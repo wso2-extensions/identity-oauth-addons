@@ -19,15 +19,9 @@ package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.oltu.oauth2.common.validators.OAuthValidator;
 import org.osgi.service.component.ComponentContext;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
-//import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.JWTBearerGrantHandler;
-//import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.JWTGrantValidator;
-import org.wso2.carbon.identity.oauth2.token.handlers.grant.AuthorizationGrantHandler;
 import org.wso2.carbon.user.core.service.RealmService;
-
-import java.util.Hashtable;
 
 /**
  * @scr.component name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt" immediate="true"

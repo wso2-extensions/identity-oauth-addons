@@ -46,11 +46,11 @@ import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.cache.JWTCache;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.cache.JWTCacheEntry;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceComponent;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.storage.PrivateKeyJWTStorageManager;
 import org.wso2.carbon.identity.oauth2.token.handlers.clientauth.AbstractClientAuthHandler;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementException;
 import org.wso2.carbon.idp.mgt.IdentityProviderManager;
-import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -72,13 +72,39 @@ public class PrivateKeyJWTClientAuthHandler extends AbstractClientAuthHandler {
     private JWTCache jwtCache;
     private boolean cacheUsedJTI;
 
+    private PrivateKeyJWTStorageManager privateKeyJWTStorageManager;
     protected Properties properties;
+
+    class JWTIDPersistingThread implements Runnable {
+        long authenticatedTime;
+        String jti;
+        int tenantID;
+
+        public JWTIDPersistingThread(int tenantId, String jti) {
+            super();
+            this.tenantID = tenantId;
+            this.jti = jti;
+            this.authenticatedTime= new java.util.Date().getTime();
+        }
+
+        @Override
+        public void run() {
+            try {
+                privateKeyJWTStorageManager.persistJWTIdInDB(jti, tenantID, authenticatedTime);
+                if (log.isDebugEnabled()) {
+                    log.debug("JWT Token with jti:" + jti + " was added to the storage successfully");
+                }
+            } catch (Exception e) {
+                log.error("Error occurred while persisting JWT ID:" + jti , e);
+            }
+        }
+    }
 
     @Override
     public void init(Properties properties) throws IdentityOAuth2Exception {
         this.properties = properties;
         authConfig = properties.getProperty(OAuthConstants.CLIENT_AUTH_CREDENTIAL_VALIDATION);
-
+        privateKeyJWTStorageManager = new PrivateKeyJWTStorageManager();
         try {
 
             String validityPeriodVal = properties.getProperty(Constants.VALIDITY_PERIOD);
@@ -169,10 +195,6 @@ public class PrivateKeyJWTClientAuthHandler extends AbstractClientAuthHandler {
         String tokenEndPointAlias = null;
         ReadOnlyJWTClaimsSet claimsSet;
 
-        tenantDomain = tokReqMsgCtx.getOauth2AccessTokenReqDTO().getTenantDomain();
-        if (StringUtils.isEmpty(tenantDomain)) {
-            tenantDomain = MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
-        }
         signedJWT = getSignedJWT(tokReqMsgCtx);
         if (signedJWT == null) {
             handleException("No Valid Assertion was found for " + Constants.OAUTH_JWT_BEARER_GRANT_TYPE);
@@ -206,19 +228,58 @@ public class PrivateKeyJWTClientAuthHandler extends AbstractClientAuthHandler {
                     " JSON Web Token.");
         }
 
+        //check whether the token is already used
+        //check JWT ID in cache
+        if (cacheUsedJTI && (jti != null)) {
+            JWTCacheEntry entry = (JWTCacheEntry) jwtCache.getValueFromCache(jti);
+            if (checkCachedJTI(jti, signedJWT, entry)) {
+                if (log.isDebugEnabled()) {
+                    log.debug("JWT id: " + jti + " not found in the cache and the JWT has been validated " +
+                            "successfully in cache.");
+                }
+            }
+        } else {
+            if (log.isDebugEnabled()) {
+                if (!cacheUsedJTI) {
+                    log.debug("List of used JSON Web Token IDs are not maintained in cache. Continue Validation");
+                }
+            }
+        }
+
+        // check JWT ID in DB
+        if (checkJWTIDinDataBase(jti)) {
+            if (log.isDebugEnabled()) {
+                log.debug("JWT id: " + jti + " not found in the Storage the JWT has been validated successfully.");
+            }
+        } else {
+            handleException("JWT with jti: " + jti + " is already used for authentication.");
+        }
+
+        //validate whether the subject is client_id
         OAuthAppDO oAuthAppDO = null;
         try {
             oAuthAppDO = OAuth2Util.getAppInformationByClientId(subject);
         } catch (InvalidOAuthClientException e) {
-            handleException("Unable to find OAuth application with provided JWT information.");
+            handleException("Error while retrieving OAuth application with provided JWT information.");
         }
 
         if (oAuthAppDO == null) {
             handleException("Unable to find OAuth application with provided JWT information.");
         }
+
+        tenantDomain = oAuthAppDO.getUser().getTenantDomain();
+        int tenantId;
+        try {
+            tenantId = JWTServiceComponent.getRealmService().getTenantManager().getTenantId(tenantDomain);
+        } catch (org.wso2.carbon.user.api.UserStoreException e) {
+            String errorMsg = "Error getting the tenant ID for the tenant domain : " + tenantDomain;
+            throw new IdentityOAuth2Exception(errorMsg, e);
+        }
+
+        //validate signature
         try {
 
-            X509Certificate cert = getCertificate(tenantDomain, jwtIssuer);
+            X509Certificate cert = getCertificate(tenantDomain, tenantId, jwtIssuer);
             signatureValid = validateSignature(signedJWT, cert);
             if (signatureValid) {
                 if (log.isDebugEnabled()) {
@@ -227,94 +288,80 @@ public class PrivateKeyJWTClientAuthHandler extends AbstractClientAuthHandler {
             } else {
                 handleException("Signature or Message Authentication invalid.");
             }
-//            tokenEndPointAlias = IdentityUtil.getProperty(IdentityConstants.OAuth.OAUTH2_TOKEN_EP_URL);
-
-            tokenEndPointAlias = getTokenEndpointAlias();
-            audienceFound = validateAudience(tokenEndPointAlias, audience);
-            if (!audienceFound) {
-                handleException("None of the audience values matched the tokenEndpoint Alias " + tokenEndPointAlias);
-            }
-
-            tokReqMsgCtx.setScope(tokReqMsgCtx.getOauth2AccessTokenReqDTO().getScope());
-
-            boolean checkedExpirationTime = checkExpirationTime(expirationTime, currentTimeInMillis,
-                    timeStampSkewMillis);
-            if (checkedExpirationTime) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Expiration Time(exp) of JWT was validated successfully.");
-                }
-            }
-            if (notBeforeTime == null) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Not Before Time(nbf) not found in JWT. Continuing Validation");
-                }
-            } else {
-                boolean checkedNotBeforeTime = checkNotBeforeTime(notBeforeTime, currentTimeInMillis,
-                        timeStampSkewMillis);
-                if (checkedNotBeforeTime) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Not Before Time(nbf) of JWT was validated successfully.");
-                    }
-                }
-            }
-            if (issuedAtTime == null) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Issued At Time(iat) not found in JWT. Continuing Validation");
-                }
-            } else {
-                boolean checkedValidityToken = checkValidityOfTheToken(issuedAtTime, currentTimeInMillis,
-                        timeStampSkewMillis);
-                if (checkedValidityToken) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Issued At Time(iat) of JWT was validated successfully.");
-                    }
-                }
-            }
-            if (cacheUsedJTI && (jti != null)) {
-                JWTCacheEntry entry = (JWTCacheEntry) jwtCache.getValueFromCache(jti);
-                if (entry != null) {
-                    if (checkCachedJTI(jti, signedJWT, entry, currentTimeInMillis, timeStampSkewMillis)) {
-                        if (log.isDebugEnabled()) {
-                            log.debug("JWT id: " + jti + " not found in the cache.");
-                            log.debug("jti of the JWT has been validated successfully.");
-                        }
-                    }
-                }
-            } else {
-                if (log.isDebugEnabled()) {
-                    if (!cacheUsedJTI) {
-                        log.debug("List of used JSON Web Token IDs are not maintained. Continue Validation");
-                    }
-                    if (jti == null) {
-                        log.debug("JSON Web Token ID(jti) not found in JWT. Continuing Validation");
-                    }
-                }
-            }
-            if (customClaims == null) {
-                if (log.isDebugEnabled()) {
-                    log.debug("No custom claims found. Continue validating other claims.");
-                }
-            } else {
-                boolean customClaimsValidated = validateCustomClaims(claimsSet.getCustomClaims());
-                if (!customClaimsValidated) {
-                    handleException("Custom Claims in the JWT were invalid");
-                }
-            }
-            if (log.isDebugEnabled()) {
-                log.debug("JWT Token was validated successfully");
-            }
-            if (cacheUsedJTI) {
-                jwtCache.addToCache(jti, new JWTCacheEntry(signedJWT));
-            }
-            if (log.isDebugEnabled()) {
-                log.debug("JWT Token was added to the cache successfully");
-            }
         } catch (JOSEException e) {
             handleException("Error when verifying signature.");
         }
         if (log.isDebugEnabled()) {
-            log.debug("Issuer(iss) of the JWT validated successfully");
+            log.debug("Issuer(iss) of the JWT validated successfully. ");
         }
+
+        //validate audience
+        tokenEndPointAlias = getTokenEndpointAlias();
+        audienceFound = validateAudience(tokenEndPointAlias, audience);
+        if (!audienceFound) {
+            handleException("None of the audience values matched the tokenEndpoint Alias " + tokenEndPointAlias);
+        }
+
+        //Check token Expiry
+        boolean checkedExpirationTime = checkExpirationTime(expirationTime, currentTimeInMillis,
+                timeStampSkewMillis);
+        if (checkedExpirationTime) {
+            if (log.isDebugEnabled()) {
+                log.debug("Expiration Time(exp) of JWT was validated successfully.");
+            }
+        }
+        //check notbefore time
+        if (notBeforeTime == null) {
+            if (log.isDebugEnabled()) {
+                log.debug("Not Before Time(nbf) not found in JWT. Continuing Validation");
+            }
+        } else {
+            boolean checkedNotBeforeTime = checkNotBeforeTime(notBeforeTime, currentTimeInMillis,
+                    timeStampSkewMillis);
+            if (checkedNotBeforeTime) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Not Before Time(nbf) of JWT was validated successfully.");
+                }
+            }
+        }
+
+        //check issued time
+        if (issuedAtTime == null) {
+            if (log.isDebugEnabled()) {
+                log.debug("Issued At Time(iat) not found in JWT. Continuing Validation");
+            }
+        } else {
+            boolean checkedValidityToken = checkValidityOfTheToken(issuedAtTime, currentTimeInMillis,
+                    timeStampSkewMillis);
+            if (checkedValidityToken) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Issued At Time(iat) of JWT was validated successfully.");
+                }
+            }
+        }
+
+        // validate custom claims
+        if (customClaims == null) {
+            if (log.isDebugEnabled()) {
+                log.debug("No custom claims found. Continue validating other claims.");
+            }
+        } else {
+            boolean customClaimsValidated = validateCustomClaims(claimsSet.getCustomClaims());
+            if (!customClaimsValidated) {
+                handleException("Custom Claims in the JWT were invalid");
+            }
+        }
+        if (log.isDebugEnabled()) {
+            log.debug("JWT Token was validated successfully");
+        }
+        if (cacheUsedJTI) {
+            jwtCache.addToCache(jti, new JWTCacheEntry(signedJWT));
+        }
+        if (log.isDebugEnabled()) {
+            log.debug("JWT Token was added to the cache successfully");
+        }
+
+        persistJWTID(jti, tenantId);
         return true;
     }
 
@@ -449,18 +496,9 @@ public class PrivateKeyJWTClientAuthHandler extends AbstractClientAuthHandler {
      * @param alias        alias of cert
      * @return X509CredentialImpl object containing the public certificate of that tenant
      */
-    public static X509Certificate getCertificate(String tenantDomain, String alias) throws IdentityOAuth2Exception {
-        if (tenantDomain.trim() == null || alias.trim() == null) {
-            log.error("Invalid parameters; domain name : " + tenantDomain + ", " +
-                    "alias : " + alias);
-        }
-        int tenantId;
-        try {
-            tenantId = JWTServiceComponent.getRealmService().getTenantManager().getTenantId(tenantDomain);
-        } catch (org.wso2.carbon.user.api.UserStoreException e) {
-            String errorMsg = "Error getting the tenant ID for the tenant domain : " + tenantDomain;
-            throw new IdentityOAuth2Exception(errorMsg, e);
-        }
+    public static X509Certificate getCertificate(String tenantDomain, int tenantId,
+                                                 String alias) throws IdentityOAuth2Exception {
+
         KeyStoreManager keyStoreManager;
         // get an instance of the corresponding Key Store Manager instance
         keyStoreManager = KeyStoreManager.getInstance(tenantId);
@@ -619,34 +657,19 @@ public class PrivateKeyJWTClientAuthHandler extends AbstractClientAuthHandler {
      * @param jti                 JSON Token Id
      * @param signedJWT           Signed JWT
      * @param entry               Cache entry
-     * @param currentTimeInMillis Current time
-     * @param timeStampSkewMillis Skew time
      * @return true or false
      */
-    private boolean checkCachedJTI(String jti, SignedJWT signedJWT, JWTCacheEntry entry, long currentTimeInMillis,
-                                   long timeStampSkewMillis) throws IdentityOAuth2Exception {
-        try {
-            SignedJWT cachedJWT = entry.getJwt();
-            long cachedJWTExpiryTimeMillis = cachedJWT.getJWTClaimsSet().getExpirationTime().getTime();
-            if (currentTimeInMillis + timeStampSkewMillis > cachedJWTExpiryTimeMillis) {
-                if (log.isDebugEnabled()) {
-                    log.debug("JWT Token has been reused after the allowed expiry time : "
-                            + cachedJWT.getJWTClaimsSet().getExpirationTime());
-                }
-
-                // Update the cache with the new JWT for the same JTI.
-                this.jwtCache.addToCache(jti, new JWTCacheEntry(signedJWT));
-                if (log.isDebugEnabled()) {
-                    log.debug("jti of the JWT has been validated successfully and cache updated");
-                }
-            } else {
-                handleException("JWT Token \n" + signedJWT.getHeader().toJSONObject().toString() + "\n"
-                        + signedJWT.getPayload().toJSONObject().toString() + "\n" +
-                        "Has been replayed before the allowed expiry time : "
-                        + cachedJWT.getJWTClaimsSet().getExpirationTime());
+    private boolean checkCachedJTI(String jti, SignedJWT signedJWT, JWTCacheEntry entry) throws IdentityOAuth2Exception {
+        if ( entry == null) {
+            // Update the cache with the new JWT for the same JTI.
+            this.jwtCache.addToCache(jti, new JWTCacheEntry(signedJWT));
+            if (log.isDebugEnabled()) {
+                log.debug("jti of the JWT has been validated successfully and cache updated.");
             }
-        } catch (ParseException e) {
-            handleException("Unable to parse the cached jwt assertion : " + entry.getEncodedJWt());
+        } else {
+            handleException("JWT Token \n" + signedJWT.getHeader().toJSONObject().toString() + "\n"
+                    + signedJWT.getPayload().toJSONObject().toString() + "\n" +
+                    "Has been replayed");
         }
         return true;
     }
@@ -669,5 +692,18 @@ public class PrivateKeyJWTClientAuthHandler extends AbstractClientAuthHandler {
      */
     protected boolean validateCustomClaims(Map<String, Object> customClaims) {
         return true;
+    }
+
+    private boolean checkJWTIDinDataBase(String jti) throws IdentityOAuth2Exception {
+        try {
+           return !privateKeyJWTStorageManager.isJTIExistsInDB(jti);
+        } catch (IdentityOAuth2Exception e) {
+            log.error(e.getMessage(), e);
+        }
+        return true;
+    }
+
+    private void persistJWTID(final String jti, int tenantID){
+        new Thread(new JWTIDPersistingThread(tenantID, jti)).start();
     }
 }
