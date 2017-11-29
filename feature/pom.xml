@@ -17,20 +17,20 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>org.wso2.carbon.extension.identity.oauth2.clientauth</groupId>
-        <artifactId>identity-oauth2-private-key-jwt-client-handler</artifactId>
+        <groupId>org.wso2.carbon.extension.identity.oauth2</groupId>
+        <artifactId>identity-oauth2-extenstions</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
-    <artifactId>org.wso2.carbon.extension.identity.oauth2.jwt.feature</artifactId>
+    <artifactId>org.wso2.carbon.extension.identity.oauth2.extension.feature</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>WSO2 Carbon Extension- Private Key JWT Client Handler Feature</name>
+    <name>WSO2 Carbon Extension- Identity Oauth Extensions Feature</name>
     <url>http://wso2.org</url>
     <description>This feature contains extension feature for JWT Grant Type</description>
     <dependencies>
         <dependency>
-            <groupId>org.wso2.carbon.extension.identity.oauth2.clientauth</groupId>
+            <groupId>org.wso2.carbon.extension.identity.oauth2</groupId>
             <artifactId>org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt</artifactId>
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
@@ -58,7 +58,7 @@
                                 </properties>
                             </adviceFile>
                             <bundles>
-                                <bundleDef>org.wso2.carbon.extension.identity.oauth2.clientauth:org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt
+                                <bundleDef>org.wso2.carbon.extension.identity.oauth2:org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt
                                 </bundleDef>
                             </bundles>
                         </configuration>

@@ -28,7 +28,7 @@ public class PrivateKeyJWTAuthorizationCodeValidator extends AuthorizationCodeVa
 
     public PrivateKeyJWTAuthorizationCodeValidator() {
         super();
-        privateKeyJWTValidator = new PrivateKeyJWTValidator();
+        privateKeyJWTValidator = new PrivateKeyJWTValidator(this.enforceClientAuthentication);
     }
 
     public void validateClientAuthenticationCredentials(HttpServletRequest request) throws OAuthProblemException {

@@ -35,19 +35,11 @@ public class JWTServiceComponent {
     private static RealmService realmService;
 
     public static RealmService getRealmService() {
-        return (RealmService) PrivilegedCarbonContext.getThreadLocalCarbonContext()
-                .getOSGiService(RealmService.class);
+        return JWTServiceDataHolder.getInstance().getRealmService();
     }
 
     protected void activate(ComponentContext ctxt) {
         try {
-//            JWTBearerGrantHandler grantHandler = new JWTBearerGrantHandler();
-//            Hashtable<String, String> props = new Hashtable< String, String >();
-//            ctxt.getBundleContext().registerService(AuthorizationGrantHandler.class.getName(),
-//                    grantHandler, props);
-//
-//            JWTGrantValidator validator = new JWTGrantValidator();
-//            ctxt.getBundleContext().registerService(OAuthValidator.class.getName(), validator, props);
             if (log.isDebugEnabled()) {
                 log.debug("Private Key JWT client handler is activated");
             }
@@ -63,7 +55,7 @@ public class JWTServiceComponent {
     }
 
     protected void setRealmService(RealmService realmService) {
-        JWTServiceComponent.realmService = realmService;
+        JWTServiceDataHolder.getInstance().setRealmService(realmService);
         if (log.isDebugEnabled()) {
             log.debug("RealmService is set in the custom token builder bundle");
         }
@@ -71,7 +63,7 @@ public class JWTServiceComponent {
     }
 
     protected void unsetRealmService(RealmService realmService) {
-        JWTServiceComponent.realmService = null;
+        JWTServiceDataHolder.getInstance().setRealmService(null);
         if (log.isDebugEnabled()) {
             log.debug("RealmService is unset in the custom token builder bundle");
         }

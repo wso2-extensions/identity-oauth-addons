@@ -23,11 +23,11 @@
         <artifactId>wso2</artifactId>
         <version>1</version>
     </parent>
-    <groupId>org.wso2.carbon.extension.identity.oauth2.clientauth</groupId>
-    <artifactId>identity-oauth2-private-key-jwt-client-handler</artifactId>
+    <groupId>org.wso2.carbon.extension.identity.oauth2</groupId>
+    <artifactId>identity-oauth2-extenstions</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>WSO2 Carbon Extension - Private Key JWT Client Handler Pom</name>
+    <name>WSO2 Carbon Extension - Identity OAuth Extensions Pom</name>
     <url>http://wso2.org</url>
     <profiles>
         <profile>
@@ -175,6 +175,70 @@
             <groupId>org.wso2.orbit.org.owasp.encoder</groupId>
             <artifactId>encoder</artifactId>
             <version>${encoder.wso2.version}</version>
+        </dependency>
+
+        <!--Test Dependencies-->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>${testng.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jacoco</groupId>
+            <artifactId>org.jacoco.agent</artifactId>
+            <classifier>runtime</classifier>
+            <scope>test</scope>
+            <version>${jacoco.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.powermock/powermock-module-testng -->
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-module-testng</artifactId>
+            <version>${powermock.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-api-mockito</artifactId>
+            <version>${powermock.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax</groupId>
+            <artifactId>javaee-web-api</artifactId>
+            <version>${javaee.web.api.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>${h2database.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.wso2.carbon.identity.framework</groupId>
+            <artifactId>org.wso2.carbon.identity.testutil</artifactId>
+            <version>${carbon.identity.test.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>${commons-codec.test.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon</groupId>
+            <artifactId>org.wso2.carbon.tomcat.ext</artifactId>
+            <version>${carbon.kernel.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
     <build>
@@ -353,6 +417,7 @@
     </distributionManagement>
     <properties>
         <carbon.identity.version>5.7.0</carbon.identity.version>
+        <carbon.identity.test.version>5.10.31</carbon.identity.test.version>
         <identity.inbound.auth.oauth.version>5.3.4</identity.inbound.auth.oauth.version>
         <commons-logging.version>4.4.7</commons-logging.version>
         <carbon.kernel.version>4.4.7</carbon.kernel.version>
@@ -374,5 +439,16 @@
         <commons-logging.osgi.version.range>[1.2,2.0)</commons-logging.osgi.version.range>
         <commons-lang.wso2.osgi.version.range>[2.6.0,3.0.0)</commons-lang.wso2.osgi.version.range>
         <net.minidev.json.imp.pkg.version.range>[1.3.0, 2.0.0)</net.minidev.json.imp.pkg.version.range>
+
+        <!--Test Dependencies-->
+        <junit.version>4.12</junit.version>
+        <testng.version>6.9.10</testng.version>
+        <jacoco.version>0.7.9</jacoco.version>
+        <powermock.version>1.6.6</powermock.version>
+        <maven.surefire.plugin.version>2.18.1</maven.surefire.plugin.version>
+        <javaee.web.api.version>7.0</javaee.web.api.version>
+        <h2database.version>1.0.60</h2database.version>
+        <commons-codec.test.version>1.4</commons-codec.test.version>
+        <org.wso2.carbon.identity.testutil.version>5.10.0</org.wso2.carbon.identity.testutil.version>
     </properties>
 </project>

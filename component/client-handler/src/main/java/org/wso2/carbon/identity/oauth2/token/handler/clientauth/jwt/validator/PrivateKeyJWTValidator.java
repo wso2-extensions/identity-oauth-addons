@@ -30,9 +30,12 @@ import java.util.Set;
 
 public class PrivateKeyJWTValidator extends AbstractValidator<HttpServletRequest> {
 
+    public PrivateKeyJWTValidator(boolean enforceClientAuthentication) {
+        this.enforceClientAuthentication = enforceClientAuthentication;
+    }
+
     @Override
     public void validateClientAuthenticationCredentials(HttpServletRequest request) throws OAuthProblemException {
-        super.validateClientAuthenticationCredentials(request);
         if (this.enforceClientAuthentication) {
             Set<String> missingParameters = new HashSet();
 

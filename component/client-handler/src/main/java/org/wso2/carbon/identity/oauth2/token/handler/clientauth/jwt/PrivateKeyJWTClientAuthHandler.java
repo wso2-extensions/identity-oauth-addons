@@ -71,6 +71,7 @@ public class PrivateKeyJWTClientAuthHandler extends AbstractClientAuthHandler {
     private int validityPeriod;
     private JWTCache jwtCache;
     private boolean cacheUsedJTI;
+    private boolean mandateJTI;
 
     private PrivateKeyJWTStorageManager privateKeyJWTStorageManager;
     protected Properties properties;
@@ -484,7 +485,7 @@ public class PrivateKeyJWTClientAuthHandler extends AbstractClientAuthHandler {
      * @param claimsSet all the JWT claims
      * @return The subject, to be used
      */
-    protected String resolveSubject(ReadOnlyJWTClaimsSet claimsSet) {
+    private String resolveSubject(ReadOnlyJWTClaimsSet claimsSet) {
         return claimsSet.getSubject();
     }
 
@@ -496,7 +497,7 @@ public class PrivateKeyJWTClientAuthHandler extends AbstractClientAuthHandler {
      * @param alias        alias of cert
      * @return X509CredentialImpl object containing the public certificate of that tenant
      */
-    public static X509Certificate getCertificate(String tenantDomain, int tenantId,
+    protected static X509Certificate getCertificate(String tenantDomain, int tenantId,
                                                  String alias) throws IdentityOAuth2Exception {
 
         KeyStoreManager keyStoreManager;
@@ -533,7 +534,7 @@ public class PrivateKeyJWTClientAuthHandler extends AbstractClientAuthHandler {
      * @param tenantDomain tenant domain name
      * @return key store file name
      */
-    public static String generateKSNameFromDomainName(String tenantDomain) {
+    private static String generateKSNameFromDomainName(String tenantDomain) {
         String ksName = tenantDomain.trim().replace(".", "-");
         return ksName + ".jks";
     }

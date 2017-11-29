@@ -24,14 +24,14 @@ import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import javax.servlet.http.HttpServletRequest;
 
 public class PrivateKeyJWTClientCredentialValidator extends ClientCredentialValidator {
-    private ClientCredentialValidator clientCredentialValidator;
+    private PrivateKeyJWTValidator privateKeyJWTValidator;
 
     public PrivateKeyJWTClientCredentialValidator() {
         super();
-        clientCredentialValidator = new ClientCredentialValidator();
+        privateKeyJWTValidator = new PrivateKeyJWTValidator(this.enforceClientAuthentication);
     }
 
     public void validateClientAuthenticationCredentials(HttpServletRequest request) throws OAuthProblemException {
-        clientCredentialValidator.validateClientAuthenticationCredentials(request);
+        privateKeyJWTValidator.validateClientAuthenticationCredentials(request);
     }
 }
