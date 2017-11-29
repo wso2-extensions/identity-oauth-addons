@@ -175,8 +175,13 @@
         <ClientAuthHandlers>
             <ClientAuthHandler Class="org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.PrivateKeyJWTClientAuthHandler">
                 <Property Name="StrictClientCredentialValidation">false</Property>
+                <Property Name="RejectBeforePeriod">60</Property>
+                <Property Name="PreventTokenReuse">true</Property>
+                <Property Name="Audience">some-audience</Property>
+                <Property Name="Issuer">client_id</Property>
+                <Property Name="SubjectField">client_id</Property>
                 <Property Name="EnableCacheForJTI">true</Property>
-                <Property Name="JwtValidityPeriod">60</Property>
+                <Property Name="CertificateAlias">some-alias</Property>
             </ClientAuthHandler>
         </ClientAuthHandlers>
         <!-- Supported Response Types -->

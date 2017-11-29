@@ -27,6 +27,8 @@
             <class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.PrivateKeyJWTAuthorizationCodeValidatorTest"/>
             <class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.PrivateKeyJWTClientCredentialValidator"/>
             <class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.PrivateKeyJWTValidatorTest"/>
+            <class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.storage.PrivateKeyJWTStorageManagerTest"/>
+            <class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.cache.JWTCacheTest"/>
         </classes>
     </test>
 </suite>

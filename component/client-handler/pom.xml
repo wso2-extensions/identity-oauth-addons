@@ -119,6 +119,7 @@
                         <!--component, but in dependent oauth components. Constant classes only have private
                         constructors. Hence they excluding them in coverage reports-->
                         <exclude>**/Constants.class</exclude>
+                        <exclude>**/*SQLQueries.class</exclude>
                         <exclude>**/JWTServiceComponent.class</exclude>
                     </excludes>
                 </configuration>

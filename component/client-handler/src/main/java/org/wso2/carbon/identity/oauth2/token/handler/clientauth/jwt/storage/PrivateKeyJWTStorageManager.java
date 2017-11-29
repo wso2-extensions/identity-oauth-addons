@@ -58,7 +58,7 @@ public class PrivateKeyJWTStorageManager {
         return isExists;
     }
 
-    public void persistJWTIdInDB(String jti, int tenantID, long time) throws IdentityOAuth2Exception {
+    public void persistJWTIdInDB(String jti, long expTime, long time) throws IdentityOAuth2Exception {
         Connection connection = null;
         PreparedStatement preparedStatement = null;
         ResultSet rs = null;
@@ -67,15 +67,15 @@ public class PrivateKeyJWTStorageManager {
             preparedStatement = connection.prepareStatement(Constants.SQLQueries.INSERT_JWD_ID);
             preparedStatement.setString(1, jti);
             Timestamp timestamp = new Timestamp(time);
-            preparedStatement.setInt(2, tenantID);
+            preparedStatement.setLong(2, expTime);
             preparedStatement.setTimestamp(3, timestamp,
                     Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC)));
             preparedStatement.executeUpdate();
             preparedStatement.close();
             connection.commit();
         } catch (SQLException e) {
-            String error = "Error when storing the JWT ID: " + tenantID + " for tenant : " +
-                    jti;
+            String error = "Error when storing the JWT ID: " + jti + " with exp: " +
+                    expTime;
             throw new IdentityOAuth2Exception(error, e);
         } finally {
             IdentityDatabaseUtil.closeAllConnections(connection, rs, preparedStatement);

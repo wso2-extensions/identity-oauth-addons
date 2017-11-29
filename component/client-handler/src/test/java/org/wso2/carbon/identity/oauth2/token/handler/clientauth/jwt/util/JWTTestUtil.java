@@ -26,12 +26,17 @@ import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.PlainJWT;
 import com.nimbusds.jwt.SignedJWT;
+import org.wso2.carbon.base.CarbonBaseConstants;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.oauth.dao.SQLQueries;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.user.core.UserCoreConstants;
 
+import java.io.FileInputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.Key;
+import java.security.KeyStore;
 import java.security.interfaces.RSAPrivateKey;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -108,5 +113,14 @@ public class JWTTestUtil {
         }
     }
 
+    public static KeyStore getKeyStoreFromFile(String keystoreName, String password,
+                                               String home) throws Exception {
+        Path tenantKeystorePath = Paths.get(home, "repository",
+                "resources", "security", keystoreName);
+        FileInputStream file = new FileInputStream(tenantKeystorePath.toString());
+        KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
+        keystore.load(file, password.toCharArray());
+        return keystore;
+    }
 
 }

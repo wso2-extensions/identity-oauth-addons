@@ -22,8 +22,12 @@ public class Constants {
     public static final String OAUTH_JWT_BEARER_GRANT_TYPE = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
     public static final String OAUTH_JWT_ASSERTION = "client_assertion";
     public static final String OAUTH_JWT_ASSERTION_TYPE = "client_assertion_type";
-    public static final String VALIDITY_PERIOD = "JwtValidityPeriod";
-    public static final String DEFAULT_VALIDITY_PERIOD = "300";
+    public static final int DEFAULT_VALIDITY_PERIOD = 300;
+    public static final String VALIDITY_PERIOD = "RejectBeforePeriod";
+    public static final String PREVENT_TOKEN_REUSE = "PreventTokenReuse";
+    public static final String AUDIENCE = "Audience";
+    public static final String ISSUER = "Issuer";
+    public static final String SUBJECT_FIELD = "SubjectField";
     public static final String USE_CACHE_FOR_JTI = "EnableCacheForJTI";
     public static final boolean DEFAULT_USE_CACHE_FOR_JTI_VALUE = true;
     public static final String PROPERTIES_FILE = "jwt.properties";
@@ -34,7 +38,7 @@ public class Constants {
 
     {
         public static final String GET_JWT_ID = "SELECT 1 FROM IDN_JWT_PRIVATE_KEY WHERE JWT_ID =?;";
-        public static final String INSERT_JWD_ID = "INSERT INTO IDN_JWT_PRIVATE_KEY (JWT_ID,TENANT_ID," +
+        public static final String INSERT_JWD_ID = "INSERT INTO IDN_JWT_PRIVATE_KEY (JWT_ID,EXP_PERIOD," +
                 "TIME_CREATED)VALUES (?,?,?)";
     }
 
