@@ -542,9 +542,10 @@ public class PrivateKeyJWTClientAuthHandler extends AbstractClientAuthHandler {
      *
      * @param tenantDomain tenant domain of the issuer
      * @param alias        alias of cert
-     * @return X509CredentialImpl object containing the public certificate of that tenant
+     * @return X509Certificate object containing the public certificate in the primary keystore of the tenantDOmain
+     * with alias
      */
-    protected static X509Certificate getCertificate(String tenantDomain, String alias) throws IdentityOAuth2Exception {
+    public static X509Certificate getCertificate(String tenantDomain, String alias) throws IdentityOAuth2Exception {
 
         int tenantId;
         try {
@@ -566,13 +567,11 @@ public class PrivateKeyJWTClientAuthHandler extends AbstractClientAuthHandler {
                 // config. in carbon.xml
                 keyStore = keyStoreManager.getPrimaryKeyStore();
             }
-            java.security.cert.X509Certificate cert =
-                    (java.security.cert.X509Certificate) keyStore.getCertificate(alias);
-            return cert;
+            return (X509Certificate) keyStore.getCertificate(alias);
 
         } catch (KeyStoreException e) {
-            String errorMsg = "Error instantiating an X509CredentialImpl object for the public certificate of "
-                    + tenantDomain;
+            String errorMsg = "Error instantiating an X509Certificate object for the certificate alias:" + alias +
+                    " in tenant:" + tenantDomain;
             log.error(errorMsg, e);
             throw new IdentityOAuth2Exception(errorMsg, e);
         } catch (Exception e) {

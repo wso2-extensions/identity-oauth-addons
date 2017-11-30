@@ -121,6 +121,7 @@
                         <exclude>**/Constants.class</exclude>
                         <exclude>**/*SQLQueries.class</exclude>
                         <exclude>**/JWTServiceComponent.class</exclude>
+                        <exclude>**/*JWTIDPersistingThread.class</exclude>
                     </excludes>
                 </configuration>
                 <executions>

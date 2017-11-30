@@ -28,7 +28,6 @@ import org.wso2.carbon.base.CarbonBaseConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.core.util.KeyStoreManager;
 import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorConfig;
-import org.wso2.carbon.identity.application.mgt.internal.ApplicationManagementServiceComponentHolder;
 import org.wso2.carbon.identity.base.IdentityConstants;
 import org.wso2.carbon.identity.common.testng.*;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
@@ -39,6 +38,7 @@ import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2AccessTokenReqDTO;
 import org.wso2.carbon.identity.oauth2.model.RequestParameter;
 import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceComponent;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceDataHolder;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil;
 import org.wso2.carbon.identity.testutil.ReadCertStoreSampleUtil;
@@ -47,18 +47,18 @@ import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.core.service.RealmService;
 
 import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.Calendar;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.buildJWT;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.getKeyStoreFromFile;
 import static org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
@@ -69,7 +69,7 @@ import static org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENA
 @WithAxisConfiguration
 @WithH2Database(jndiName = "jdbc/WSO2CarbonDB", files = {"dbscripts/identity.sql"})
 @WithRealmService(tenantId = SUPER_TENANT_ID, tenantDomain = SUPER_TENANT_DOMAIN_NAME,
-        injectToSingletons = {ApplicationManagementServiceComponentHolder.class})
+        injectToSingletons = {JWTServiceComponent.class})
 @WithKeyStore
 public class PrivateKeyJWTClientAuthHandlerTest {
 
@@ -140,6 +140,8 @@ public class PrivateKeyJWTClientAuthHandlerTest {
         OAuth2AccessTokenReqDTO oauth2AccessTokenReqDTO6 = new OAuth2AccessTokenReqDTO();
         OAuth2AccessTokenReqDTO oauth2AccessTokenReqDTO7 = new OAuth2AccessTokenReqDTO();
         OAuth2AccessTokenReqDTO oauth2AccessTokenReqDTO8 = new OAuth2AccessTokenReqDTO();
+        OAuth2AccessTokenReqDTO oauth2AccessTokenReqDTO9 = new OAuth2AccessTokenReqDTO();
+        OAuth2AccessTokenReqDTO oauth2AccessTokenReqDTO10 = new OAuth2AccessTokenReqDTO();
 
         oauth2AccessTokenReqDTO1.setClientId(TEST_CLIENT_ID_1);
         oauth2AccessTokenReqDTO1.setClientSecret(TEST_SECRET_1);
@@ -150,6 +152,8 @@ public class PrivateKeyJWTClientAuthHandlerTest {
         oauth2AccessTokenReqDTO6.setClientId(TEST_CLIENT_ID_1);
         oauth2AccessTokenReqDTO7.setClientId(TEST_CLIENT_ID_1);
         oauth2AccessTokenReqDTO8.setClientId(TEST_CLIENT_ID_1);
+        oauth2AccessTokenReqDTO9.setClientId(TEST_CLIENT_ID_1);
+        oauth2AccessTokenReqDTO10.setClientId(TEST_CLIENT_ID_1);
 
         oauth2AccessTokenReqDTO1.setGrantType("authorization_code");
         oauth2AccessTokenReqDTO2.setGrantType("authorization_code");
@@ -159,6 +163,8 @@ public class PrivateKeyJWTClientAuthHandlerTest {
         oauth2AccessTokenReqDTO6.setGrantType("authorization_code");
         oauth2AccessTokenReqDTO7.setGrantType("authorization_code");
         oauth2AccessTokenReqDTO8.setGrantType("authorization_code");
+        oauth2AccessTokenReqDTO9.setGrantType("authorization_code");
+        oauth2AccessTokenReqDTO10.setGrantType("authorization_code");
 
         Properties properties1 = new Properties();
         Properties properties2 = new Properties();
@@ -182,6 +188,8 @@ public class PrivateKeyJWTClientAuthHandlerTest {
         OAuthTokenReqMessageContext oAuthTokenReqMessageContext6 = buildOAuth2AccessTokenReqDTO();
         OAuthTokenReqMessageContext oAuthTokenReqMessageContext7 = buildOAuth2AccessTokenReqDTO();
         OAuthTokenReqMessageContext oAuthTokenReqMessageContext8 = buildOAuth2AccessTokenReqDTO();
+        OAuthTokenReqMessageContext oAuthTokenReqMessageContext9 = buildOAuth2AccessTokenReqDTO();
+        OAuthTokenReqMessageContext oAuthTokenReqMessageContext10 = buildOAuth2AccessTokenReqDTO();
 
         try {
             Key key1 = clientKeyStore.getKey("wso2carbon", "wso2carbon".toCharArray());
@@ -200,8 +208,13 @@ public class PrivateKeyJWTClientAuthHandlerTest {
             String privateKeyJWT6 = "some-string";
             String privateKeyJWT7 = buildJWT(oauth2AccessTokenReqDTO1.getClientId(),
                     oauth2AccessTokenReqDTO1.getClientId(), "2000", audience, "RSA265", key1, 0);
-            String privateKeyJWT8 = buildJWT(oauth2AccessTokenReqDTO1.getClientId() ,
-                    oauth2AccessTokenReqDTO1.getClientId(), null , null, "RSA265", key1, 0);
+            String privateKeyJWT8 = buildJWT(oauth2AccessTokenReqDTO1.getClientId(),
+                    oauth2AccessTokenReqDTO1.getClientId(), null, null, "RSA265", key1, 0);
+            String privateKeyJWT9 = buildJWT(oauth2AccessTokenReqDTO1.getClientId(),
+                    oauth2AccessTokenReqDTO1.getClientId(), "1002", audience, "RSA265", key1,
+                    Calendar.getInstance().getTimeInMillis());
+            String privateKeyJWT10 = buildJWT(oauth2AccessTokenReqDTO1.getClientId(),
+                    oauth2AccessTokenReqDTO1.getClientId(), "1003", audience, "", key1, 0);
 
             RequestParameter[] requestParameters1 = new RequestParameter[]{new RequestParameter("client_assertion_type",
                     "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"), new RequestParameter("client_assertion",
@@ -227,6 +240,13 @@ public class PrivateKeyJWTClientAuthHandlerTest {
             RequestParameter[] requestParameters8 = new RequestParameter[]{new RequestParameter("client_assertion_type",
                     "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"), new RequestParameter("client_assertion",
                     privateKeyJWT8)};
+            RequestParameter[] requestParameters9 = new RequestParameter[]{new RequestParameter("client_assertion_type",
+                    "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"), new RequestParameter("client_assertion",
+                    privateKeyJWT9)};
+            RequestParameter[] requestParameters10 = new RequestParameter[]{new RequestParameter
+                    ("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"),
+                    new RequestParameter("client_assertion", privateKeyJWT10)};
+
 
             oauth2AccessTokenReqDTO1.setRequestParameters(requestParameters1);
             oAuthTokenReqMessageContext1.getOauth2AccessTokenReqDTO().setRequestParameters(requestParameters1);
@@ -252,6 +272,12 @@ public class PrivateKeyJWTClientAuthHandlerTest {
             oauth2AccessTokenReqDTO8.setRequestParameters(requestParameters8);
             oAuthTokenReqMessageContext8.getOauth2AccessTokenReqDTO().setRequestParameters(requestParameters8);
 
+            oauth2AccessTokenReqDTO9.setRequestParameters(requestParameters9);
+            oAuthTokenReqMessageContext9.getOauth2AccessTokenReqDTO().setRequestParameters(requestParameters9);
+
+            oauth2AccessTokenReqDTO10.setRequestParameters(requestParameters9);
+            oAuthTokenReqMessageContext10.getOauth2AccessTokenReqDTO().setRequestParameters(requestParameters9);
+
             OAuthTokenReqMessageContext tokReqMsgCtx1 = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO1);
             OAuthTokenReqMessageContext tokReqMsgCtx2 = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO2);
             OAuthTokenReqMessageContext tokReqMsgCtx3 = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO3);
@@ -260,6 +286,8 @@ public class PrivateKeyJWTClientAuthHandlerTest {
             OAuthTokenReqMessageContext tokReqMsgCtx6 = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO6);
             OAuthTokenReqMessageContext tokReqMsgCtx7 = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO7);
             OAuthTokenReqMessageContext tokReqMsgCtx8 = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO8);
+            OAuthTokenReqMessageContext tokReqMsgCtx9 = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO9);
+            OAuthTokenReqMessageContext tokReqMsgCtx10 = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO10);
 
             return new Object[][]{
                     {tokReqMsgCtx1, true, properties1, true},
@@ -269,7 +297,9 @@ public class PrivateKeyJWTClientAuthHandlerTest {
                     {tokReqMsgCtx5, true, properties3, false},
                     {tokReqMsgCtx6, true, properties3, false},
                     {tokReqMsgCtx7, true, properties3, false},
-                    {tokReqMsgCtx8, true, properties3, false}
+                    {tokReqMsgCtx8, true, properties3, false},
+                    {tokReqMsgCtx9, true, properties1, false},
+                    {tokReqMsgCtx10, true, properties1, false}
             };
         } catch (KeyStoreException e) {
             e.printStackTrace();
@@ -354,12 +384,48 @@ public class PrivateKeyJWTClientAuthHandlerTest {
                 false);
     }
 
+    @Test()
     public void testGetCertificate() throws Exception {
-
+        KeyStoreManager keyStoreManager = Mockito.mock(KeyStoreManager.class);
+        ConcurrentHashMap<String, KeyStoreManager> mtKeyStoreManagers = new ConcurrentHashMap();
+        mtKeyStoreManagers.put("-1234", keyStoreManager);
+        WhiteboxImpl.setInternalState(KeyStoreManager.class, "mtKeyStoreManagers", mtKeyStoreManagers);
+        Mockito.when(keyStoreManager.getPrimaryKeyStore()).thenReturn(serverKeyStore);
+        assertNotNull(testclass.getCertificate(SUPER_TENANT_DOMAIN_NAME, TEST_CLIENT_ID_1));
     }
 
-    public void testValidateCustomClaims() throws Exception {
+    @Test()
+    public void testGetCertificateNonExistingAlias() throws Exception {
+        KeyStoreManager keyStoreManager = Mockito.mock(KeyStoreManager.class);
+        ConcurrentHashMap<String, KeyStoreManager> mtKeyStoreManagers = new ConcurrentHashMap();
+        mtKeyStoreManagers.put("-1234", keyStoreManager);
+        WhiteboxImpl.setInternalState(KeyStoreManager.class, "mtKeyStoreManagers", mtKeyStoreManagers);
+        Mockito.when(keyStoreManager.getPrimaryKeyStore()).thenReturn(clientKeyStore);
+        assertNull(testclass.getCertificate(SUPER_TENANT_DOMAIN_NAME, TEST_CLIENT_ID_1));
+    }
 
+    @Test(expectedExceptions = IdentityOAuth2Exception.class)
+    public void testGetCertificateException() throws Exception {
+        assertNull(testclass.getCertificate(SUPER_TENANT_DOMAIN_NAME, TEST_CLIENT_ID_1));
+    }
+
+    @Test(expectedExceptions = IdentityOAuth2Exception.class)
+    public void testGetCertificateException2() throws Exception {
+        assertNull(testclass.getCertificate("some-tenant", TEST_CLIENT_ID_1));
+    }
+
+    @Test(expectedExceptions = IdentityOAuth2Exception.class)
+    public void testGetCertificateException3() throws Exception {
+        KeyStoreManager keyStoreManager = Mockito.mock(KeyStoreManager.class);
+        ConcurrentHashMap<String, KeyStoreManager> mtKeyStoreManagers = new ConcurrentHashMap();
+        mtKeyStoreManagers.put("-1234", keyStoreManager);
+        WhiteboxImpl.setInternalState(KeyStoreManager.class, "mtKeyStoreManagers", mtKeyStoreManagers);
+        Mockito.when(keyStoreManager.getPrimaryKeyStore()).thenReturn(serverKeyStore);
+        KeyStore keyStore = keyStoreManager.getPrimaryKeyStore();
+        Mockito.when(keyStore.getCertificate(TEST_CLIENT_ID_1)).thenThrow(new IdentityOAuth2Exception("Identity " +
+                "Exception"));
+        Mockito.when(keyStoreManager.getPrimaryKeyStore()).thenReturn(serverKeyStore);
+        assertNull(testclass.getCertificate(SUPER_TENANT_DOMAIN_NAME, TEST_CLIENT_ID_1));
     }
 
     private OAuthTokenReqMessageContext buildOAuth2AccessTokenReqDTO() {
