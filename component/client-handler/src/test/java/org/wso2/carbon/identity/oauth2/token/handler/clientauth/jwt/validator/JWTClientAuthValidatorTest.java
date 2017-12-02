@@ -25,19 +25,20 @@ import org.mockito.internal.util.reflection.Whitebox;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.grant.JWTClientAuthValidator;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PrivateKeyJWTValidatorTest {
-    private PrivateKeyJWTValidator privateKeyJWTValidator;
+public class JWTClientAuthValidatorTest {
+    private JWTClientAuthValidator JWTClientAuthValidator;
     HttpServletRequest mockedRequest;
 
     @BeforeClass
     public void setUp() throws Exception {
-        privateKeyJWTValidator = new PrivateKeyJWTValidator(true);
-        Whitebox.setInternalState(this.privateKeyJWTValidator, "enforceClientAuthentication", true);
+        JWTClientAuthValidator = new JWTClientAuthValidator(true);
+        Whitebox.setInternalState(this.JWTClientAuthValidator, "enforceClientAuthentication", true);
         mockedRequest = Mockito.mock(HttpServletRequest.class);
 
     }
@@ -52,7 +53,7 @@ public class PrivateKeyJWTValidatorTest {
         Mockito.when(mockedRequest.getParameter(Constants.CLIENT_ID)).thenReturn("some-id");
         Mockito.when(mockedRequest.getParameter(Constants.OAUTH_JWT_ASSERTION_TYPE)).thenReturn("some-assertion-type");
         Mockito.when(mockedRequest.getParameter(Constants.OAUTH_JWT_ASSERTION)).thenReturn("some-assertion");
-        privateKeyJWTValidator.validateClientAuthenticationCredentials(mockedRequest);
+        JWTClientAuthValidator.validateClientAuthenticationCredentials(mockedRequest);
     }
 
     @Test(expectedExceptions = OAuthProblemException.class)
@@ -65,6 +66,6 @@ public class PrivateKeyJWTValidatorTest {
         Mockito.when(mockedRequest.getParameter(Constants.CLIENT_ID)).thenReturn("");
         Mockito.when(mockedRequest.getParameter(Constants.OAUTH_JWT_ASSERTION_TYPE)).thenReturn("");
         Mockito.when(mockedRequest.getParameter(Constants.OAUTH_JWT_ASSERTION)).thenReturn("");
-        privateKeyJWTValidator.validateClientAuthenticationCredentials(mockedRequest);
+        JWTClientAuthValidator.validateClientAuthenticationCredentials(mockedRequest);
     }
 }

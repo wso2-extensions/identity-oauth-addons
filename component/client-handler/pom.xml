@@ -122,6 +122,7 @@
                         <exclude>**/*SQLQueries.class</exclude>
                         <exclude>**/JWTServiceComponent.class</exclude>
                         <exclude>**/*JWTIDPersistingThread.class</exclude>
+                        <exclude>**/JWTEntry.class</exclude>
                     </excludes>
                 </configuration>
                 <executions>

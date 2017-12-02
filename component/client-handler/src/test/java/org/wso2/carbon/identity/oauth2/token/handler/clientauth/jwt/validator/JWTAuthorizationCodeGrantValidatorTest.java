@@ -19,28 +19,24 @@
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator;
 
 
-import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
-import org.eclipse.equinox.http.servlet.internal.HttpServletRequestAdaptor;
 import org.mockito.Mockito;
 import org.mockito.internal.util.reflection.Whitebox;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.grant.JWTAuthorizationCodeGrantValidator;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.HashMap;
-import java.util.Map;
 
-public class PrivateKeyJWTAuthorizationCodeValidatorTest{;
-    PrivateKeyJWTAuthorizationCodeValidator privateKeyJWTAuthorizationCodeValidator;
+public class JWTAuthorizationCodeGrantValidatorTest {;
+    org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.grant.JWTAuthorizationCodeGrantValidator JWTAuthorizationCodeGrantValidator;
     HttpServletRequest  mockedRequest;
 
     @BeforeClass
     public void setUp() throws Exception {
         mockedRequest = Mockito.mock(HttpServletRequest.class);
-        privateKeyJWTAuthorizationCodeValidator = new PrivateKeyJWTAuthorizationCodeValidator();
-        Whitebox.setInternalState(privateKeyJWTAuthorizationCodeValidator, "enforceClientAuthentication", true);
+        JWTAuthorizationCodeGrantValidator = new JWTAuthorizationCodeGrantValidator();
+        Whitebox.setInternalState(JWTAuthorizationCodeGrantValidator, "enforceClientAuthentication", true);
     }
 
     @Test()
@@ -48,7 +44,7 @@ public class PrivateKeyJWTAuthorizationCodeValidatorTest{;
         Mockito.when(mockedRequest.getParameter(Constants.CLIENT_ID)).thenReturn("some-id");
         Mockito.when(mockedRequest.getParameter(Constants.OAUTH_JWT_ASSERTION_TYPE)).thenReturn("some-assertion-type");
         Mockito.when(mockedRequest.getParameter(Constants.OAUTH_JWT_ASSERTION)).thenReturn("some-assertion");
-        Whitebox.setInternalState(privateKeyJWTAuthorizationCodeValidator, "enforceClientAuthentication", true);
-        privateKeyJWTAuthorizationCodeValidator.validateClientAuthenticationCredentials(mockedRequest);
+        Whitebox.setInternalState(JWTAuthorizationCodeGrantValidator, "enforceClientAuthentication", true);
+        JWTAuthorizationCodeGrantValidator.validateClientAuthenticationCredentials(mockedRequest);
     }
 }

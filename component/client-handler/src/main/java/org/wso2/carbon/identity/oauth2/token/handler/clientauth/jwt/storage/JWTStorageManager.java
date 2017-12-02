@@ -29,9 +29,34 @@ import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants;
 import java.sql.*;
 import java.util.*;
 
-public class PrivateKeyJWTStorageManager {
+public class JWTStorageManager {
 
-    private static Log log = LogFactory.getLog(PrivateKeyJWTStorageManager.class);
+     class JWTIDPersistingThread implements Runnable {
+        long issuedTime;
+        String jti;
+        long expiryTime;
+
+        public JWTIDPersistingThread(String jti, long expiryTime, long issuedTime) {
+            super();
+            this.expiryTime = expiryTime;
+            this.jti = jti;
+            this.issuedTime = issuedTime;
+        }
+
+        @Override
+        public void run() {
+            try {
+                persistJWTIdInDB(jti, expiryTime, issuedTime);
+                if (log.isDebugEnabled()) {
+                    log.debug("JWT Token with jti:" + jti + " was added to the storage successfully");
+                }
+            } catch (IdentityOAuth2Exception e) {
+                log.error("Error occurred while persisting JWT ID:" + jti, e);
+            }
+        }
+    }
+
+    private static Log log = LogFactory.getLog(JWTStorageManager.class);
 
     public boolean isJTIExistsInDB(String jti) throws IdentityOAuth2Exception {
         Connection dbConnection = IdentityDatabaseUtil.getDBConnection();
@@ -45,9 +70,9 @@ public class PrivateKeyJWTStorageManager {
             int count = 0;
             if (rs.next()) {
                 count = rs.getInt(1);
-                if (count > 0) {
-                    isExists = true;
-                }
+            }
+            if (count > 0) {
+                isExists = true;
             }
         } catch (SQLException e) {
             String error = "Error when retrieving the JWT ID: " + jti;
@@ -58,7 +83,30 @@ public class PrivateKeyJWTStorageManager {
         return isExists;
     }
 
-    public void persistJWTIdInDB(String jti, long expTime, long time) throws IdentityOAuth2Exception {
+    public JWTEntry getJwtFromDB(String jti) throws IdentityOAuth2Exception {
+        Connection dbConnection = IdentityDatabaseUtil.getDBConnection();
+        PreparedStatement prepStmt = null;
+        ResultSet rs = null;
+        JWTEntry jwtEntry= null;
+        try {
+            prepStmt = dbConnection.prepareStatement(Constants.SQLQueries.GET_JWT);
+            prepStmt.setString(1, jti);
+            rs = prepStmt.executeQuery();
+            if (rs.next()) {
+                long exp = rs.getTime(1, Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC))).getTime();
+                long created = rs.getTime(2, Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC))).getTime();
+                jwtEntry = new JWTEntry(exp, created);
+            }
+        } catch (SQLException e) {
+            String error = "Error when retrieving the JWT ID: " + jti;
+            throw new IdentityOAuth2Exception(error,  e);
+        } finally {
+            IdentityDatabaseUtil.closeAllConnections(dbConnection, rs, prepStmt);
+        }
+        return jwtEntry;
+    }
+
+    public void persistJWTIdInDB(String jti, long expTime, long created) throws IdentityOAuth2Exception {
         Connection connection = null;
         PreparedStatement preparedStatement = null;
         ResultSet rs = null;
@@ -66,8 +114,9 @@ public class PrivateKeyJWTStorageManager {
             connection = IdentityDatabaseUtil.getDBConnection();
             preparedStatement = connection.prepareStatement(Constants.SQLQueries.INSERT_JWD_ID);
             preparedStatement.setString(1, jti);
-            Timestamp timestamp = new Timestamp(time);
-            preparedStatement.setLong(2, expTime);
+            Timestamp timestamp = new Timestamp(created);
+            Timestamp expTimestamp = new Timestamp(expTime);
+            preparedStatement.setTimestamp(2, expTimestamp, Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC)));
             preparedStatement.setTimestamp(3, timestamp,
                     Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC)));
             preparedStatement.executeUpdate();
@@ -80,5 +129,9 @@ public class PrivateKeyJWTStorageManager {
         } finally {
             IdentityDatabaseUtil.closeAllConnections(connection, rs, preparedStatement);
         }
+    }
+
+    public void persistJwt(final String jti, long expiryTime, long issuedTime){
+        new Thread(new JWTIDPersistingThread(jti, expiryTime, issuedTime)).start();
     }
 }

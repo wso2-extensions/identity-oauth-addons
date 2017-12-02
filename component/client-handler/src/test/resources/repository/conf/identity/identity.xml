@@ -181,7 +181,7 @@
                 <Property Name="Issuer">client_id</Property>
                 <Property Name="SubjectField">client_id</Property>
                 <Property Name="EnableCacheForJTI">true</Property>
-                <Property Name="CertificateAlias">some-alias</Property>
+                <Property Name="SignedBy">SP</Property>
             </ClientAuthHandler>
         </ClientAuthHandlers>
         <!-- Supported Response Types -->
@@ -208,7 +208,7 @@
             <SupportedGrantType>
                 <GrantTypeName>authorization_code</GrantTypeName>
                 <GrantTypeHandlerImplClass>org.wso2.carbon.identity.oauth2.token.handlers.grant.AuthorizationCodeGrantHandler</GrantTypeHandlerImplClass>
-                <GrantTypeValidatorImplClass>org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.PrivateKeyJWTAuthorizationCodeValidator</GrantTypeValidatorImplClass>
+                <GrantTypeValidatorImplClass>org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.grant.JWTAuthorizationCodeGrantValidator</GrantTypeValidatorImplClass>
             </SupportedGrantType>
             <SupportedGrantType>
                 <GrantTypeName>password</GrantTypeName>
@@ -221,7 +221,7 @@
             <SupportedGrantType>
                 <GrantTypeName>client_credentials</GrantTypeName>
                 <GrantTypeHandlerImplClass>org.wso2.carbon.identity.oauth2.token.handlers.grant.ClientCredentialsGrantHandler</GrantTypeHandlerImplClass>
-                <GrantTypeValidatorImplClass>org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.PrivateKeyJWTClientCredentialValidator</GrantTypeValidatorImplClass>
+                <GrantTypeValidatorImplClass>org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.grant.JWTClientCredentialGrantValidator</GrantTypeValidatorImplClass>
             </SupportedGrantType>
             <SupportedGrantType>
                 <GrantTypeName>urn:ietf:params:oauth:grant-type:saml2-bearer</GrantTypeName>

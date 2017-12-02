@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt;
 
+import com.nimbusds.jose.JWSAlgorithm;
 import org.apache.commons.codec.binary.Base64;
 import org.mockito.Mockito;
 import org.powermock.reflect.internal.WhiteboxImpl;
@@ -41,12 +42,14 @@ import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceComponent;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceDataHolder;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.JWTValidator;
 import org.wso2.carbon.identity.testutil.ReadCertStoreSampleUtil;
 import org.wso2.carbon.idp.mgt.internal.IdpMgtServiceComponentHolder;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.core.service.RealmService;
 
 import java.io.ByteArrayInputStream;
+import java.lang.reflect.Field;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
@@ -56,8 +59,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.*;
 import static org.testng.AssertJUnit.assertNull;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.buildJWT;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.getKeyStoreFromFile;
@@ -142,6 +144,11 @@ public class PrivateKeyJWTClientAuthHandlerTest {
         OAuth2AccessTokenReqDTO oauth2AccessTokenReqDTO8 = new OAuth2AccessTokenReqDTO();
         OAuth2AccessTokenReqDTO oauth2AccessTokenReqDTO9 = new OAuth2AccessTokenReqDTO();
         OAuth2AccessTokenReqDTO oauth2AccessTokenReqDTO10 = new OAuth2AccessTokenReqDTO();
+        OAuth2AccessTokenReqDTO oauth2AccessTokenReqDTO11 = new OAuth2AccessTokenReqDTO();
+        OAuth2AccessTokenReqDTO oauth2AccessTokenReqDTO12 = new OAuth2AccessTokenReqDTO();
+        OAuth2AccessTokenReqDTO oauth2AccessTokenReqDTO13 = new OAuth2AccessTokenReqDTO();
+        OAuth2AccessTokenReqDTO oauth2AccessTokenReqDTO14 = new OAuth2AccessTokenReqDTO();
+        OAuth2AccessTokenReqDTO oauth2AccessTokenReqDTO15 = new OAuth2AccessTokenReqDTO();
 
         oauth2AccessTokenReqDTO1.setClientId(TEST_CLIENT_ID_1);
         oauth2AccessTokenReqDTO1.setClientSecret(TEST_SECRET_1);
@@ -154,6 +161,11 @@ public class PrivateKeyJWTClientAuthHandlerTest {
         oauth2AccessTokenReqDTO8.setClientId(TEST_CLIENT_ID_1);
         oauth2AccessTokenReqDTO9.setClientId(TEST_CLIENT_ID_1);
         oauth2AccessTokenReqDTO10.setClientId(TEST_CLIENT_ID_1);
+        oauth2AccessTokenReqDTO11.setClientId(TEST_CLIENT_ID_1);
+        oauth2AccessTokenReqDTO12.setClientId(TEST_CLIENT_ID_1);
+        oauth2AccessTokenReqDTO13.setClientId(TEST_CLIENT_ID_1);
+        oauth2AccessTokenReqDTO14.setClientId(TEST_CLIENT_ID_1);
+        oauth2AccessTokenReqDTO15.setClientId(TEST_CLIENT_ID_1);
 
         oauth2AccessTokenReqDTO1.setGrantType("authorization_code");
         oauth2AccessTokenReqDTO2.setGrantType("authorization_code");
@@ -165,11 +177,17 @@ public class PrivateKeyJWTClientAuthHandlerTest {
         oauth2AccessTokenReqDTO8.setGrantType("authorization_code");
         oauth2AccessTokenReqDTO9.setGrantType("authorization_code");
         oauth2AccessTokenReqDTO10.setGrantType("authorization_code");
+        oauth2AccessTokenReqDTO11.setGrantType("authorization_code");
+        oauth2AccessTokenReqDTO12.setGrantType("authorization_code");
+        oauth2AccessTokenReqDTO13.setGrantType("authorization_code");
+        oauth2AccessTokenReqDTO14.setGrantType("authorization_code");
+        oauth2AccessTokenReqDTO15.setGrantType("authorization_code");
 
         Properties properties1 = new Properties();
         Properties properties2 = new Properties();
         Properties properties3 = new Properties();
         Properties properties4 = new Properties();
+        Properties properties5 = new Properties();
 
         properties1.setProperty("StrictClientCredentialValidation", "false");
         properties1.setProperty("EnableCacheForJTI", "true");
@@ -179,6 +197,8 @@ public class PrivateKeyJWTClientAuthHandlerTest {
 
         properties3.setProperty("StrictClientCredentialValidation", "false");
         properties4.setProperty("StrictClientCredentialValidation", "false");
+
+        properties5.setProperty("PreventTokenReuse", "false");
 
         OAuthTokenReqMessageContext oAuthTokenReqMessageContext1 = buildOAuth2AccessTokenReqDTO();
         OAuthTokenReqMessageContext oAuthTokenReqMessageContext2 = buildOAuth2AccessTokenReqDTO();
@@ -190,6 +210,11 @@ public class PrivateKeyJWTClientAuthHandlerTest {
         OAuthTokenReqMessageContext oAuthTokenReqMessageContext8 = buildOAuth2AccessTokenReqDTO();
         OAuthTokenReqMessageContext oAuthTokenReqMessageContext9 = buildOAuth2AccessTokenReqDTO();
         OAuthTokenReqMessageContext oAuthTokenReqMessageContext10 = buildOAuth2AccessTokenReqDTO();
+        OAuthTokenReqMessageContext oAuthTokenReqMessageContext11 = buildOAuth2AccessTokenReqDTO();
+        OAuthTokenReqMessageContext oAuthTokenReqMessageContext12 = buildOAuth2AccessTokenReqDTO();
+        OAuthTokenReqMessageContext oAuthTokenReqMessageContext13 = buildOAuth2AccessTokenReqDTO();
+        OAuthTokenReqMessageContext oAuthTokenReqMessageContext14 = buildOAuth2AccessTokenReqDTO();
+        OAuthTokenReqMessageContext oAuthTokenReqMessageContext15 = buildOAuth2AccessTokenReqDTO();
 
         try {
             Key key1 = clientKeyStore.getKey("wso2carbon", "wso2carbon".toCharArray());
@@ -209,12 +234,21 @@ public class PrivateKeyJWTClientAuthHandlerTest {
             String privateKeyJWT7 = buildJWT(oauth2AccessTokenReqDTO1.getClientId(),
                     oauth2AccessTokenReqDTO1.getClientId(), "2000", audience, "RSA265", key1, 0);
             String privateKeyJWT8 = buildJWT(oauth2AccessTokenReqDTO1.getClientId(),
-                    oauth2AccessTokenReqDTO1.getClientId(), null, null, "RSA265", key1, 0);
+                    oauth2AccessTokenReqDTO1.getClientId(), null, audience, "RSA265", key1, 0);
             String privateKeyJWT9 = buildJWT(oauth2AccessTokenReqDTO1.getClientId(),
                     oauth2AccessTokenReqDTO1.getClientId(), "1002", audience, "RSA265", key1,
                     Calendar.getInstance().getTimeInMillis());
             String privateKeyJWT10 = buildJWT(oauth2AccessTokenReqDTO1.getClientId(),
-                    oauth2AccessTokenReqDTO1.getClientId(), "1003", audience, "", key1, 0);
+                    oauth2AccessTokenReqDTO1.getClientId(), "1003", audience, JWSAlgorithm.NONE.getName(), key1, 0);
+            String privateKeyJWT11 = buildJWT(oauth2AccessTokenReqDTO1.getClientId(),
+                    oauth2AccessTokenReqDTO1.getClientId(), "1004", audience, "RSA265", key1, 0, 0, 1000000000);
+
+            String privateKeyJWT12 = buildJWT(oauth2AccessTokenReqDTO1.getClientId(),
+                    oauth2AccessTokenReqDTO1.getClientId(), "1005", audience, "RSA265", key1, 0);
+            String privateKeyJWT13 = buildJWT(oauth2AccessTokenReqDTO1.getClientId(),
+                    oauth2AccessTokenReqDTO1.getClientId(), "2001", audience, "RSA265", key1, 0);
+            String privateKeyJWT15 = buildJWT(oauth2AccessTokenReqDTO1.getClientId(),
+                    oauth2AccessTokenReqDTO1.getClientId(), "1006", audience, "RSA265", key1, 600000000);
 
             RequestParameter[] requestParameters1 = new RequestParameter[]{new RequestParameter("client_assertion_type",
                     "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"), new RequestParameter("client_assertion",
@@ -246,6 +280,24 @@ public class PrivateKeyJWTClientAuthHandlerTest {
             RequestParameter[] requestParameters10 = new RequestParameter[]{new RequestParameter
                     ("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"),
                     new RequestParameter("client_assertion", privateKeyJWT10)};
+            RequestParameter[] requestParameters11 = new RequestParameter[]{new RequestParameter
+                    ("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"),
+                    new RequestParameter("client_assertion", privateKeyJWT11)};
+
+            RequestParameter[] requestParameters12 = new RequestParameter[]{new RequestParameter
+                    ("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"),
+                    new RequestParameter("client_assertion", privateKeyJWT12)};
+
+            RequestParameter[] requestParameters13 = new RequestParameter[]{new RequestParameter
+                    ("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"),
+                    new RequestParameter("client_assertion", privateKeyJWT13)};
+
+            RequestParameter[] requestParameters14 = new RequestParameter[]{new RequestParameter
+                    ("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"),
+                    new RequestParameter("client_assertion", null)};
+            RequestParameter[] requestParameters15 = new RequestParameter[]{new RequestParameter
+                    ("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"),
+                    new RequestParameter("client_assertion", privateKeyJWT15)};
 
 
             oauth2AccessTokenReqDTO1.setRequestParameters(requestParameters1);
@@ -275,8 +327,23 @@ public class PrivateKeyJWTClientAuthHandlerTest {
             oauth2AccessTokenReqDTO9.setRequestParameters(requestParameters9);
             oAuthTokenReqMessageContext9.getOauth2AccessTokenReqDTO().setRequestParameters(requestParameters9);
 
-            oauth2AccessTokenReqDTO10.setRequestParameters(requestParameters9);
-            oAuthTokenReqMessageContext10.getOauth2AccessTokenReqDTO().setRequestParameters(requestParameters9);
+            oauth2AccessTokenReqDTO10.setRequestParameters(requestParameters10);
+            oAuthTokenReqMessageContext10.getOauth2AccessTokenReqDTO().setRequestParameters(requestParameters10);
+
+            oauth2AccessTokenReqDTO11.setRequestParameters(requestParameters11);
+            oAuthTokenReqMessageContext11.getOauth2AccessTokenReqDTO().setRequestParameters(requestParameters11);
+
+            oauth2AccessTokenReqDTO12.setRequestParameters(requestParameters12);
+            oAuthTokenReqMessageContext12.getOauth2AccessTokenReqDTO().setRequestParameters(requestParameters12);
+
+            oauth2AccessTokenReqDTO13.setRequestParameters(requestParameters13);
+            oAuthTokenReqMessageContext13.getOauth2AccessTokenReqDTO().setRequestParameters(requestParameters13);
+
+            oauth2AccessTokenReqDTO14.setRequestParameters(requestParameters14);
+            oAuthTokenReqMessageContext14.getOauth2AccessTokenReqDTO().setRequestParameters(requestParameters14);
+
+            oauth2AccessTokenReqDTO15.setRequestParameters(requestParameters15);
+            oAuthTokenReqMessageContext15.getOauth2AccessTokenReqDTO().setRequestParameters(requestParameters15);
 
             OAuthTokenReqMessageContext tokReqMsgCtx1 = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO1);
             OAuthTokenReqMessageContext tokReqMsgCtx2 = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO2);
@@ -288,10 +355,15 @@ public class PrivateKeyJWTClientAuthHandlerTest {
             OAuthTokenReqMessageContext tokReqMsgCtx8 = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO8);
             OAuthTokenReqMessageContext tokReqMsgCtx9 = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO9);
             OAuthTokenReqMessageContext tokReqMsgCtx10 = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO10);
+            OAuthTokenReqMessageContext tokReqMsgCtx11 = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO11);
+            OAuthTokenReqMessageContext tokReqMsgCtx12 = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO12);
+            OAuthTokenReqMessageContext tokReqMsgCtx13 = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO13);
+            OAuthTokenReqMessageContext tokReqMsgCtx14 = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO14);
+            OAuthTokenReqMessageContext tokReqMsgCtx15 = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO15);
 
             return new Object[][]{
                     {tokReqMsgCtx1, true, properties1, true},
-                    {tokReqMsgCtx2, true, properties2, false},
+                    {tokReqMsgCtx2, true, properties1, false},
                     {tokReqMsgCtx3, true, properties3, false},
                     {tokReqMsgCtx4, true, properties3, false},
                     {tokReqMsgCtx5, true, properties3, false},
@@ -299,7 +371,13 @@ public class PrivateKeyJWTClientAuthHandlerTest {
                     {tokReqMsgCtx7, true, properties3, false},
                     {tokReqMsgCtx8, true, properties3, false},
                     {tokReqMsgCtx9, true, properties1, false},
-                    {tokReqMsgCtx10, true, properties1, false}
+                    {tokReqMsgCtx10, true, properties1, false},
+                    {tokReqMsgCtx11, true, properties1, false},
+                    {tokReqMsgCtx12, true, properties5, true},
+                    {tokReqMsgCtx12, true, properties5, false},
+                    {tokReqMsgCtx13, true, properties1, false},
+                    {tokReqMsgCtx14, false, properties1, false},
+                    {tokReqMsgCtx15, true, properties1, false}
             };
         } catch (KeyStoreException e) {
             e.printStackTrace();
@@ -334,8 +412,36 @@ public class PrivateKeyJWTClientAuthHandlerTest {
         };
     }
 
+    @Test()
     public void testInit() throws Exception {
+        Properties properties = new Properties();
+        properties.setProperty("RejectBeforePeriod", "30");
+        properties.setProperty("PreventTokenReuse", "false");
+        properties.setProperty("Audience", "some-audience");
+        properties.setProperty("Issuer", "some-issuer");
+        properties.setProperty("SubjectField", "some-subject");
+        properties.setProperty("EnableCacheForJTI", "true");
+        properties.setProperty("SignedBy", "some-signedby-value");
+        testclass.init(properties);
+        Field fieldRejectBeforePeriod = PrivateKeyJWTClientAuthHandler.class.getDeclaredField("rejectBeforePeriod");
+        fieldRejectBeforePeriod.setAccessible(true);
+        int validityPeriod = (int) fieldRejectBeforePeriod.get(testclass);
+        assertEquals(validityPeriod, 30);
+        Field fieldPreventTokenReuse = PrivateKeyJWTClientAuthHandler.class.getDeclaredField("preventTokenReuse");
+        fieldPreventTokenReuse.setAccessible(true);
+        boolean preventTokenReuse = (boolean) fieldPreventTokenReuse.get(testclass);
+        assertFalse(preventTokenReuse);
+    }
 
+    @Test()
+    public void testInitInvalidValue() throws Exception {
+        Properties properties = new Properties();
+        properties.setProperty("RejectBeforePeriod", "some-string");
+        testclass.init(properties);
+        Field field = PrivateKeyJWTClientAuthHandler.class.getDeclaredField("rejectBeforePeriod");
+        field.setAccessible(true);
+        int validityPeriod = (int) field.get(testclass);
+        assertEquals(validityPeriod, 300);
     }
 
     @Test(dataProvider = "provideOAuthTokenReqMessageContext")
@@ -384,49 +490,6 @@ public class PrivateKeyJWTClientAuthHandlerTest {
                 false);
     }
 
-    @Test()
-    public void testGetCertificate() throws Exception {
-        KeyStoreManager keyStoreManager = Mockito.mock(KeyStoreManager.class);
-        ConcurrentHashMap<String, KeyStoreManager> mtKeyStoreManagers = new ConcurrentHashMap();
-        mtKeyStoreManagers.put("-1234", keyStoreManager);
-        WhiteboxImpl.setInternalState(KeyStoreManager.class, "mtKeyStoreManagers", mtKeyStoreManagers);
-        Mockito.when(keyStoreManager.getPrimaryKeyStore()).thenReturn(serverKeyStore);
-        assertNotNull(testclass.getCertificate(SUPER_TENANT_DOMAIN_NAME, TEST_CLIENT_ID_1));
-    }
-
-    @Test()
-    public void testGetCertificateNonExistingAlias() throws Exception {
-        KeyStoreManager keyStoreManager = Mockito.mock(KeyStoreManager.class);
-        ConcurrentHashMap<String, KeyStoreManager> mtKeyStoreManagers = new ConcurrentHashMap();
-        mtKeyStoreManagers.put("-1234", keyStoreManager);
-        WhiteboxImpl.setInternalState(KeyStoreManager.class, "mtKeyStoreManagers", mtKeyStoreManagers);
-        Mockito.when(keyStoreManager.getPrimaryKeyStore()).thenReturn(clientKeyStore);
-        assertNull(testclass.getCertificate(SUPER_TENANT_DOMAIN_NAME, TEST_CLIENT_ID_1));
-    }
-
-    @Test(expectedExceptions = IdentityOAuth2Exception.class)
-    public void testGetCertificateException() throws Exception {
-        assertNull(testclass.getCertificate(SUPER_TENANT_DOMAIN_NAME, TEST_CLIENT_ID_1));
-    }
-
-    @Test(expectedExceptions = IdentityOAuth2Exception.class)
-    public void testGetCertificateException2() throws Exception {
-        assertNull(testclass.getCertificate("some-tenant", TEST_CLIENT_ID_1));
-    }
-
-    @Test(expectedExceptions = IdentityOAuth2Exception.class)
-    public void testGetCertificateException3() throws Exception {
-        KeyStoreManager keyStoreManager = Mockito.mock(KeyStoreManager.class);
-        ConcurrentHashMap<String, KeyStoreManager> mtKeyStoreManagers = new ConcurrentHashMap();
-        mtKeyStoreManagers.put("-1234", keyStoreManager);
-        WhiteboxImpl.setInternalState(KeyStoreManager.class, "mtKeyStoreManagers", mtKeyStoreManagers);
-        Mockito.when(keyStoreManager.getPrimaryKeyStore()).thenReturn(serverKeyStore);
-        KeyStore keyStore = keyStoreManager.getPrimaryKeyStore();
-        Mockito.when(keyStore.getCertificate(TEST_CLIENT_ID_1)).thenThrow(new IdentityOAuth2Exception("Identity " +
-                "Exception"));
-        Mockito.when(keyStoreManager.getPrimaryKeyStore()).thenReturn(serverKeyStore);
-        assertNull(testclass.getCertificate(SUPER_TENANT_DOMAIN_NAME, TEST_CLIENT_ID_1));
-    }
 
     private OAuthTokenReqMessageContext buildOAuth2AccessTokenReqDTO() {
         OAuth2AccessTokenReqDTO oAuth2AccessTokenReqDTO = new OAuth2AccessTokenReqDTO();

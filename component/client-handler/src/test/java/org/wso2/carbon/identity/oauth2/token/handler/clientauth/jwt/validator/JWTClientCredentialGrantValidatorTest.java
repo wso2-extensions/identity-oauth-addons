@@ -24,21 +24,20 @@ import org.mockito.internal.util.reflection.Whitebox;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.grant.JWTClientCredentialGrantValidator;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.HashMap;
-import java.util.Map;
 
-public class PrivateKeyJWTClientCredentialValidatorTest {
+public class JWTClientCredentialGrantValidatorTest {
 
     HttpServletRequest mockedRequest;
-    private PrivateKeyJWTClientCredentialValidator privateKeyJWTClientCredentialValidator;
+    private org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.grant.JWTClientCredentialGrantValidator JWTClientCredentialGrantValidator;
 
     @BeforeClass
     public void setUp() throws Exception {
         mockedRequest = Mockito.mock(HttpServletRequest.class);
-        privateKeyJWTClientCredentialValidator = new PrivateKeyJWTClientCredentialValidator();
-        Whitebox.setInternalState(privateKeyJWTClientCredentialValidator, "enforceClientAuthentication", true);
+        JWTClientCredentialGrantValidator = new JWTClientCredentialGrantValidator();
+        Whitebox.setInternalState(JWTClientCredentialGrantValidator, "enforceClientAuthentication", true);
     }
 
     @Test(expectedExceptions = OAuthProblemException.class)
@@ -46,6 +45,6 @@ public class PrivateKeyJWTClientCredentialValidatorTest {
         Mockito.when(mockedRequest.getParameter(Constants.CLIENT_ID)).thenReturn("");
         Mockito.when(mockedRequest.getParameter(Constants.OAUTH_JWT_ASSERTION_TYPE)).thenReturn("");
         Mockito.when(mockedRequest.getParameter(Constants.OAUTH_JWT_ASSERTION)).thenReturn("");
-        privateKeyJWTClientCredentialValidator.validateClientAuthenticationCredentials(mockedRequest);
+        JWTClientCredentialGrantValidator.validateClientAuthenticationCredentials(mockedRequest);
     }
 }

@@ -18,28 +18,46 @@
 
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.storage;
 
+import org.mockito.Mockito;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.wso2.carbon.identity.common.testng.WithH2Database;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+
 @WithH2Database(jndiName = "jdbc/WSO2CarbonDB", files = {"dbscripts/identity.sql"})
-public class PrivateKeyJWTStorageManagerTest{
-    private PrivateKeyJWTStorageManager privateKeyJWTStorageManager;
+public class JWTStorageManagerTest {
+    private JWTStorageManager JWTStorageManager;
 
     @BeforeClass
     public void setUp() throws Exception {
-        privateKeyJWTStorageManager = new PrivateKeyJWTStorageManager();
+        JWTStorageManager = new JWTStorageManager();
     }
 
     @Test()
     public void testIsJTIExistsInDB() throws Exception {
-      privateKeyJWTStorageManager.isJTIExistsInDB("");
+        assertTrue(JWTStorageManager.isJTIExistsInDB("2000"));
+    }
+
+    @Test()
+    public void testGetJwtFromDB() throws Exception {
+        assertNotNull(JWTStorageManager.getJwtFromDB("2000"));
+    }
+
+    @Test()
+    public void testPersistJWTIdInDB() throws Exception {
+        JWTStorageManager.persistJWTIdInDB("2004", 10000000, 10000000);
     }
 
     @Test(expectedExceptions = IdentityOAuth2Exception.class)
-    public void testPersistJWTIdInDB() throws Exception {
-        privateKeyJWTStorageManager.persistJWTIdInDB("2000", 10000, 10000000);
-        privateKeyJWTStorageManager.persistJWTIdInDB("2000", 10000, 10000000);
+    public void testPersistJWTIdInDBExceptionCase() throws Exception {
+        JWTStorageManager.persistJWTIdInDB("2000", 10000000, 10000000);
     }
 }

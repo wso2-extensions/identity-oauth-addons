@@ -16,7 +16,7 @@
  * under the License
  */
 
-package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator;
+package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.grant;
 
 
 import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
@@ -28,9 +28,9 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.HashSet;
 import java.util.Set;
 
-public class PrivateKeyJWTValidator extends AbstractValidator<HttpServletRequest> {
+public class JWTClientAuthValidator extends AbstractValidator<HttpServletRequest> {
 
-    public PrivateKeyJWTValidator(boolean enforceClientAuthentication) {
+    public JWTClientAuthValidator(boolean enforceClientAuthentication) {
         this.enforceClientAuthentication = enforceClientAuthentication;
     }
 
