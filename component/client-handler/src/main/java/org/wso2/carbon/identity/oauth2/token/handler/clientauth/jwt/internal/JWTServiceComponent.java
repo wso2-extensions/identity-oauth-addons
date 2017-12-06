@@ -24,6 +24,8 @@ import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
+ * JwtService osgi Component
+ *
  * @scr.component name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt" immediate="true"
  * @scr.reference name="user.realmservice.default"
  *                interface="org.wso2.carbon.user.core.service.RealmService"

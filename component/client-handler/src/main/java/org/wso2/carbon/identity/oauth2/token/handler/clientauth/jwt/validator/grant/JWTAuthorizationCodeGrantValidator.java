@@ -23,6 +23,9 @@ import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 
 import javax.servlet.http.HttpServletRequest;
 
+/**
+ * AuthorizationCode Grant validator to validate authorization_Code grant requests
+ */
 public class JWTAuthorizationCodeGrantValidator extends AuthorizationCodeValidator {
     private JWTClientAuthValidator JWTClientAuthValidator;
 
@@ -31,6 +34,12 @@ public class JWTAuthorizationCodeGrantValidator extends AuthorizationCodeValidat
         JWTClientAuthValidator = new JWTClientAuthValidator(this.enforceClientAuthentication);
     }
 
+    /**
+     * Validate Client Authentication credential
+     * @param request
+     * @throws OAuthProblemException
+     */
+    @Override
     public void validateClientAuthenticationCredentials(HttpServletRequest request) throws OAuthProblemException {
         JWTClientAuthValidator.validateClientAuthenticationCredentials(request);
     }

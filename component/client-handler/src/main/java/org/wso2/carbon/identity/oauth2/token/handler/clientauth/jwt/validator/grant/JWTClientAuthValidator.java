@@ -28,20 +28,26 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Grant validator to validate requests
+ */
 public class JWTClientAuthValidator extends AbstractValidator<HttpServletRequest> {
 
     public JWTClientAuthValidator(boolean enforceClientAuthentication) {
         this.enforceClientAuthentication = enforceClientAuthentication;
     }
 
+    /**
+     * Validate Client Authentication credential
+     * Check whether the correct assertion_type and assertion is sent in the request
+     * @param request
+     * @throws OAuthProblemException
+     */
     @Override
     public void validateClientAuthenticationCredentials(HttpServletRequest request) throws OAuthProblemException {
         if (this.enforceClientAuthentication) {
             Set<String> missingParameters = new HashSet();
 
-            if (OAuthUtils.isEmpty(request.getParameter(Constants.CLIENT_ID))) {
-                missingParameters.add(Constants.CLIENT_ID);
-            }
             if (OAuthUtils.isEmpty(request.getParameter(Constants.OAUTH_JWT_ASSERTION_TYPE))) {
                 missingParameters.add(Constants.OAUTH_JWT_ASSERTION_TYPE);
             }

@@ -16,7 +16,7 @@
  * under the License
  */
 
-package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator;
+package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.grant;
 
 
 import org.mockito.Mockito;

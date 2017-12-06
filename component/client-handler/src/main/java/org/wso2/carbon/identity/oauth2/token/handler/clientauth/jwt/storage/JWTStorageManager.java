@@ -29,11 +29,20 @@ import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants;
 import java.sql.*;
 import java.util.*;
 
+/**
+ * JWT token persistence is managed by JWTStorageManager
+ * It saved JWTEntry instances in Identity Database.
+ */
 public class JWTStorageManager {
+    private static final Log log = LogFactory.getLog(JWTStorageManager.class);
 
-     class JWTIDPersistingThread implements Runnable {
+    /**
+     * Inner class to implement saving JWT entries using a different thread
+     */
+    class JWTIDPersistingThread implements Runnable {
         long issuedTime;
         String jti;
+
         long expiryTime;
 
         public JWTIDPersistingThread(String jti, long expiryTime, long issuedTime) {
@@ -42,7 +51,6 @@ public class JWTStorageManager {
             this.jti = jti;
             this.issuedTime = issuedTime;
         }
-
         @Override
         public void run() {
             try {
@@ -54,10 +62,15 @@ public class JWTStorageManager {
                 log.error("Error occurred while persisting JWT ID:" + jti, e);
             }
         }
+
     }
 
-    private static Log log = LogFactory.getLog(JWTStorageManager.class);
-
+    /**
+     * check whether a JWT Entry with given jti exists in the DB
+     * @param jti JWT TOKEN ID
+     * @return true if an entry is found
+     * @throws IdentityOAuth2Exception when exception occures
+     */
     public boolean isJTIExistsInDB(String jti) throws IdentityOAuth2Exception {
         Connection dbConnection = IdentityDatabaseUtil.getDBConnection();
         PreparedStatement prepStmt = null;
@@ -83,6 +96,12 @@ public class JWTStorageManager {
         return isExists;
     }
 
+    /**
+     * To retrieve a JWT Entry with given jti if, exists in the DB
+     * @param jti JWT TOKEN ID
+     * @return JWT entry if found, null otherwise
+     * @throws IdentityOAuth2Exception when exception occurs
+     */
     public JWTEntry getJwtFromDB(String jti) throws IdentityOAuth2Exception {
         Connection dbConnection = IdentityDatabaseUtil.getDBConnection();
         PreparedStatement prepStmt = null;
@@ -106,6 +125,13 @@ public class JWTStorageManager {
         return jwtEntry;
     }
 
+    /**
+     * Save JWT entry to database
+     * @param jti JWT TOKEN ID
+     * @param expTime expiration time
+     * @param created created time
+     * @throws IdentityOAuth2Exception
+     */
     public void persistJWTIdInDB(String jti, long expTime, long created) throws IdentityOAuth2Exception {
         Connection connection = null;
         PreparedStatement preparedStatement = null;
@@ -131,6 +157,13 @@ public class JWTStorageManager {
         }
     }
 
+    /**
+     * Public method to request saving a JWT information to DB
+     * Perform persistence task via a new thread
+     * @param jti
+     * @param expiryTime
+     * @param issuedTime
+     */
     public void persistJwt(final String jti, long expiryTime, long issuedTime){
         new Thread(new JWTIDPersistingThread(jti, expiryTime, issuedTime)).start();
     }

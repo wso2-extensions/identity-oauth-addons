@@ -31,6 +31,12 @@ public class JWTClientCredentialGrantValidator extends ClientCredentialValidator
         JWTClientAuthValidator = new JWTClientAuthValidator(this.enforceClientAuthentication);
     }
 
+    /**
+     * Validate Client Authentication credential
+     * @param request
+     * @throws OAuthProblemException
+     */
+    @Override
     public void validateClientAuthenticationCredentials(HttpServletRequest request) throws OAuthProblemException {
         JWTClientAuthValidator.validateClientAuthenticationCredentials(request);
     }

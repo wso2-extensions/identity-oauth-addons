@@ -18,17 +18,11 @@
 
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.storage;
 
-import org.mockito.Mockito;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.wso2.carbon.identity.common.testng.WithH2Database;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 

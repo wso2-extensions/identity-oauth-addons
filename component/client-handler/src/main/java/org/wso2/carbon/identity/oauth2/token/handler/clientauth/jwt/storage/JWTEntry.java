@@ -18,6 +18,9 @@
 
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.storage;
 
+/**
+ * JWT token is persisted in database as JWTEntry objects
+ */
 public class JWTEntry {
     private long exp;
     private long createdTime;

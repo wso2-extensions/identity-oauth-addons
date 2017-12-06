@@ -26,10 +26,16 @@ import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.PlainJWT;
 import com.nimbusds.jwt.SignedJWT;
-import org.wso2.carbon.base.CarbonBaseConstants;
+import org.apache.commons.lang.StringUtils;
+import org.testng.Assert;
+import org.testng.TestNGException;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.oauth.dao.SQLQueries;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
+import org.wso2.carbon.identity.oauth2.dto.OAuth2AccessTokenReqDTO;
+import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.JWTValidator;
 import org.wso2.carbon.user.core.UserCoreConstants;
 
 import java.io.FileInputStream;
@@ -40,14 +46,16 @@ import java.security.KeyStore;
 import java.security.interfaces.RSAPrivateKey;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Properties;
 
 public class JWTTestUtil {
 
     public static String buildJWT(String issuer, String subject, String jti, String audience, String algorythm,
-                           Key privateKey, long notBeforeMillis)
+                                  Key privateKey, long notBeforeMillis)
             throws IdentityOAuth2Exception {
 
         long lifetimeInMillis = 3600 * 1000;
@@ -62,7 +70,7 @@ public class JWTTestUtil {
         jwtClaimsSet.setExpirationTime(new Date(curTimeInMillis + lifetimeInMillis));
         jwtClaimsSet.setIssueTime(new Date(curTimeInMillis));
 
-        if(notBeforeMillis > 0 ){
+        if (notBeforeMillis > 0) {
             jwtClaimsSet.setNotBeforeTime(new Date(curTimeInMillis + notBeforeMillis));
         }
         if (JWSAlgorithm.NONE.getName().equals(algorythm)) {
@@ -73,15 +81,16 @@ public class JWTTestUtil {
     }
 
     public static String buildJWT(String issuer, String subject, String jti, String audience, String algorythm,
-                           Key privateKey, long notBeforeMillis, long lifetimeInMillis, long issuedTime)
+                                  Key privateKey, long notBeforeMillis, long lifetimeInMillis, long issuedTime)
             throws IdentityOAuth2Exception {
 
         long curTimeInMillis = Calendar.getInstance().getTimeInMillis();
-        if(issuedTime < 0){
+        if (issuedTime < 0) {
             issuedTime = curTimeInMillis;
         }
-        if(lifetimeInMillis <= 0){
-            lifetimeInMillis = 3600 * 1000;;
+        if (lifetimeInMillis <= 0) {
+            lifetimeInMillis = 3600 * 1000;
+            ;
         }
         // Set claims to jwt token.
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet();
@@ -92,7 +101,7 @@ public class JWTTestUtil {
         jwtClaimsSet.setExpirationTime(new Date(issuedTime + lifetimeInMillis));
         jwtClaimsSet.setIssueTime(new Date(issuedTime));
 
-        if(notBeforeMillis > 0 ){
+        if (notBeforeMillis > 0) {
             jwtClaimsSet.setNotBeforeTime(new Date(issuedTime + notBeforeMillis));
         }
         if (JWSAlgorithm.NONE.getName().equals(algorythm)) {
@@ -114,7 +123,7 @@ public class JWTTestUtil {
             throws IdentityOAuth2Exception {
         try {
             JWSSigner signer = new RSASSASigner((RSAPrivateKey) privateKey);
-            SignedJWT signedJWT = new SignedJWT(new JWSHeader((JWSAlgorithm) JWSAlgorithm.RS256), jwtClaimsSet);
+            SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.RS256), jwtClaimsSet);
             signedJWT.sign(signer);
             return signedJWT.serialize();
         } catch (JOSEException e) {
@@ -122,9 +131,9 @@ public class JWTTestUtil {
         }
     }
 
-    public static void createApplication(String consumerKey, String consumerSecret, int tenantId) throws Exception {
+    public static void createApplication(String consumerKey, String consumerSecret, int tenantId) {
         try (Connection connection = IdentityDatabaseUtil.getDBConnection();
-             PreparedStatement prepStmt = connection.prepareStatement(SQLQueries.OAuthAppDAOSQLQueries.ADD_OAUTH_APP)) {
+             PreparedStatement prepStmt = connection.prepareStatement(SQLQueries.OAuthAppDAOSQLQueries.ADD_OAUTH_APP)){
             prepStmt.setString(1, consumerKey);
             prepStmt.setString(2, consumerSecret);
             prepStmt.setString(3, "testUser");
@@ -135,11 +144,11 @@ public class JWTTestUtil {
             prepStmt.setString(8, "some-call-back");
             prepStmt.setString(9, "refresh_token urn:ietf:params:oauth:grant-type:saml2-bearer implicit password " +
                     "client_credentials iwa:ntlm authorization_code urn:ietf:params:oauth:grant-type:jwt-bearer");
-//            prepStmt.setLong(10, 3600L);
-//            prepStmt.setLong(11, 3600L);
-//            prepStmt.setLong(12, 84600L);
             prepStmt.execute();
             connection.commit();
+        } catch (SQLException e) {
+            Assert.fail("Unable to add Oauth application.");
+            //throw new TestNGException("Unable to add Oauth application.");
         }
     }
 
@@ -151,6 +160,55 @@ public class JWTTestUtil {
         KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
         keystore.load(file, password.toCharArray());
         return keystore;
+    }
+
+    public static JWTValidator getJWTValidator(Properties properties) {
+        int rejectBeforePeriod;
+        boolean cacheUsedJTI = true;
+        String validAudience = null;
+        String validIssuer = null;
+        boolean preventTokenReuse = true;
+        try {
+
+            String rejectBeforePeriodConfigVal = properties.getProperty(Constants.VALIDITY_PERIOD);
+            if (StringUtils.isNotEmpty(rejectBeforePeriodConfigVal)) {
+                rejectBeforePeriod = Integer.parseInt(rejectBeforePeriodConfigVal);
+            } else {
+                rejectBeforePeriod = Constants.DEFAULT_VALIDITY_PERIOD_IN_MINUTES;
+            }
+
+            String cacheUsedJTIConfigVal = properties.getProperty(Constants.USE_CACHE_FOR_JTI);
+            if (StringUtils.isNotEmpty(cacheUsedJTIConfigVal)) {
+                cacheUsedJTI = Boolean.parseBoolean(cacheUsedJTIConfigVal);
+            } else {
+                cacheUsedJTI = Constants.DEFAULT_ENABLE_JTI_CACHE;
+            }
+
+            String validAudienceConfigVal = properties.getProperty("ValidAudience");
+            if (StringUtils.isNotEmpty(validAudienceConfigVal)) {
+                validAudience = validAudienceConfigVal;
+            } else {
+                validAudience = null;
+            }
+
+            String validIssuerConfigVal = properties.getProperty("ValidIssuer");
+            if (StringUtils.isNotEmpty(validIssuerConfigVal)) {
+                validIssuer = validIssuerConfigVal;
+            } else {
+                validIssuer = null;
+            }
+
+            String preventTokenReuseProperty = properties.getProperty("PreventTokenReuse");
+            if (StringUtils.isNotEmpty(preventTokenReuseProperty)) {
+                preventTokenReuse = Boolean.parseBoolean(preventTokenReuseProperty);
+            }
+
+        } catch (NumberFormatException e) {
+            rejectBeforePeriod = Constants.DEFAULT_VALIDITY_PERIOD_IN_MINUTES;
+        }
+
+        return new JWTValidator(rejectBeforePeriod, preventTokenReuse, cacheUsedJTI,
+                validAudience, validIssuer);
     }
 
 }

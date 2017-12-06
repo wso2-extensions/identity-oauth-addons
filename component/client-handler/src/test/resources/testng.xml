@@ -20,16 +20,28 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
 
 <suite name="Identity-Oauth-Private-Key-JWT-Test-Suite">
-    <test name="Util-Tests" preserve-order="true" parallel="false">
+    <test name="Tests" preserve-order="true" parallel="false">
         <parameter name="log-level" value="debug"/>
         <classes>
             <class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.PrivateKeyJWTClientAuthHandlerTest"/>
-            <class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.JWTAuthorizationCodeGrantValidatorTest"/>
-            <class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.grant.JWTClientCredentialGrantValidator"/>
-            <class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.JWTClientAuthValidatorTest"/>
+            <class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.JWTValidatorTest"/>
+            <class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.grant.JWTAuthorizationCodeGrantValidatorTest"/>
+            <class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.grant.JWTClientCredentialGrantValidatorTest"/>
+            <class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.grant.JWTClientAuthValidatorTest"/>
             <class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.storage.JWTStorageManagerTest"/>
             <class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.cache.JWTCacheTest"/>
-            <class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.JWTValidatorTest"/>
         </classes>
     </test>
+    <!--<test name="JWTValidator-Tests" preserve-order="true" parallel="false">-->
+        <!--<parameter name="log-level" value="debug"/>-->
+        <!--<classes>-->
+            <!--<class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.PrivateKeyJWTClientAuthHandlerTest"/>-->
+            <!--<class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.JWTValidatorTest"/>-->
+            <!--<class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.grant.JWTAuthorizationCodeGrantValidatorTest"/>-->
+            <!--<class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.grant.JWTClientCredentialGrantValidator"/>-->
+            <!--<class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.grant.JWTClientAuthValidatorTest"/>-->
+            <!--<class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.storage.JWTStorageManagerTest"/>-->
+            <!--<class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.cache.JWTCacheTest"/>-->
+        <!--</classes>-->
+    <!--</test>-->
 </suite>

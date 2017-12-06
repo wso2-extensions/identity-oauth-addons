@@ -28,7 +28,6 @@ import org.testng.annotations.Test;
 import org.wso2.carbon.base.CarbonBaseConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.core.util.KeyStoreManager;
-import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorConfig;
 import org.wso2.carbon.identity.base.IdentityConstants;
 import org.wso2.carbon.identity.common.testng.*;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
@@ -42,7 +41,6 @@ import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceComponent;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceDataHolder;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil;
-import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.JWTValidator;
 import org.wso2.carbon.identity.testutil.ReadCertStoreSampleUtil;
 import org.wso2.carbon.idp.mgt.internal.IdpMgtServiceComponentHolder;
 import org.wso2.carbon.user.api.UserRealm;
@@ -77,12 +75,9 @@ public class PrivateKeyJWTClientAuthHandlerTest {
 
     public static final String TEST_CLIENT_ID_1 = "KrVLov4Bl3natUksF2HmWsdw684a";
     public static final String TEST_SECRET_1 = "testSecret1";
-    private PrivateKeyJWTClientAuthHandler testclass = new PrivateKeyJWTClientAuthHandler();
-    private FederatedAuthenticatorConfig oauthConfig;
-    private FederatedAuthenticatorConfig federatedAuthenticatorConfig;
+    public static final String OAUTH_CLIENT_ASSERTION_TYPE_JWT_BEARER = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
 
     private KeyStore clientKeyStore;
-    private KeyStore serverKeyStore;
     private String CERTIFICATE = "MIIDVzCCAj+gAwIBAgIEN+6m4zANBgkqhkiG9w0BAQsFADBcMQswCQYDVQQGEwJGUjEMMAoGA1UE\n" +
             "CBMDTVBMMQwwCgYDVQQHEwNNUEwxDTALBgNVBAoTBHRlc3QxDTALBgNVBAsTBHRlc3QxEzARBgNV\n" +
             "BAMMCioudGVzdC5jb20wHhcNMTcxMTIzMTI1MDEyWhcNNDcxMTE2MTI1MDEyWjBcMQswCQYDVQQG\n" +
@@ -107,7 +102,7 @@ public class PrivateKeyJWTClientAuthHandlerTest {
         publicCerts.put(SUPER_TENANT_ID, ReadCertStoreSampleUtil.createKeyStore(getClass())
                 .getCertificate("wso2carbon"));
         clientKeyStore = getKeyStoreFromFile("testkeystore.jks", "wso2carbon", System.getProperty(CarbonBaseConstants.CARBON_HOME));
-        serverKeyStore = getKeyStoreFromFile("wso2carbon.jks", "wso2carbon", System.getProperty(CarbonBaseConstants.CARBON_HOME));
+        KeyStore serverKeyStore = getKeyStoreFromFile("wso2carbon.jks", "wso2carbon", System.getProperty(CarbonBaseConstants.CARBON_HOME));
 
         KeyStoreManager keyStoreManager = Mockito.mock(KeyStoreManager.class);
         ConcurrentHashMap<String, KeyStoreManager> mtKeyStoreManagers = new ConcurrentHashMap();
@@ -119,69 +114,18 @@ public class PrivateKeyJWTClientAuthHandlerTest {
         Mockito.when(keyStoreManager.getPrimaryKeyStore()).thenReturn(serverKeyStore);
         Mockito.when(keyStoreManager.getKeyStore("wso2carbon.jks")).thenReturn(serverKeyStore);
 
-        JWTTestUtil.createApplication(TEST_CLIENT_ID_1, TEST_SECRET_1, SUPER_TENANT_ID);
-//        JWTTestUtil.createApplication(TEST_CLIENT_ID_2, TEST_SECRET_2, SUPER_TENANT_ID);
-
         RealmService realmService = IdentityTenantUtil.getRealmService();
         UserRealm userRealm = realmService.getTenantUserRealm(SUPER_TENANT_ID);
         PrivilegedCarbonContext.getThreadLocalCarbonContext().setUserRealm(userRealm);
         JWTServiceDataHolder.getInstance().setRealmService(realmService);
-
         IdpMgtServiceComponentHolder.getInstance().setRealmService(realmService);
+
+        JWTTestUtil.createApplication(TEST_CLIENT_ID_1, TEST_SECRET_1, SUPER_TENANT_ID);
 
     }
 
     @DataProvider(name = "provideOAuthTokenReqMessageContext")
     public Object[][] createOAuthTokenReqMessageContext() {
-
-        OAuth2AccessTokenReqDTO oauth2AccessTokenReqDTO1 = new OAuth2AccessTokenReqDTO();
-        OAuth2AccessTokenReqDTO oauth2AccessTokenReqDTO2 = new OAuth2AccessTokenReqDTO();
-        OAuth2AccessTokenReqDTO oauth2AccessTokenReqDTO3 = new OAuth2AccessTokenReqDTO();
-        OAuth2AccessTokenReqDTO oauth2AccessTokenReqDTO4 = new OAuth2AccessTokenReqDTO();
-        OAuth2AccessTokenReqDTO oauth2AccessTokenReqDTO5 = new OAuth2AccessTokenReqDTO();
-        OAuth2AccessTokenReqDTO oauth2AccessTokenReqDTO6 = new OAuth2AccessTokenReqDTO();
-        OAuth2AccessTokenReqDTO oauth2AccessTokenReqDTO7 = new OAuth2AccessTokenReqDTO();
-        OAuth2AccessTokenReqDTO oauth2AccessTokenReqDTO8 = new OAuth2AccessTokenReqDTO();
-        OAuth2AccessTokenReqDTO oauth2AccessTokenReqDTO9 = new OAuth2AccessTokenReqDTO();
-        OAuth2AccessTokenReqDTO oauth2AccessTokenReqDTO10 = new OAuth2AccessTokenReqDTO();
-        OAuth2AccessTokenReqDTO oauth2AccessTokenReqDTO11 = new OAuth2AccessTokenReqDTO();
-        OAuth2AccessTokenReqDTO oauth2AccessTokenReqDTO12 = new OAuth2AccessTokenReqDTO();
-        OAuth2AccessTokenReqDTO oauth2AccessTokenReqDTO13 = new OAuth2AccessTokenReqDTO();
-        OAuth2AccessTokenReqDTO oauth2AccessTokenReqDTO14 = new OAuth2AccessTokenReqDTO();
-        OAuth2AccessTokenReqDTO oauth2AccessTokenReqDTO15 = new OAuth2AccessTokenReqDTO();
-
-        oauth2AccessTokenReqDTO1.setClientId(TEST_CLIENT_ID_1);
-        oauth2AccessTokenReqDTO1.setClientSecret(TEST_SECRET_1);
-        oauth2AccessTokenReqDTO2.setClientId(TEST_CLIENT_ID_1);
-        oauth2AccessTokenReqDTO3.setClientId(TEST_CLIENT_ID_1);
-        oauth2AccessTokenReqDTO4.setClientId(TEST_CLIENT_ID_1);
-        oauth2AccessTokenReqDTO5.setClientId(TEST_CLIENT_ID_1);
-        oauth2AccessTokenReqDTO6.setClientId(TEST_CLIENT_ID_1);
-        oauth2AccessTokenReqDTO7.setClientId(TEST_CLIENT_ID_1);
-        oauth2AccessTokenReqDTO8.setClientId(TEST_CLIENT_ID_1);
-        oauth2AccessTokenReqDTO9.setClientId(TEST_CLIENT_ID_1);
-        oauth2AccessTokenReqDTO10.setClientId(TEST_CLIENT_ID_1);
-        oauth2AccessTokenReqDTO11.setClientId(TEST_CLIENT_ID_1);
-        oauth2AccessTokenReqDTO12.setClientId(TEST_CLIENT_ID_1);
-        oauth2AccessTokenReqDTO13.setClientId(TEST_CLIENT_ID_1);
-        oauth2AccessTokenReqDTO14.setClientId(TEST_CLIENT_ID_1);
-        oauth2AccessTokenReqDTO15.setClientId(TEST_CLIENT_ID_1);
-
-        oauth2AccessTokenReqDTO1.setGrantType("authorization_code");
-        oauth2AccessTokenReqDTO2.setGrantType("authorization_code");
-        oauth2AccessTokenReqDTO3.setGrantType("authorization_code");
-        oauth2AccessTokenReqDTO4.setGrantType("authorization_code");
-        oauth2AccessTokenReqDTO5.setGrantType("authorization_code");
-        oauth2AccessTokenReqDTO6.setGrantType("authorization_code");
-        oauth2AccessTokenReqDTO7.setGrantType("authorization_code");
-        oauth2AccessTokenReqDTO8.setGrantType("authorization_code");
-        oauth2AccessTokenReqDTO9.setGrantType("authorization_code");
-        oauth2AccessTokenReqDTO10.setGrantType("authorization_code");
-        oauth2AccessTokenReqDTO11.setGrantType("authorization_code");
-        oauth2AccessTokenReqDTO12.setGrantType("authorization_code");
-        oauth2AccessTokenReqDTO13.setGrantType("authorization_code");
-        oauth2AccessTokenReqDTO14.setGrantType("authorization_code");
-        oauth2AccessTokenReqDTO15.setGrantType("authorization_code");
 
         Properties properties1 = new Properties();
         Properties properties2 = new Properties();
@@ -200,184 +144,78 @@ public class PrivateKeyJWTClientAuthHandlerTest {
 
         properties5.setProperty("PreventTokenReuse", "false");
 
-        OAuthTokenReqMessageContext oAuthTokenReqMessageContext1 = buildOAuth2AccessTokenReqDTO();
-        OAuthTokenReqMessageContext oAuthTokenReqMessageContext2 = buildOAuth2AccessTokenReqDTO();
-        OAuthTokenReqMessageContext oAuthTokenReqMessageContext3 = buildOAuth2AccessTokenReqDTO();
-        OAuthTokenReqMessageContext oAuthTokenReqMessageContext4 = buildOAuth2AccessTokenReqDTO();
-        OAuthTokenReqMessageContext oAuthTokenReqMessageContext5 = buildOAuth2AccessTokenReqDTO();
-        OAuthTokenReqMessageContext oAuthTokenReqMessageContext6 = buildOAuth2AccessTokenReqDTO();
-        OAuthTokenReqMessageContext oAuthTokenReqMessageContext7 = buildOAuth2AccessTokenReqDTO();
-        OAuthTokenReqMessageContext oAuthTokenReqMessageContext8 = buildOAuth2AccessTokenReqDTO();
-        OAuthTokenReqMessageContext oAuthTokenReqMessageContext9 = buildOAuth2AccessTokenReqDTO();
-        OAuthTokenReqMessageContext oAuthTokenReqMessageContext10 = buildOAuth2AccessTokenReqDTO();
-        OAuthTokenReqMessageContext oAuthTokenReqMessageContext11 = buildOAuth2AccessTokenReqDTO();
-        OAuthTokenReqMessageContext oAuthTokenReqMessageContext12 = buildOAuth2AccessTokenReqDTO();
-        OAuthTokenReqMessageContext oAuthTokenReqMessageContext13 = buildOAuth2AccessTokenReqDTO();
-        OAuthTokenReqMessageContext oAuthTokenReqMessageContext14 = buildOAuth2AccessTokenReqDTO();
-        OAuthTokenReqMessageContext oAuthTokenReqMessageContext15 = buildOAuth2AccessTokenReqDTO();
-
         try {
             Key key1 = clientKeyStore.getKey("wso2carbon", "wso2carbon".toCharArray());
             String audience = IdentityUtil.getServerURL(IdentityConstants.OAuth.TOKEN, true, false);
 
-            String privateKeyJWT1 = buildJWT(oauth2AccessTokenReqDTO1.getClientId(), oauth2AccessTokenReqDTO1.getClientId
-                    (), "1000", audience, "RSA265", key1, 0);
-            String privateKeyJWT2 = buildJWT(oauth2AccessTokenReqDTO1.getClientId(),
-                    oauth2AccessTokenReqDTO1.getClientId(), "1000", audience, "RSA265", key1, 6000000);
-            String privateKeyJWT3 = buildJWT("some-issuer",
-                    oauth2AccessTokenReqDTO1.getClientId(), "1001", audience, "RSA265", key1, 6000000);
-            String privateKeyJWT4 = buildJWT(oauth2AccessTokenReqDTO1.getClientId(),
-                    "some-client-id", "1002", audience, "RSA265", key1, 0);
-            String privateKeyJWT5 = buildJWT(oauth2AccessTokenReqDTO1.getClientId(),
-                    oauth2AccessTokenReqDTO1.getClientId(), "1000", audience, "RSA265", key1, 0);
+            String privateKeyJWT1 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "1000", audience, "RSA265", key1, 0);
+            String privateKeyJWT2 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "1000", audience, "RSA265", key1,
+                    6000000);
+            String privateKeyJWT3 = buildJWT("some-issuer", TEST_CLIENT_ID_1, "1001", audience, "RSA265", key1,
+                    6000000);
+            String privateKeyJWT4 = buildJWT(TEST_CLIENT_ID_1, "some-client-id", "1002", audience, "RSA265", key1, 0);
+            String privateKeyJWT5 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "1000", audience, "RSA265", key1, 0);
             String privateKeyJWT6 = "some-string";
-            String privateKeyJWT7 = buildJWT(oauth2AccessTokenReqDTO1.getClientId(),
-                    oauth2AccessTokenReqDTO1.getClientId(), "2000", audience, "RSA265", key1, 0);
-            String privateKeyJWT8 = buildJWT(oauth2AccessTokenReqDTO1.getClientId(),
-                    oauth2AccessTokenReqDTO1.getClientId(), null, audience, "RSA265", key1, 0);
-            String privateKeyJWT9 = buildJWT(oauth2AccessTokenReqDTO1.getClientId(),
-                    oauth2AccessTokenReqDTO1.getClientId(), "1002", audience, "RSA265", key1,
+            String privateKeyJWT7 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "2000", audience, "RSA265", key1, 0);
+            String privateKeyJWT8 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, null, audience, "RSA265", key1, 0);
+            String privateKeyJWT9 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "1002", audience, "RSA265", key1,
                     Calendar.getInstance().getTimeInMillis());
-            String privateKeyJWT10 = buildJWT(oauth2AccessTokenReqDTO1.getClientId(),
-                    oauth2AccessTokenReqDTO1.getClientId(), "1003", audience, JWSAlgorithm.NONE.getName(), key1, 0);
-            String privateKeyJWT11 = buildJWT(oauth2AccessTokenReqDTO1.getClientId(),
-                    oauth2AccessTokenReqDTO1.getClientId(), "1004", audience, "RSA265", key1, 0, 0, 1000000000);
+            String privateKeyJWT10 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "1003", audience,
+                    JWSAlgorithm.NONE.getName(), key1, 0);
+            String privateKeyJWT11 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "1004", audience, "RSA265", key1,
+                    0, 0, 1000000000);
 
-            String privateKeyJWT12 = buildJWT(oauth2AccessTokenReqDTO1.getClientId(),
-                    oauth2AccessTokenReqDTO1.getClientId(), "1005", audience, "RSA265", key1, 0);
-            String privateKeyJWT13 = buildJWT(oauth2AccessTokenReqDTO1.getClientId(),
-                    oauth2AccessTokenReqDTO1.getClientId(), "2001", audience, "RSA265", key1, 0);
-            String privateKeyJWT15 = buildJWT(oauth2AccessTokenReqDTO1.getClientId(),
-                    oauth2AccessTokenReqDTO1.getClientId(), "1006", audience, "RSA265", key1, 600000000);
+            String privateKeyJWT12 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "1005", audience, "RSA265", key1, 0);
+            String privateKeyJWT13 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "2001", audience, "RSA265", key1, 0);
+            String privateKeyJWT15 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "1006", audience, "RSA265", key1,
+                    600000000);
 
-            RequestParameter[] requestParameters1 = new RequestParameter[]{new RequestParameter("client_assertion_type",
-                    "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"), new RequestParameter("client_assertion",
-                    privateKeyJWT1)};
-            RequestParameter[] requestParameters2 = new RequestParameter[]{new RequestParameter("client_assertion_type",
-                    "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"), new RequestParameter("client_assertion",
-                    privateKeyJWT2)};
-            RequestParameter[] requestParameters3 = new RequestParameter[]{new RequestParameter("client_assertion_type",
-                    "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"), new RequestParameter("client_assertion",
-                    privateKeyJWT3)};
-            RequestParameter[] requestParameters4 = new RequestParameter[]{new RequestParameter("client_assertion_type",
-                    "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"), new RequestParameter("client_assertion",
-                    privateKeyJWT4)};
-            RequestParameter[] requestParameters5 = new RequestParameter[]{new RequestParameter("client_assertion_type",
-                    "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"), new RequestParameter("client_assertion",
-                    privateKeyJWT5)};
-            RequestParameter[] requestParameters6 = new RequestParameter[]{new RequestParameter("client_assertion_type",
-                    "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"), new RequestParameter("client_assertion",
-                    privateKeyJWT6)};
-            RequestParameter[] requestParameters7 = new RequestParameter[]{new RequestParameter("client_assertion_type",
-                    "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"), new RequestParameter("client_assertion",
-                    privateKeyJWT7)};
-            RequestParameter[] requestParameters8 = new RequestParameter[]{new RequestParameter("client_assertion_type",
-                    "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"), new RequestParameter("client_assertion",
-                    privateKeyJWT8)};
-            RequestParameter[] requestParameters9 = new RequestParameter[]{new RequestParameter("client_assertion_type",
-                    "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"), new RequestParameter("client_assertion",
-                    privateKeyJWT9)};
-            RequestParameter[] requestParameters10 = new RequestParameter[]{new RequestParameter
-                    ("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"),
-                    new RequestParameter("client_assertion", privateKeyJWT10)};
-            RequestParameter[] requestParameters11 = new RequestParameter[]{new RequestParameter
-                    ("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"),
-                    new RequestParameter("client_assertion", privateKeyJWT11)};
+            String privateKeyJWT16 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "1007", audience,
+                    JWSAlgorithm.NONE.getName(), key1, 0);
+            String hsSignedJWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9" +
+                    ".eyJzdWIiOiJLclZMb3Y0QmwzbmF0VWtzRjJIbVdzZHc2ODRhIiwibmFtZSI6IkpvaG4gRG9lIiwiaXNzdWVyIjoiS3JWTG92NEJsM25hdFVrc0YySG1Xc2R3Njg0YSIsImp0aSI6MTAwOCwiZXhwIjoiMjU1NDQ0MDEzMjAwMCIsImF1ZCI6WyJzb21lLWF1ZGllbmNlIl19.m0RrVUrZHr1M7R4I_4dzpoWD8jNA2fKkOadEsFg9Wj4";
 
-            RequestParameter[] requestParameters12 = new RequestParameter[]{new RequestParameter
-                    ("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"),
-                    new RequestParameter("client_assertion", privateKeyJWT12)};
-
-            RequestParameter[] requestParameters13 = new RequestParameter[]{new RequestParameter
-                    ("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"),
-                    new RequestParameter("client_assertion", privateKeyJWT13)};
-
-            RequestParameter[] requestParameters14 = new RequestParameter[]{new RequestParameter
-                    ("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"),
-                    new RequestParameter("client_assertion", null)};
-            RequestParameter[] requestParameters15 = new RequestParameter[]{new RequestParameter
-                    ("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"),
-                    new RequestParameter("client_assertion", privateKeyJWT15)};
-
-
-            oauth2AccessTokenReqDTO1.setRequestParameters(requestParameters1);
-            oAuthTokenReqMessageContext1.getOauth2AccessTokenReqDTO().setRequestParameters(requestParameters1);
-
-            oauth2AccessTokenReqDTO2.setRequestParameters(requestParameters2);
-            oAuthTokenReqMessageContext2.getOauth2AccessTokenReqDTO().setRequestParameters(requestParameters2);
-
-            oauth2AccessTokenReqDTO3.setRequestParameters(requestParameters3);
-            oAuthTokenReqMessageContext3.getOauth2AccessTokenReqDTO().setRequestParameters(requestParameters3);
-
-            oauth2AccessTokenReqDTO4.setRequestParameters(requestParameters4);
-            oAuthTokenReqMessageContext4.getOauth2AccessTokenReqDTO().setRequestParameters(requestParameters4);
-
-            oauth2AccessTokenReqDTO5.setRequestParameters(requestParameters5);
-            oAuthTokenReqMessageContext5.getOauth2AccessTokenReqDTO().setRequestParameters(requestParameters5);
-
-            oauth2AccessTokenReqDTO6.setRequestParameters(requestParameters6);
-            oAuthTokenReqMessageContext6.getOauth2AccessTokenReqDTO().setRequestParameters(requestParameters6);
-
-            oauth2AccessTokenReqDTO7.setRequestParameters(requestParameters7);
-            oAuthTokenReqMessageContext7.getOauth2AccessTokenReqDTO().setRequestParameters(requestParameters7);
-
-            oauth2AccessTokenReqDTO8.setRequestParameters(requestParameters8);
-            oAuthTokenReqMessageContext8.getOauth2AccessTokenReqDTO().setRequestParameters(requestParameters8);
-
-            oauth2AccessTokenReqDTO9.setRequestParameters(requestParameters9);
-            oAuthTokenReqMessageContext9.getOauth2AccessTokenReqDTO().setRequestParameters(requestParameters9);
-
-            oauth2AccessTokenReqDTO10.setRequestParameters(requestParameters10);
-            oAuthTokenReqMessageContext10.getOauth2AccessTokenReqDTO().setRequestParameters(requestParameters10);
-
-            oauth2AccessTokenReqDTO11.setRequestParameters(requestParameters11);
-            oAuthTokenReqMessageContext11.getOauth2AccessTokenReqDTO().setRequestParameters(requestParameters11);
-
-            oauth2AccessTokenReqDTO12.setRequestParameters(requestParameters12);
-            oAuthTokenReqMessageContext12.getOauth2AccessTokenReqDTO().setRequestParameters(requestParameters12);
-
-            oauth2AccessTokenReqDTO13.setRequestParameters(requestParameters13);
-            oAuthTokenReqMessageContext13.getOauth2AccessTokenReqDTO().setRequestParameters(requestParameters13);
-
-            oauth2AccessTokenReqDTO14.setRequestParameters(requestParameters14);
-            oAuthTokenReqMessageContext14.getOauth2AccessTokenReqDTO().setRequestParameters(requestParameters14);
-
-            oauth2AccessTokenReqDTO15.setRequestParameters(requestParameters15);
-            oAuthTokenReqMessageContext15.getOauth2AccessTokenReqDTO().setRequestParameters(requestParameters15);
-
-            OAuthTokenReqMessageContext tokReqMsgCtx1 = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO1);
-            OAuthTokenReqMessageContext tokReqMsgCtx2 = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO2);
-            OAuthTokenReqMessageContext tokReqMsgCtx3 = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO3);
-            OAuthTokenReqMessageContext tokReqMsgCtx4 = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO4);
-            OAuthTokenReqMessageContext tokReqMsgCtx5 = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO5);
-            OAuthTokenReqMessageContext tokReqMsgCtx6 = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO6);
-            OAuthTokenReqMessageContext tokReqMsgCtx7 = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO7);
-            OAuthTokenReqMessageContext tokReqMsgCtx8 = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO8);
-            OAuthTokenReqMessageContext tokReqMsgCtx9 = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO9);
-            OAuthTokenReqMessageContext tokReqMsgCtx10 = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO10);
-            OAuthTokenReqMessageContext tokReqMsgCtx11 = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO11);
-            OAuthTokenReqMessageContext tokReqMsgCtx12 = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO12);
-            OAuthTokenReqMessageContext tokReqMsgCtx13 = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO13);
-            OAuthTokenReqMessageContext tokReqMsgCtx14 = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO14);
-            OAuthTokenReqMessageContext tokReqMsgCtx15 = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO15);
+            OAuthTokenReqMessageContext tokReqMsgCtx1 = getOAuthTokenReqMessageContext(privateKeyJWT1);
+            OAuthTokenReqMessageContext tokReqMsgCtx2 = getOAuthTokenReqMessageContext(privateKeyJWT2);
+            OAuthTokenReqMessageContext tokReqMsgCtx3 = getOAuthTokenReqMessageContext(privateKeyJWT3);
+            OAuthTokenReqMessageContext tokReqMsgCtx4 = getOAuthTokenReqMessageContext(privateKeyJWT4);
+            OAuthTokenReqMessageContext tokReqMsgCtx5 = getOAuthTokenReqMessageContext(privateKeyJWT5);
+            OAuthTokenReqMessageContext tokReqMsgCtx6 = getOAuthTokenReqMessageContext(privateKeyJWT6);
+            OAuthTokenReqMessageContext tokReqMsgCtx7 = getOAuthTokenReqMessageContext(privateKeyJWT7);
+            OAuthTokenReqMessageContext tokReqMsgCtx8 = getOAuthTokenReqMessageContext(privateKeyJWT8);
+            OAuthTokenReqMessageContext tokReqMsgCtx9 = getOAuthTokenReqMessageContext(privateKeyJWT9);
+            OAuthTokenReqMessageContext tokReqMsgCtx10 = getOAuthTokenReqMessageContext(privateKeyJWT10);
+            OAuthTokenReqMessageContext tokReqMsgCtx11 = getOAuthTokenReqMessageContext(privateKeyJWT11);
+            OAuthTokenReqMessageContext tokReqMsgCtx12 = getOAuthTokenReqMessageContext(privateKeyJWT12);
+            OAuthTokenReqMessageContext tokReqMsgCtx13 = getOAuthTokenReqMessageContext(privateKeyJWT13);
+            OAuthTokenReqMessageContext tokReqMsgCtx14 = getOAuthTokenReqMessageContext(null);
+            OAuthTokenReqMessageContext tokReqMsgCtx15 = getOAuthTokenReqMessageContext(privateKeyJWT15);
+            OAuthTokenReqMessageContext tokReqMsgCtx16 = getOAuthTokenReqMessageContext(privateKeyJWT16);
+            OAuthTokenReqMessageContext tokReqMsgCtx17 = getOAuthTokenReqMessageContext(hsSignedJWT);
 
             return new Object[][]{
-                    {tokReqMsgCtx1, true, properties1, true},
-                    {tokReqMsgCtx2, true, properties1, false},
-                    {tokReqMsgCtx3, true, properties3, false},
-                    {tokReqMsgCtx4, true, properties3, false},
-                    {tokReqMsgCtx5, true, properties3, false},
-                    {tokReqMsgCtx6, true, properties3, false},
-                    {tokReqMsgCtx7, true, properties3, false},
-                    {tokReqMsgCtx8, true, properties3, false},
-                    {tokReqMsgCtx9, true, properties1, false},
-                    {tokReqMsgCtx10, true, properties1, false},
-                    {tokReqMsgCtx11, true, properties1, false},
-                    {tokReqMsgCtx12, true, properties5, true},
-                    {tokReqMsgCtx12, true, properties5, false},
-                    {tokReqMsgCtx13, true, properties1, false},
-                    {tokReqMsgCtx14, false, properties1, false},
-                    {tokReqMsgCtx15, true, properties1, false}
+                    {tokReqMsgCtx1, true, properties1, true, "Correct authentication request is failed."},
+                    {tokReqMsgCtx2, true, properties1, false, "JWT replay with preventTokenReuse enabled is not " +
+                            "failed. "},
+                    {tokReqMsgCtx3, true, properties3, false, "JWT with Invalid field Issuer must be fail."},
+                    {tokReqMsgCtx4, true, properties3, false, "Request with non existing SP client-id should fail."},
+                    {tokReqMsgCtx5, true, properties3, false, "JWT replay with preventTokenReuse disabled but " +
+                            "not-expired is not failed"},
+                    {tokReqMsgCtx6, true, properties3, false, "Invalid JWT token validation should fail."},
+                    {tokReqMsgCtx7, true, properties3, false, "JWT persisted in database with preventTokenReuse " +
+                            "enabled is not failed."},
+                    {tokReqMsgCtx8, true, properties3, false, "JWT with jti null is not failed"},
+                    {tokReqMsgCtx9, true, properties1, false, "JWT persisted in database with preventTokenReuse " +
+                            "disabled is not failed."},
+                    {tokReqMsgCtx10, true, properties1, false, "Non signed JWT should be failed."},
+                    {tokReqMsgCtx11, true, properties1, false, ""},
+                    {tokReqMsgCtx12, true, properties5, true, ""},
+                    {tokReqMsgCtx12, true, properties5, false, ""},
+                    {tokReqMsgCtx13, true, properties1, false, ""},
+                    {tokReqMsgCtx14, false, properties1, false, ""},
+                    {tokReqMsgCtx15, true, properties1, false, ""},
+                    {tokReqMsgCtx16, true, properties1, false, ""},
+                    {tokReqMsgCtx17, true, properties1, false, ""}
             };
         } catch (KeyStoreException e) {
             e.printStackTrace();
@@ -391,25 +229,96 @@ public class PrivateKeyJWTClientAuthHandlerTest {
         return null;
     }
 
-    @DataProvider(name = "provideOAuthTokenReqMessageContextForSAMLBearer")
-    public Object[][] createOAuthTokenReqMessageContextForSAMLBearer() {
+    @DataProvider(name = "provideInvalidOAuthTokenReqMessageContext")
+    public Object[][] createInvalidOAuthTokenReqMessageContext() {
 
-        OAuth2AccessTokenReqDTO oauth2AccessTokenReqDTO2 = new OAuth2AccessTokenReqDTO();
-        oauth2AccessTokenReqDTO2.setClientId(TEST_CLIENT_ID_1);
-        oauth2AccessTokenReqDTO2.setGrantType(String.valueOf(org.wso2.carbon.identity.oauth.common.GrantType.SAML20_BEARER));
+        Properties properties1 = new Properties();
+        properties1.setProperty("StrictClientCredentialValidation", "false");
+        properties1.setProperty("EnableCacheForJTI", "true");
+        properties1.setProperty("JwtValidityPeriod", "30");
 
-        Properties properties2 = new Properties();
+        try {
+            Key key1 = clientKeyStore.getKey("wso2carbon", "wso2carbon".toCharArray());
+            String audience = IdentityUtil.getServerURL(IdentityConstants.OAuth.TOKEN, true, false);
 
-        properties2.setProperty("StrictClientCredentialValidation", "false");
+            String privateKeyJWT1 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "1000", audience, "RSA265", key1, 0);
 
-        RequestParameter[] requestParameters2 = new RequestParameter[]{};
-        oauth2AccessTokenReqDTO2.setRequestParameters(requestParameters2);
+            OAuthTokenReqMessageContext tokReqMsgCtx1 = getOAuthTokenReqMessageContext(privateKeyJWT1);
+            OAuthTokenReqMessageContext tokReqMsgCtx2 = getOAuthTokenReqMessageContext(privateKeyJWT1,
+                    "some-assertion-type");
+            OAuthTokenReqMessageContext tokReqMsgCtx3 = getOAuthTokenReqMessageContext(null, null);
+            OAuthTokenReqMessageContext tokReqMsgCtx4 = getOAuthTokenReqMessageContext(null,
+                    OAUTH_CLIENT_ASSERTION_TYPE_JWT_BEARER);
 
-        OAuthTokenReqMessageContext tokReqMsgCtx2 = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO2);
+            return new Object[][]{
+                    {tokReqMsgCtx1, properties1, true, "Correct authentication request is failed."},
+                    {tokReqMsgCtx2, properties1, false, "Incorrect assertion type is not " +
+                            "failed. "},
+                    {tokReqMsgCtx3, properties1, false, "Incorrect Assertion must be fail."},
+                    {tokReqMsgCtx4, properties1, false, "Incorrect Assertion Type and Assertion must fail."},
+            };
+        } catch (KeyStoreException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (UnrecoverableKeyException e) {
+            e.printStackTrace();
+        } catch (IdentityOAuth2Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
-        return new Object[][]{
-                {tokReqMsgCtx2, true, properties2}
-        };
+    private OAuthTokenReqMessageContext getOAuthTokenReqMessageContext(String clientAssertion) {
+        return getOAuthTokenReqMessageContext(clientAssertion, OAUTH_CLIENT_ASSERTION_TYPE_JWT_BEARER);
+    }
+
+    private OAuthTokenReqMessageContext getOAuthTokenReqMessageContext(String clientAssertion,
+                                                                       String clientAssertionType) {
+        OAuthTokenReqMessageContext tokReqMsgCtx;
+        OAuth2AccessTokenReqDTO oauth2AccessTokenReqDTO = new OAuth2AccessTokenReqDTO();
+        oauth2AccessTokenReqDTO.setGrantType("authorization_code");
+        RequestParameter[] requestParameters1 = new RequestParameter[]{new RequestParameter("client_assertion_type",
+                clientAssertionType), new RequestParameter("client_assertion",
+                clientAssertion)};
+        oauth2AccessTokenReqDTO.setRequestParameters(requestParameters1);
+        tokReqMsgCtx = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO);
+        return tokReqMsgCtx;
+    }
+
+    @Test(dataProvider = "provideOAuthTokenReqMessageContext")
+    public void testCanAuthenticate(Object oAuthTokenReqMessageContext, boolean expected,
+                                    Object properties, boolean isAuthenticated, String errorMsg) throws Exception {
+//        testClass.init((Properties) properties);
+        PrivateKeyJWTClientAuthHandler privateKeyJWTClientAuthHandler = new PrivateKeyJWTClientAuthHandler();
+        privateKeyJWTClientAuthHandler.init((Properties) properties);
+        assertEquals(privateKeyJWTClientAuthHandler.canAuthenticate((OAuthTokenReqMessageContext) oAuthTokenReqMessageContext),
+                expected, errorMsg);
+
+    }
+
+    @Test(dataProvider = "provideOAuthTokenReqMessageContext")
+    public void testAuthenticateClient(Object oAuthTokenReqMessageContext, boolean canAuthenticate,
+                                       Object properties, boolean expectedValue, String errorMsg)
+            throws InvalidOAuthClientException, IdentityOAuth2Exception, IdentityOAuthAdminException {
+
+        PrivateKeyJWTClientAuthHandler privateKeyJWTClientAuthHandler = new PrivateKeyJWTClientAuthHandler();
+        privateKeyJWTClientAuthHandler.init((Properties) properties);
+//        testClass.init((Properties) properties);
+        assertEquals(privateKeyJWTClientAuthHandler.authenticateClient((OAuthTokenReqMessageContext) oAuthTokenReqMessageContext),
+                expectedValue, errorMsg);
+    }
+
+    @Test(dataProvider = "provideInvalidOAuthTokenReqMessageContext")
+    public void testAuthenticateClientInvalidRequest(Object oAuthTokenReqMessageContext, Object properties,
+                                                     boolean expectedValue,
+                                                     String errorMsg) throws InvalidOAuthClientException,
+            IdentityOAuth2Exception, IdentityOAuthAdminException {
+
+        PrivateKeyJWTClientAuthHandler privateKeyJWTClientAuthHandler = new PrivateKeyJWTClientAuthHandler();
+        privateKeyJWTClientAuthHandler.init((Properties) properties);
+        assertEquals(privateKeyJWTClientAuthHandler.canAuthenticate((OAuthTokenReqMessageContext) oAuthTokenReqMessageContext),
+                expectedValue, errorMsg);
     }
 
     @Test()
@@ -422,80 +331,28 @@ public class PrivateKeyJWTClientAuthHandlerTest {
         properties.setProperty("SubjectField", "some-subject");
         properties.setProperty("EnableCacheForJTI", "true");
         properties.setProperty("SignedBy", "some-signedby-value");
-        testclass.init(properties);
-        Field fieldRejectBeforePeriod = PrivateKeyJWTClientAuthHandler.class.getDeclaredField("rejectBeforePeriod");
+        PrivateKeyJWTClientAuthHandler privateKeyJWTClientAuthHandler = new PrivateKeyJWTClientAuthHandler();
+        privateKeyJWTClientAuthHandler.init(properties);
+        Field fieldRejectBeforePeriod = PrivateKeyJWTClientAuthHandler.class.getDeclaredField("notAcceptBeforeTimeInMins");
         fieldRejectBeforePeriod.setAccessible(true);
-        int validityPeriod = (int) fieldRejectBeforePeriod.get(testclass);
+        int validityPeriod = (int) fieldRejectBeforePeriod.get(privateKeyJWTClientAuthHandler);
         assertEquals(validityPeriod, 30);
         Field fieldPreventTokenReuse = PrivateKeyJWTClientAuthHandler.class.getDeclaredField("preventTokenReuse");
         fieldPreventTokenReuse.setAccessible(true);
-        boolean preventTokenReuse = (boolean) fieldPreventTokenReuse.get(testclass);
-        assertFalse(preventTokenReuse);
+        boolean preventTokenReuse = (boolean) fieldPreventTokenReuse.get(privateKeyJWTClientAuthHandler);
+        assertTrue(preventTokenReuse);
     }
 
     @Test()
     public void testInitInvalidValue() throws Exception {
         Properties properties = new Properties();
         properties.setProperty("RejectBeforePeriod", "some-string");
-        testclass.init(properties);
-        Field field = PrivateKeyJWTClientAuthHandler.class.getDeclaredField("rejectBeforePeriod");
+        PrivateKeyJWTClientAuthHandler privateKeyJWTClientAuthHandler = new PrivateKeyJWTClientAuthHandler();
+        privateKeyJWTClientAuthHandler.init(properties);
+        Field field = PrivateKeyJWTClientAuthHandler.class.getDeclaredField("notAcceptBeforeTimeInMins");
         field.setAccessible(true);
-        int validityPeriod = (int) field.get(testclass);
+        int validityPeriod = (int) field.get(privateKeyJWTClientAuthHandler);
         assertEquals(validityPeriod, 300);
-    }
-
-    @Test(dataProvider = "provideOAuthTokenReqMessageContext")
-    public void testCanAuthenticate(Object oAuthTokenReqMessageContext, boolean expected,
-                                    Object properties, boolean isAuthenticated) throws Exception {
-        testclass.init((Properties) properties);
-        assertEquals(testclass.canAuthenticate((OAuthTokenReqMessageContext) oAuthTokenReqMessageContext),
-                expected);
-
-    }
-
-    @Test(dataProvider = "provideOAuthTokenReqMessageContextForSAMLBearer")
-    public void testCanAuthenticateForSAMLBearer(Object oAuthTokenReqMessageContext, boolean expectedValue,
-                                                 Object properties) throws Exception {
-        testclass.init((Properties) properties);
-        assertEquals(testclass.canAuthenticate((OAuthTokenReqMessageContext) oAuthTokenReqMessageContext),
-                expectedValue);
-
-    }
-
-    @Test(dataProvider = "provideOAuthTokenReqMessageContext")
-    public void testAuthenticateClient(Object oAuthTokenReqMessageContext, boolean canAuthenticate,
-                                       Object properties, boolean expectedValue)
-            throws InvalidOAuthClientException, IdentityOAuth2Exception, IdentityOAuthAdminException {
-
-        testclass.init((Properties) properties);
-        assertEquals(testclass.authenticateClient((OAuthTokenReqMessageContext) oAuthTokenReqMessageContext),
-                expectedValue);
-    }
-
-    @Test(dataProvider = "provideOAuthTokenReqMessageContextForSAMLBearer")
-    public void testAuthenticateClientForSAMLBearer(Object oAuthTokenReqMessageContext, boolean expectedValue,
-                                                    Object properties)
-            throws InvalidOAuthClientException, IdentityOAuth2Exception, IdentityOAuthAdminException {
-
-        testclass.init((Properties) properties);
-        assertEquals(testclass.authenticateClient((OAuthTokenReqMessageContext) oAuthTokenReqMessageContext),
-                expectedValue);
-    }
-
-    @Test(dataProvider = "provideOAuthTokenReqMessageContext", dependsOnMethods = {"testAuthenticateClient"})
-    public void testAuthenticateClientWithSameJWT(Object oAuthTokenReqMessageContext, boolean canAuthenticate,
-                                                  Object properties, boolean isAuthenticate)
-            throws InvalidOAuthClientException, IdentityOAuth2Exception, IdentityOAuthAdminException {
-        assertEquals(testclass.authenticateClient((OAuthTokenReqMessageContext) oAuthTokenReqMessageContext),
-                false);
-    }
-
-
-    private OAuthTokenReqMessageContext buildOAuth2AccessTokenReqDTO() {
-        OAuth2AccessTokenReqDTO oAuth2AccessTokenReqDTO = new OAuth2AccessTokenReqDTO();
-        OAuthTokenReqMessageContext oAuthTokenReqMessageContext = new OAuthTokenReqMessageContext(
-                oAuth2AccessTokenReqDTO);
-        return oAuthTokenReqMessageContext;
     }
 
 }
