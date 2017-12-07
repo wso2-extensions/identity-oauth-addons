@@ -34,6 +34,15 @@ import java.util.Properties;
 
 import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.apache.commons.lang.StringUtils.isNotEmpty;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.DEFAULT_AUDIENCE;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.DEFAULT_ENABLE_JTI_CACHE;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.DEFAULT_ISSUER;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.DEFAULT_VALIDITY_PERIOD_IN_MINUTES;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.OAUTH_JWT_ASSERTION;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.OAUTH_JWT_ASSERTION_TYPE;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.OAUTH_JWT_BEARER_GRANT_TYPE;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.PREVENT_TOKEN_REUSE;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.REJECT_BEFORE_PERIOD;
 
 /**
  * Client Authentication handler to implement oidc private_key_jwt client authentication spec
@@ -42,68 +51,63 @@ import static org.apache.commons.lang.StringUtils.isNotEmpty;
 public class PrivateKeyJWTClientAuthHandler extends AbstractClientAuthHandler {
 
     private static final Log log = LogFactory.getLog(PrivateKeyJWTClientAuthHandler.class);
-
-    private int notAcceptBeforeTimeInMins;
-    private boolean enableJTICache;
-    private boolean preventTokenReuse;
-    private String validAudience;
-    private String validIssuer;
-
     private JWTValidator jwtValidator;
 
     @Override
     public void init(Properties properties) throws IdentityOAuth2Exception {
         authConfig = properties.getProperty(OAuthConstants.CLIENT_AUTH_CREDENTIAL_VALIDATION);
-        initialiseJWTValidatorVariables(properties);
-        jwtValidator = new JWTValidator(notAcceptBeforeTimeInMins, preventTokenReuse, enableJTICache,
-                validAudience, validIssuer);
+        jwtValidator = createJWTValidator(properties);
     }
 
     /**
      * Initialize validator parameters
+     *
      * @param properties
      */
-    private void initialiseJWTValidatorVariables(Properties properties) {
+    private JWTValidator createJWTValidator(Properties properties) {
+        boolean enableJTICache = DEFAULT_ENABLE_JTI_CACHE;
+        String validAudience = DEFAULT_AUDIENCE;
+        String validIssuer = DEFAULT_ISSUER;
+        boolean preventTokenReuse = PREVENT_TOKEN_REUSE;
+        int notAcceptBeforeTimeInMins = DEFAULT_VALIDITY_PERIOD_IN_MINUTES;
         try {
-            String rejectBeforePeriodConfigVal = properties.getProperty(Constants.VALIDITY_PERIOD);
+            String rejectBeforePeriodConfigVal = properties.getProperty(REJECT_BEFORE_PERIOD);
             if (isNotEmpty(rejectBeforePeriodConfigVal)) {
                 notAcceptBeforeTimeInMins = Integer.parseInt(rejectBeforePeriodConfigVal);
-            } else {
-                notAcceptBeforeTimeInMins = Constants.DEFAULT_VALIDITY_PERIOD_IN_MINUTES;
             }
-            enableJTICache = Constants.DEFAULT_ENABLE_JTI_CACHE;
-            validAudience = Constants.DEFAULT_AUDIENCE;
-            validIssuer = Constants.DEFAULT_ISSUER;
-            preventTokenReuse = Constants.PREVENT_TOKEN_REUSE;
-
+            if (log.isDebugEnabled()) {
+                log.debug("PrivateKeyJWT Validity period is set to:" + notAcceptBeforeTimeInMins);
+            }
         } catch (NumberFormatException e) {
-            log.warn("Invalid PrivateKeyJWT Validity period found in the configuration. Using default value.");
-            notAcceptBeforeTimeInMins = Constants.DEFAULT_VALIDITY_PERIOD_IN_MINUTES;
+            log.warn("Invalid PrivateKeyJWT Validity period found in the configuration. Using default value:" +
+                    DEFAULT_VALIDITY_PERIOD_IN_MINUTES);
         }
+        return new JWTValidator(notAcceptBeforeTimeInMins, preventTokenReuse, enableJTICache,
+                validAudience, validIssuer);
     }
 
     @Override
     public boolean canAuthenticate(OAuthTokenReqMessageContext tokReqMsgCtx) throws IdentityOAuth2Exception {
 
-        String clientAssertionType = getRequestParameter(tokReqMsgCtx, Constants.OAUTH_JWT_ASSERTION_TYPE);
-        String clientAssertion = getRequestParameter(tokReqMsgCtx, Constants.OAUTH_JWT_ASSERTION);
+        String clientAssertionType = getRequestParameter(tokReqMsgCtx, OAUTH_JWT_ASSERTION_TYPE);
+        String clientAssertion = getRequestParameter(tokReqMsgCtx, OAUTH_JWT_ASSERTION);
 
         return isValidJWTClientAssertionRequest(clientAssertionType, clientAssertion);
-        //TODO check validate SAML_Bearer
     }
 
     /**
      * Check whether the client_assertion_type and client_assertion is valid
+     *
      * @param clientAssertionType
      * @param clientAssertion
      * @return
      */
     private boolean isValidJWTClientAssertionRequest(String clientAssertionType, String clientAssertion) {
         if (log.isDebugEnabled()) {
-            log.debug("Authenticate Requested with : " + Constants.OAUTH_JWT_ASSERTION_TYPE + " and " +
+            log.debug("Authenticate Requested with : " + clientAssertionType + " and " +
                     "private_key_jwt: " + clientAssertion);
         }
-        return Constants.OAUTH_JWT_BEARER_GRANT_TYPE.equals(clientAssertionType) && isNotEmpty(clientAssertion);
+        return OAUTH_JWT_BEARER_GRANT_TYPE.equals(clientAssertionType) && isNotEmpty(clientAssertion);
     }
 
     @Override
@@ -113,6 +117,7 @@ public class PrivateKeyJWTClientAuthHandler extends AbstractClientAuthHandler {
             SignedJWT signedJWT = getSignedJWT(tokReqMsgCtx);
             return jwtValidator.isValidToken(signedJWT);
         } catch (IdentityOAuth2Exception e) {
+            //IdentityOAuth2Exception are logged when thrown
             return false;
         }
     }
@@ -142,35 +147,32 @@ public class PrivateKeyJWTClientAuthHandler extends AbstractClientAuthHandler {
      * @return signedJWT
      */
     private SignedJWT getSignedJWT(OAuthTokenReqMessageContext tokReqMsgCtx) throws IdentityOAuth2Exception {
-        RequestParameter[] params = tokReqMsgCtx.getOauth2AccessTokenReqDTO().getRequestParameters();
-        String assertion = null;
-        SignedJWT signedJWT = null;
-        for (RequestParameter param : params) {
-            if (param.getKey().equals(Constants.OAUTH_JWT_ASSERTION) && !ArrayUtils.isEmpty(param.getValue())) {
-                assertion = param.getValue()[0];
-                break;
-            }
-        }
+        SignedJWT signedJWT;
+        String assertion;
+        assertion = getRequestParameter(tokReqMsgCtx, OAUTH_JWT_ASSERTION);
         if (isEmpty(assertion)) {
             return null;
         }
 
         try {
             signedJWT = SignedJWT.parse(assertion);
-            if (log.isDebugEnabled()) {
-                logJWT(signedJWT);
-            }
+            logJWT(signedJWT);
         } catch (ParseException e) {
-            handleException("Error while parsing the JWT" + e.getMessage());
+            String errorMessage = "Error while parsing the JWT";
+            log.error(errorMessage, e);
+            throw new IdentityOAuth2Exception(errorMessage, e);
         }
         if (signedJWT == null) {
-            handleException("No Valid Assertion was found for " + Constants.OAUTH_JWT_BEARER_GRANT_TYPE);
+            String errorMessage = "No Valid Assertion was found for " + OAUTH_JWT_BEARER_GRANT_TYPE;
+            log.error(errorMessage);
+            throw new IdentityOAuth2Exception(errorMessage);
         }
         return signedJWT;
     }
 
     /**
      * Handle error scenarios
+     *
      * @param errorMessage
      * @throws IdentityOAuth2Exception
      */
@@ -183,8 +185,10 @@ public class PrivateKeyJWTClientAuthHandler extends AbstractClientAuthHandler {
      * @param signedJWT the signedJWT to be logged
      */
     private void logJWT(SignedJWT signedJWT) {
-        log.debug("JWT Header: " + signedJWT.getHeader().toJSONObject().toString());
-        log.debug("JWT Payload: " + signedJWT.getPayload().toJSONObject().toString());
-        log.debug("Signature: " + signedJWT.getSignature().toString());
+        if (log.isDebugEnabled()) {
+            log.debug("JWT Header: " + signedJWT.getHeader().toJSONObject().toString());
+            log.debug("JWT Payload: " + signedJWT.getPayload().toJSONObject().toString());
+            log.debug("Signature: " + signedJWT.getSignature().toString());
+        }
     }
 }

@@ -26,8 +26,15 @@ import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants;
 
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+
+import java.util.Calendar;
+import java.util.TimeZone;
+
 
 /**
  * JWT token persistence is managed by JWTStorageManager

@@ -169,7 +169,8 @@ public class JWTValidatorTest {
             String jsonWebToken10 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3004", SOME_VALID_AUDIENCE,
                     "RSA265", key1, 0);
             String jsonWebToken11 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3005", audience, "RSA265", key1,
-                    0, 0, 1000000000);
+                    0, 0, Calendar.getInstance().getTimeInMillis() - (1000L * 60 * 2 *
+                            Constants.DEFAULT_VALIDITY_PERIOD_IN_MINUTES));
 
             String jsonWebToken12 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3006", audience, "RSA265", key1, 0);
             String jsonWebToken13 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "2001", audience, "RSA265", key1, 0);
@@ -302,6 +303,14 @@ public class JWTValidatorTest {
         Date createdDate = new Date(currentTimeInMillis - (1000L * 60 * 2 * Constants
                 .DEFAULT_VALIDITY_PERIOD_IN_MINUTES));
         assertFalse(jwtValidator.validateAgeOfTheToken(createdDate, currentTimeInMillis, 100));
+    }
+    @Test(dependsOnMethods = "testValidateToken")
+    public void testCheckNotBeforeTime() throws Exception {
+        JWTValidator jwtValidator = getJWTValidator(new Properties());
+        long currentTimeInMillis= Calendar.getInstance().getTimeInMillis();
+        Date notBeforeDate = new Date(currentTimeInMillis + (1000L * 60 * 2 * Constants
+                .DEFAULT_VALIDITY_PERIOD_IN_MINUTES));
+        assertFalse(jwtValidator.checkNotBeforeTime(notBeforeDate, currentTimeInMillis, 100));
     }
 
     @Test(dependsOnMethods = "testValidateToken")

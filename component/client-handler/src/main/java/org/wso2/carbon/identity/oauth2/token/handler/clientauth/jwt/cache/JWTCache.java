@@ -22,27 +22,35 @@ import org.wso2.carbon.identity.application.common.cache.BaseCache;
 import org.wso2.carbon.identity.application.common.cache.CacheEntry;
 import org.wso2.carbon.utils.CarbonUtils;
 
-public class JWTCache extends BaseCache {
-    private static final JWTCache instance = new JWTCache("PrivateKeyJWTCache");
+public class JWTCache extends BaseCache<String,JWTCacheEntry>{
+    public static final String PRIVATE_KEY_JWT_CACHE = "PrivateKeyJWT";
+    private static volatile JWTCache instance;
 
-    private JWTCache(String cacheName) {
-        super(cacheName);
+    private JWTCache() {
+        super(PRIVATE_KEY_JWT_CACHE);
     }
 
     public static JWTCache getInstance() {
         CarbonUtils.checkSecurity();
+        if (instance == null) {
+            synchronized (JWTCache.class) {
+                if (instance == null) {
+                    instance = new JWTCache();
+                }
+            }
+        }
         return instance;
     }
 
-    public void addToCache(String key, CacheEntry entry) {
-        super.addToCache(key, entry);
-    }
-
-    public CacheEntry getValueFromCache(String key) {
-        return (CacheEntry) super.getValueFromCache(key);
-    }
-
-    public void clearCacheEntry(String key) {
-        super.clearCacheEntry(key);
-    }
+//    public void addToCache(String key, CacheEntry entry) {
+//        super.addToCache(key, entry);
+//    }
+//
+//    public CacheEntry getValueFromCache(String key) {
+//        return (CacheEntry) super.getValueFromCache(key);
+//    }
+//
+//    public void clearCacheEntry(String key) {
+//        super.clearCacheEntry(key);
+//    }
 }

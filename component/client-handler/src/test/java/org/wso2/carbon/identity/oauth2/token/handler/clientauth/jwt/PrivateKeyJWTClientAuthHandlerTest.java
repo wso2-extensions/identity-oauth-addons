@@ -41,6 +41,7 @@ import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceComponent;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceDataHolder;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.JWTValidator;
 import org.wso2.carbon.identity.testutil.ReadCertStoreSampleUtil;
 import org.wso2.carbon.idp.mgt.internal.IdpMgtServiceComponentHolder;
 import org.wso2.carbon.user.api.UserRealm;
@@ -333,13 +334,16 @@ public class PrivateKeyJWTClientAuthHandlerTest {
         properties.setProperty("SignedBy", "some-signedby-value");
         PrivateKeyJWTClientAuthHandler privateKeyJWTClientAuthHandler = new PrivateKeyJWTClientAuthHandler();
         privateKeyJWTClientAuthHandler.init(properties);
-        Field fieldRejectBeforePeriod = PrivateKeyJWTClientAuthHandler.class.getDeclaredField("notAcceptBeforeTimeInMins");
-        fieldRejectBeforePeriod.setAccessible(true);
-        int validityPeriod = (int) fieldRejectBeforePeriod.get(privateKeyJWTClientAuthHandler);
+        Field jwtValidatorField = PrivateKeyJWTClientAuthHandler.class.getDeclaredField("jwtValidator");
+        jwtValidatorField.setAccessible(true);
+        JWTValidator jwtValidator = (JWTValidator) jwtValidatorField.get(privateKeyJWTClientAuthHandler);
+        Field field = JWTValidator.class.getDeclaredField("notAcceptBeforeTimeInMins");
+        field.setAccessible(true);
+        int validityPeriod = (int) field.get(jwtValidator);
         assertEquals(validityPeriod, 30);
-        Field fieldPreventTokenReuse = PrivateKeyJWTClientAuthHandler.class.getDeclaredField("preventTokenReuse");
+        Field fieldPreventTokenReuse = JWTValidator.class.getDeclaredField("preventTokenReuse");
         fieldPreventTokenReuse.setAccessible(true);
-        boolean preventTokenReuse = (boolean) fieldPreventTokenReuse.get(privateKeyJWTClientAuthHandler);
+        boolean preventTokenReuse = (boolean) fieldPreventTokenReuse.get(jwtValidator);
         assertTrue(preventTokenReuse);
     }
 
@@ -349,9 +353,12 @@ public class PrivateKeyJWTClientAuthHandlerTest {
         properties.setProperty("RejectBeforePeriod", "some-string");
         PrivateKeyJWTClientAuthHandler privateKeyJWTClientAuthHandler = new PrivateKeyJWTClientAuthHandler();
         privateKeyJWTClientAuthHandler.init(properties);
-        Field field = PrivateKeyJWTClientAuthHandler.class.getDeclaredField("notAcceptBeforeTimeInMins");
+        Field jwtValidatorField = PrivateKeyJWTClientAuthHandler.class.getDeclaredField("jwtValidator");
+        jwtValidatorField.setAccessible(true);
+        JWTValidator jwtValidator = (JWTValidator) jwtValidatorField.get(privateKeyJWTClientAuthHandler);
+        Field field = JWTValidator.class.getDeclaredField("notAcceptBeforeTimeInMins");
         field.setAccessible(true);
-        int validityPeriod = (int) field.get(privateKeyJWTClientAuthHandler);
+        int validityPeriod = (int) field.get(jwtValidator);
         assertEquals(validityPeriod, 300);
     }
 

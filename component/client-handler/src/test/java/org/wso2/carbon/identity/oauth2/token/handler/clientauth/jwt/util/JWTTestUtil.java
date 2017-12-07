@@ -28,12 +28,9 @@ import com.nimbusds.jwt.PlainJWT;
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.commons.lang.StringUtils;
 import org.testng.Assert;
-import org.testng.TestNGException;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.oauth.dao.SQLQueries;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
-import org.wso2.carbon.identity.oauth2.dto.OAuth2AccessTokenReqDTO;
-import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.JWTValidator;
 import org.wso2.carbon.user.core.UserCoreConstants;
@@ -54,6 +51,18 @@ import java.util.Properties;
 
 public class JWTTestUtil {
 
+    /**
+     * Return a JWT string with provided info, and default time
+     * @param issuer
+     * @param subject
+     * @param jti
+     * @param audience
+     * @param algorythm
+     * @param privateKey
+     * @param notBeforeMillis
+     * @return
+     * @throws IdentityOAuth2Exception
+     */
     public static String buildJWT(String issuer, String subject, String jti, String audience, String algorythm,
                                   Key privateKey, long notBeforeMillis)
             throws IdentityOAuth2Exception {
@@ -90,7 +99,6 @@ public class JWTTestUtil {
         }
         if (lifetimeInMillis <= 0) {
             lifetimeInMillis = 3600 * 1000;
-            ;
         }
         // Set claims to jwt token.
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet();
@@ -131,6 +139,12 @@ public class JWTTestUtil {
         }
     }
 
+    /**
+     * Create a auth-app in the given tenant with given consumerKey and consumerSecreat
+     * @param consumerKey
+     * @param consumerSecret
+     * @param tenantId
+     */
     public static void createApplication(String consumerKey, String consumerSecret, int tenantId) {
         try (Connection connection = IdentityDatabaseUtil.getDBConnection();
              PreparedStatement prepStmt = connection.prepareStatement(SQLQueries.OAuthAppDAOSQLQueries.ADD_OAUTH_APP)){
@@ -152,6 +166,14 @@ public class JWTTestUtil {
         }
     }
 
+    /**
+     * Read Keystore from the file identified by given keystorename, password
+     * @param keystoreName
+     * @param password
+     * @param home
+     * @return
+     * @throws Exception
+     */
     public static KeyStore getKeyStoreFromFile(String keystoreName, String password,
                                                String home) throws Exception {
         Path tenantKeystorePath = Paths.get(home, "repository",
@@ -162,6 +184,11 @@ public class JWTTestUtil {
         return keystore;
     }
 
+    /**
+     * Create and return a JWTValidator instance with given properties
+     * @param properties
+     * @return
+     */
     public static JWTValidator getJWTValidator(Properties properties) {
         int rejectBeforePeriod;
         boolean cacheUsedJTI = true;
@@ -170,7 +197,7 @@ public class JWTTestUtil {
         boolean preventTokenReuse = true;
         try {
 
-            String rejectBeforePeriodConfigVal = properties.getProperty(Constants.VALIDITY_PERIOD);
+            String rejectBeforePeriodConfigVal = properties.getProperty(Constants.REJECT_BEFORE_PERIOD);
             if (StringUtils.isNotEmpty(rejectBeforePeriodConfigVal)) {
                 rejectBeforePeriod = Integer.parseInt(rejectBeforePeriodConfigVal);
             } else {
@@ -210,5 +237,4 @@ public class JWTTestUtil {
         return new JWTValidator(rejectBeforePeriod, preventTokenReuse, cacheUsedJTI,
                 validAudience, validIssuer);
     }
-
 }

@@ -119,7 +119,4 @@ public class CommonTestUtils {
         modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
         field.set(null, newValue);
     }
-
-
-
 }
