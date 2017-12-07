@@ -333,7 +333,7 @@ public class PrivateKeyJWTClientAuthHandlerTest {
     @Test()
     public void testInit() throws Exception {
         Properties properties = new Properties();
-        properties.setProperty("RejectBeforePeriod", "30");
+        properties.setProperty("RejectBeforePeriodInMinutes", "30");
         properties.setProperty("PreventTokenReuse", "false");
         properties.setProperty("Audience", "some-audience");
         properties.setProperty("Issuer", "some-issuer");

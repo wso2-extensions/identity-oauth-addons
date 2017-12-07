@@ -651,7 +651,12 @@ public class JWTValidator {
      * @param issuedTime
      */
     public void persistJWTID(final String jti, long expiryTime, long issuedTime) {
-        jwtStorageManager.persistJwt(jti, expiryTime, issuedTime);
+        try {
+            jwtStorageManager.persistJWTIdInDB(jti, expiryTime, issuedTime);
+        } catch (IdentityOAuth2Exception e) {
+            log.error("Error while persisting JWT reference with jti: " + jti, e);
+            //continue validation
+        }
     }
 
 }

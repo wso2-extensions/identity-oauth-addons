@@ -42,36 +42,6 @@ import java.util.TimeZone;
  */
 public class JWTStorageManager {
     private static final Log log = LogFactory.getLog(JWTStorageManager.class);
-
-    /**
-     * Inner class to implement saving JWT entries using a different thread
-     */
-    class JWTIDPersistingThread implements Runnable {
-        long issuedTime;
-        String jti;
-
-        long expiryTime;
-
-        public JWTIDPersistingThread(String jti, long expiryTime, long issuedTime) {
-            super();
-            this.expiryTime = expiryTime;
-            this.jti = jti;
-            this.issuedTime = issuedTime;
-        }
-        @Override
-        public void run() {
-            try {
-                persistJWTIdInDB(jti, expiryTime, issuedTime);
-                if (log.isDebugEnabled()) {
-                    log.debug("JWT Token with jti:" + jti + " was added to the storage successfully");
-                }
-            } catch (IdentityOAuth2Exception e) {
-                log.error("Error occurred while persisting JWT ID:" + jti, e);
-            }
-        }
-
-    }
-
     /**
      * check whether a JWT Entry with given jti exists in the DB
      * @param jti JWT TOKEN ID
@@ -162,16 +132,5 @@ public class JWTStorageManager {
         } finally {
             IdentityDatabaseUtil.closeAllConnections(connection, rs, preparedStatement);
         }
-    }
-
-    /**
-     * Public method to request saving a JWT information to DB
-     * Perform persistence task via a new thread
-     * @param jti
-     * @param expiryTime
-     * @param issuedTime
-     */
-    public void persistJwt(final String jti, long expiryTime, long issuedTime){
-        new Thread(new JWTIDPersistingThread(jti, expiryTime, issuedTime)).start();
     }
 }
