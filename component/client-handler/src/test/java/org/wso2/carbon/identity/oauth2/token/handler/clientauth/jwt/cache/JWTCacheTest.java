@@ -19,8 +19,6 @@
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.cache;
 
 import com.nimbusds.jwt.SignedJWT;
-import junit.framework.TestCase;
-import org.apache.naming.resources.CacheEntry;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.wso2.carbon.base.CarbonBaseConstants;
@@ -29,12 +27,10 @@ import org.wso2.carbon.identity.common.testng.WithCarbonHome;
 import org.wso2.carbon.identity.common.testng.WithKeyStore;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 
-import javax.validation.constraints.AssertTrue;
 import java.security.Key;
 import java.security.KeyStore;
 
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.buildJWT;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.getKeyStoreFromFile;
