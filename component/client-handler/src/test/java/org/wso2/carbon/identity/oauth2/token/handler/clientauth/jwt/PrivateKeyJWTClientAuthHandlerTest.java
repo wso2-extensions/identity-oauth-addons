@@ -115,7 +115,7 @@ public class PrivateKeyJWTClientAuthHandlerTest {
 
         KeyStoreManager keyStoreManager = Mockito.mock(KeyStoreManager.class);
         ConcurrentHashMap<String, KeyStoreManager> mtKeyStoreManagers = new ConcurrentHashMap();
-        mtKeyStoreManagers.put("-1234", keyStoreManager);
+        mtKeyStoreManagers.put(String.valueOf(SUPER_TENANT_ID), keyStoreManager);
         WhiteboxImpl.setInternalState(KeyStoreManager.class, "mtKeyStoreManagers", mtKeyStoreManagers);
         X509Certificate cert = (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(
                 new ByteArrayInputStream(Base64.decodeBase64(CERTIFICATE)));
@@ -298,7 +298,6 @@ public class PrivateKeyJWTClientAuthHandlerTest {
     @Test(dataProvider = "provideOAuthTokenReqMessageContext")
     public void testCanAuthenticate(Object oAuthTokenReqMessageContext, boolean expected,
                                     Object properties, boolean isAuthenticated, String errorMsg) throws Exception {
-//        testClass.init((Properties) properties);
         PrivateKeyJWTClientAuthHandler privateKeyJWTClientAuthHandler = new PrivateKeyJWTClientAuthHandler();
         privateKeyJWTClientAuthHandler.init((Properties) properties);
         assertEquals(privateKeyJWTClientAuthHandler.canAuthenticate((OAuthTokenReqMessageContext) oAuthTokenReqMessageContext),
@@ -313,7 +312,6 @@ public class PrivateKeyJWTClientAuthHandlerTest {
 
         PrivateKeyJWTClientAuthHandler privateKeyJWTClientAuthHandler = new PrivateKeyJWTClientAuthHandler();
         privateKeyJWTClientAuthHandler.init((Properties) properties);
-//        testClass.init((Properties) properties);
         assertEquals(privateKeyJWTClientAuthHandler.authenticateClient((OAuthTokenReqMessageContext) oAuthTokenReqMessageContext),
                 expectedValue, errorMsg);
     }
@@ -333,7 +331,7 @@ public class PrivateKeyJWTClientAuthHandlerTest {
     @Test()
     public void testInit() throws Exception {
         Properties properties = new Properties();
-        properties.setProperty("RejectBeforePeriodInMinutes", "30");
+        properties.setProperty(Constants.REJECT_BEFORE_PERIOD, "30");
         properties.setProperty("PreventTokenReuse", "false");
         properties.setProperty("Audience", "some-audience");
         properties.setProperty("Issuer", "some-issuer");
@@ -358,7 +356,7 @@ public class PrivateKeyJWTClientAuthHandlerTest {
     @Test()
     public void testInitInvalidValue() throws Exception {
         Properties properties = new Properties();
-        properties.setProperty("RejectBeforePeriod", "some-string");
+        properties.setProperty(Constants.REJECT_BEFORE_PERIOD, "some-string");
         PrivateKeyJWTClientAuthHandler privateKeyJWTClientAuthHandler = new PrivateKeyJWTClientAuthHandler();
         privateKeyJWTClientAuthHandler.init(properties);
         Field jwtValidatorField = PrivateKeyJWTClientAuthHandler.class.getDeclaredField("jwtValidator");

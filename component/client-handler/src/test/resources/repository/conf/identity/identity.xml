@@ -175,7 +175,7 @@
         <ClientAuthHandlers>
             <ClientAuthHandler Class="org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.PrivateKeyJWTClientAuthHandler">
                 <Property Name="StrictClientCredentialValidation">false</Property>
-                <Property Name="RejectBeforePeriod">60</Property>
+                <Property Name="RejectBeforePeriodInMinutes">60</Property>
                 <Property Name="PreventTokenReuse">true</Property>
                 <Property Name="Audience">some-audience</Property>
                 <Property Name="Issuer">client_id</Property>

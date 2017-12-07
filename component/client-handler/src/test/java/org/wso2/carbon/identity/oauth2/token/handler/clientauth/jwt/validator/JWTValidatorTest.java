@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator;
 
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang.StringUtils;
 import org.mockito.Mockito;
 import org.powermock.reflect.internal.WhiteboxImpl;
 import org.testng.annotations.BeforeClass;
@@ -29,7 +30,11 @@ import org.wso2.carbon.base.CarbonBaseConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.core.util.KeyStoreManager;
 import org.wso2.carbon.identity.base.IdentityConstants;
-import org.wso2.carbon.identity.common.testng.*;
+import org.wso2.carbon.identity.common.testng.WithAxisConfiguration;
+import org.wso2.carbon.identity.common.testng.WithCarbonHome;
+import org.wso2.carbon.identity.common.testng.WithH2Database;
+import org.wso2.carbon.identity.common.testng.WithKeyStore;
+import org.wso2.carbon.identity.common.testng.WithRealmService;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
@@ -43,7 +48,11 @@ import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.core.service.RealmService;
 
 import java.io.ByteArrayInputStream;
-import java.security.*;
+import java.security.Key;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -53,9 +62,14 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertNull;
-import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.*;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.buildJWT;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.getJWTValidator;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.getKeyStoreFromFile;
 import static org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
 import static org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENANT_ID;
 
@@ -110,7 +124,7 @@ public class JWTValidatorTest {
 
         KeyStoreManager keyStoreManager = Mockito.mock(KeyStoreManager.class);
         ConcurrentHashMap<String, KeyStoreManager> mtKeyStoreManagers = new ConcurrentHashMap();
-        mtKeyStoreManagers.put("-1234", keyStoreManager);
+        mtKeyStoreManagers.put(String.valueOf(SUPER_TENANT_ID), keyStoreManager);
         WhiteboxImpl.setInternalState(KeyStoreManager.class, "mtKeyStoreManagers", mtKeyStoreManagers);
         cert = (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(
                 new ByteArrayInputStream(Base64.decodeBase64(CERTIFICATE)));
@@ -243,7 +257,7 @@ public class JWTValidatorTest {
     public void testGetCertificate() throws Exception {
         KeyStoreManager keyStoreManager = Mockito.mock(KeyStoreManager.class);
         ConcurrentHashMap<String, KeyStoreManager> mtKeyStoreManagers = new ConcurrentHashMap();
-        mtKeyStoreManagers.put("-1234", keyStoreManager);
+        mtKeyStoreManagers.put(String.valueOf(SUPER_TENANT_ID), keyStoreManager);
         WhiteboxImpl.setInternalState(KeyStoreManager.class, "mtKeyStoreManagers", mtKeyStoreManagers);
         Mockito.when(keyStoreManager.getPrimaryKeyStore()).thenReturn(serverKeyStore);
         JWTValidator jwtValidator = getJWTValidator(new Properties());
@@ -254,7 +268,7 @@ public class JWTValidatorTest {
     public void testGetCertificateNonExistingAlias() throws Exception {
         KeyStoreManager keyStoreManager = Mockito.mock(KeyStoreManager.class);
         ConcurrentHashMap<String, KeyStoreManager> mtKeyStoreManagers = new ConcurrentHashMap();
-        mtKeyStoreManagers.put("-1234", keyStoreManager);
+        mtKeyStoreManagers.put(String.valueOf(SUPER_TENANT_ID), keyStoreManager);
         WhiteboxImpl.setInternalState(KeyStoreManager.class, "mtKeyStoreManagers", mtKeyStoreManagers);
         Mockito.when(keyStoreManager.getPrimaryKeyStore()).thenReturn(clientKeyStore);
         JWTValidator jwtValidator = getJWTValidator(new Properties());
@@ -277,7 +291,7 @@ public class JWTValidatorTest {
     public void testGetCertificateException3() throws Exception {
         KeyStoreManager keyStoreManager = Mockito.mock(KeyStoreManager.class);
         ConcurrentHashMap<String, KeyStoreManager> mtKeyStoreManagers = new ConcurrentHashMap();
-        mtKeyStoreManagers.put("-1234", keyStoreManager);
+        mtKeyStoreManagers.put(String.valueOf(SUPER_TENANT_ID), keyStoreManager);
         WhiteboxImpl.setInternalState(KeyStoreManager.class, "mtKeyStoreManagers", mtKeyStoreManagers);
         Mockito.when(keyStoreManager.getPrimaryKeyStore()).thenReturn(serverKeyStore);
         KeyStore keyStore = keyStoreManager.getPrimaryKeyStore();

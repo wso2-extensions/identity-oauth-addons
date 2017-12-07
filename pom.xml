@@ -450,5 +450,10 @@
         <h2database.version>1.0.60</h2database.version>
         <commons-codec.test.version>1.4</commons-codec.test.version>
         <org.wso2.carbon.identity.testutil.version>5.10.0</org.wso2.carbon.identity.testutil.version>
+        <maven.plugins.version>2.0</maven.plugins.version>
+        <maven.bundle.plugins.version>2.3.5</maven.bundle.plugins.version>
+        <maven.source.plugin.version>1.7.2</maven.source.plugin.version>
+        <maven.resource.plugin.version>3.0.2</maven.resource.plugin.version>
+        <maven.plugins.version.source>1.7</maven.plugins.version.source>
     </properties>
 </project>

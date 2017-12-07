@@ -19,9 +19,11 @@
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.cache;
 
 import org.wso2.carbon.identity.application.common.cache.BaseCache;
-import org.wso2.carbon.identity.application.common.cache.CacheEntry;
 import org.wso2.carbon.utils.CarbonUtils;
 
+/**
+ * Implements a cache to store JWT references
+ */
 public class JWTCache extends BaseCache<String,JWTCacheEntry>{
     public static final String PRIVATE_KEY_JWT_CACHE = "PrivateKeyJWT";
     private static volatile JWTCache instance;
@@ -41,16 +43,4 @@ public class JWTCache extends BaseCache<String,JWTCacheEntry>{
         }
         return instance;
     }
-
-//    public void addToCache(String key, CacheEntry entry) {
-//        super.addToCache(key, entry);
-//    }
-//
-//    public CacheEntry getValueFromCache(String key) {
-//        return (CacheEntry) super.getValueFromCache(key);
-//    }
-//
-//    public void clearCacheEntry(String key) {
-//        super.clearCacheEntry(key);
-//    }
 }

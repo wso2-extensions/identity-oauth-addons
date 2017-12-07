@@ -171,17 +171,6 @@ public class PrivateKeyJWTClientAuthHandler extends AbstractClientAuthHandler {
     }
 
     /**
-     * Handle error scenarios
-     *
-     * @param errorMessage
-     * @throws IdentityOAuth2Exception
-     */
-    private void handleException(String errorMessage) throws IdentityOAuth2Exception {
-        log.error(errorMessage);
-        throw new IdentityOAuth2Exception(errorMessage);
-    }
-
-    /**
      * @param signedJWT the signedJWT to be logged
      */
     private void logJWT(SignedJWT signedJWT) {

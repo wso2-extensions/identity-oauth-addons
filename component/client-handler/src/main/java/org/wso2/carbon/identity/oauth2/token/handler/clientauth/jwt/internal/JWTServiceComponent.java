@@ -20,7 +20,6 @@ package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.osgi.service.component.ComponentContext;
-import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
@@ -34,7 +33,6 @@ import org.wso2.carbon.user.core.service.RealmService;
  */
 public class JWTServiceComponent {
     private static Log log = LogFactory.getLog(JWTServiceComponent.class);
-    private static RealmService realmService;
 
     public static RealmService getRealmService() {
         return JWTServiceDataHolder.getInstance().getRealmService();

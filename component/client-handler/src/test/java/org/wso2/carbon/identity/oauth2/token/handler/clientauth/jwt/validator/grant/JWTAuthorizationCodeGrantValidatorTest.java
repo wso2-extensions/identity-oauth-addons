@@ -18,13 +18,11 @@
 
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.grant;
 
-
 import org.mockito.Mockito;
 import org.mockito.internal.util.reflection.Whitebox;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants;
-import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.grant.JWTAuthorizationCodeGrantValidator;
 
 import javax.servlet.http.HttpServletRequest;
 

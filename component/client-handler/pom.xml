@@ -32,7 +32,7 @@
                 <plugin>
                     <groupId>org.apache.felix</groupId>
                     <artifactId>maven-bundle-plugin</artifactId>
-                    <version>2.3.5</version>
+                    <version>${maven.bundle.plugins.version}</version>
                     <extensions>true</extensions>
                 </plugin>
             </plugins>
@@ -41,10 +41,10 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>2.0</version>
+                <version>${maven.plugins.version}</version>
                 <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>${maven.plugins.version.source}</source>
+                    <target>${maven.plugins.version.source}</target>
                 </configuration>
             </plugin>
             <plugin>
@@ -86,7 +86,7 @@
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-scr-plugin</artifactId>
-                <version>1.7.2</version>
+                <version>${maven.source.plugin.version}</version>
                 <executions>
                     <execution>
                         <id>generate-scr-scrdescriptor</id>
@@ -176,7 +176,7 @@
             </plugin>
             <plugin>
                 <artifactId>maven-resources-plugin</artifactId>
-                <version>3.0.2</version>
+                <version>${maven.resource.plugin.version}</version>
                 <executions>
                     <execution>
                         <id>copy-resources</id>

@@ -22,7 +22,7 @@ org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt-1.0.0-SNAPSHOT.jar 
 3. To register the JWT grant type, configure the <IS_HOME>/repository/conf/identity/identity.xml file by adding a new entry under the <OAuth><ClientAuthHandlers> element. Add a unique <ClientAuthHandler> identifier between as seen in the code block below.
 
         <ClientAuthHandler Class="org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.PrivateKeyJWTClientAuthHandler">
-            <Property Name="RejectBeforePeriod">60</Property>
+            <Property Name="RejectBeforePeriodInMinutes">60</Property>
         </ClientAuthHandler>
             
 4. Update <GrantTypeValidatorImplClass> for supported grant types as below in <IS_HOME>/repository/conf/identity/identity.xml, under <SupportedGrantTypes> tag

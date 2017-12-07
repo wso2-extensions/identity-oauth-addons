@@ -19,7 +19,6 @@
 
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.storage;
 
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
@@ -31,10 +30,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-
 import java.util.Calendar;
 import java.util.TimeZone;
-
 
 /**
  * JWT token persistence is managed by JWTStorageManager
@@ -112,7 +109,6 @@ public class JWTStorageManager {
     public void persistJWTIdInDB(String jti, long expTime, long created) throws IdentityOAuth2Exception {
         Connection connection = null;
         PreparedStatement preparedStatement = null;
-        ResultSet rs = null;
         try {
             connection = IdentityDatabaseUtil.getDBConnection();
             preparedStatement = connection.prepareStatement(Constants.SQLQueries.INSERT_JWD_ID);
@@ -126,11 +122,10 @@ public class JWTStorageManager {
             preparedStatement.close();
             connection.commit();
         } catch (SQLException e) {
-            String error = "Error when storing the JWT ID: " + jti + " with exp: " +
-                    expTime;
+            String error = "Error when storing the JWT ID: " + jti + " with exp: " +expTime;
             throw new IdentityOAuth2Exception(error, e);
         } finally {
-            IdentityDatabaseUtil.closeAllConnections(connection, rs, preparedStatement);
+            IdentityDatabaseUtil.closeAllConnections(connection, null, preparedStatement);
         }
     }
 }

@@ -22,10 +22,8 @@ import com.nimbusds.jwt.SignedJWT;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.wso2.carbon.base.CarbonBaseConstants;
-import org.wso2.carbon.identity.base.IdentityConstants;
 import org.wso2.carbon.identity.common.testng.WithCarbonHome;
 import org.wso2.carbon.identity.common.testng.WithKeyStore;
-import org.wso2.carbon.identity.core.util.IdentityUtil;
 
 import java.security.Key;
 import java.security.KeyStore;
@@ -49,7 +47,6 @@ public class JWTCacheTest {
                 System.getProperty(CarbonBaseConstants.CARBON_HOME));
         jwtCache = JWTCache.getInstance();
         Key key1 = clientKeyStore.getKey("wso2carbon", "wso2carbon".toCharArray());
-        String audience = IdentityUtil.getServerURL(IdentityConstants.OAuth.TOKEN, true, false);
 
         String privateKeyJWT1 = buildJWT("some-issuer", "some-subject", "some-jti", "some-audience", "RSA265", key1, 0);
         signedJWT = SignedJWT.parse(privateKeyJWT1);

@@ -23,6 +23,9 @@ import org.wso2.carbon.identity.application.common.cache.CacheEntry;
 
 import java.text.ParseException;
 
+/**
+ * Cache Entry for JWT Cache
+ */
 public class JWTCacheEntry extends CacheEntry {
     private String encodedJWT;
 

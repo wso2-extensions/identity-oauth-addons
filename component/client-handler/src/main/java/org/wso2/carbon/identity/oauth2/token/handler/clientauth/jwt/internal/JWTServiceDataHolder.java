@@ -18,7 +18,6 @@
 
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal;
 
-
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**

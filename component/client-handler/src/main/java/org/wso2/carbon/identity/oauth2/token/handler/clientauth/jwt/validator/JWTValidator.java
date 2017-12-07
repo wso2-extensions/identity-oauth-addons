@@ -27,6 +27,7 @@ import com.nimbusds.jwt.SignedJWT;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.base.MultitenantConstants;
 import org.wso2.carbon.core.util.KeyStoreManager;
 import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorConfig;
 import org.wso2.carbon.identity.application.common.model.IdentityProvider;
@@ -70,6 +71,7 @@ public class JWTValidator {
     public static final String FULLSTOP_DELIMITER = ".";
     public static final String DASH_DELIMITER = "-";
     public static final String KEYSTORE_FILE_EXTENSION = ".jks";
+    public static final String RS = "RS";
     private int notAcceptBeforeTimeInMins;
     private JWTCache jwtCache;
     private boolean enableJTICache;
@@ -87,13 +89,7 @@ public class JWTValidator {
         this.validAudience = validAudience;
         this.validIssuer = validIssuer;
         this.jwtStorageManager = new JWTStorageManager();
-        if (enableJTICache) {
-            this.jwtCache = JWTCache.getInstance();
-        } else {
-            if (log.isDebugEnabled()) {
-                log.debug("List of used JSON Web Token IDs are not maintained in cache.");
-            }
-        }
+        this.jwtCache = JWTCache.getInstance();
     }
 
     /**
@@ -102,7 +98,6 @@ public class JWTValidator {
      * @throws IdentityOAuth2Exception
      */
     public boolean isValidToken(SignedJWT signedJWT) throws IdentityOAuth2Exception {
-
         if (signedJWT == null) {
             return logAndReturnFalse("No Valid Assertion was found for " + Constants.OAUTH_JWT_BEARER_GRANT_TYPE);
         }
@@ -148,7 +143,6 @@ public class JWTValidator {
         }
 
         String tenantDomain = oAuthAppDO.getUser().getTenantDomain();
-
         //validate signature
         if (!isValidSignature(signedJWT, tenantDomain, jwtSubject)) {
             return logAndReturnFalse("Signature or Message Authentication invalid for:" + jwtSubject);
@@ -161,7 +155,6 @@ public class JWTValidator {
                 checkNotBeforeTime(notBeforeTime, currentTimeInMillis, timeStampSkewMillis) &&
                 validateAgeOfTheToken(issuedAtTime, currentTimeInMillis, timeStampSkewMillis) &&
                 validateCustomClaims(claimsSet.getCustomClaims());
-
     }
 
     /**
@@ -252,8 +245,7 @@ public class JWTValidator {
     }
 
     /**
-     * Get the token endpoint of the server
-     *
+     * Return globally set audience or the token endpoint of the server
      * @param tenantDomain
      * @return
      * @throws IdentityOAuth2Exception
@@ -284,6 +276,7 @@ public class JWTValidator {
 
 
     /**
+     * Error is logged and return false
      * @param errorMessage
      * @return
      * @throws IdentityOAuth2Exception
@@ -294,8 +287,7 @@ public class JWTValidator {
     }
 
     /**
-     * Invalid token message is logged and returns false
-     *
+     * Message is logged and returns false
      * @param errorMessage
      * @return
      */
@@ -307,8 +299,7 @@ public class JWTValidator {
     }
 
     /**
-     * Invalid token message is logged and returns false
-     *
+     * Message is logged and returns true
      * @param errorMessage
      * @return
      */
@@ -319,7 +310,7 @@ public class JWTValidator {
         return true;
     }
 
-    /**
+    /** Get the claimset from JWT
      * @param signedJWT Signed JWT
      * @return Claim set
      */
@@ -371,11 +362,10 @@ public class JWTValidator {
         keyStoreManager = KeyStoreManager.getInstance(tenantId);
         KeyStore keyStore;
         try {
-            if (tenantId != -1234) {// for tenants, load key from their generated key store
+            if (tenantId != MultitenantConstants.SUPER_TENANT_ID) {// for tenants, load key from their generated key store
                 keyStore = keyStoreManager.getKeyStore(generateKSNameFromDomainName(tenantDomain));
             } else {
-                // for super tenant, load the default pub. cert using the
-                // config. in carbon.xml
+                // for super tenant, load the default pub. cert using the config. in carbon.xml
                 keyStore = keyStoreManager.getPrimaryKeyStore();
             }
             return (X509Certificate) keyStore.getCertificate(alias);
@@ -427,7 +417,7 @@ public class JWTValidator {
             if (log.isDebugEnabled()) {
                 log.debug("Signature Algorithm found in the JWT Header: " + alg);
             }
-            if (alg.indexOf("RS") == 0) {
+            if (alg.indexOf(RS) == 0) {
                 // At this point 'x509Certificate' will never be null.
                 PublicKey publicKey = x509Certificate.getPublicKey();
                 if (publicKey instanceof RSAPublicKey) {
@@ -459,10 +449,7 @@ public class JWTValidator {
                                           long timeStampSkewMillis) throws IdentityOAuth2Exception {
         long expirationTimeInMillis = expirationTime.getTime();
         if ((currentTimeInMillis + timeStampSkewMillis) > expirationTimeInMillis) {
-            return logAndReturnFalse("JSON Web Token is expired." +
-                    " Expiration Time(ms) : " + expirationTimeInMillis +
-                    ", TimeStamp Skew : " + timeStampSkewMillis +
-                    ", Current Time : " + currentTimeInMillis + ". JWT Rejected and validation terminated");
+            return logAndReturnFalse("JSON Web Token is expired. Expiration Time(ms) : " + expirationTimeInMillis + ". JWT Rejected and validation terminated");
         }
         return logAndReturnTrue("Expiration Time(exp) of JWT was validated successfully.");
     }
@@ -584,10 +571,10 @@ public class JWTValidator {
     public boolean checkJTIValidityPeriod(String jti, long jwtExpiryTimeMillis, long currentTimeInMillis,
                                           long timeStampSkewMillis) throws IdentityOAuth2Exception {
         if (currentTimeInMillis + timeStampSkewMillis > jwtExpiryTimeMillis) {
-            return logAndReturnTrue("JWT Token with jti: " + jti + "has been reused after the allowed expiry time : "
+            return logAndReturnTrue("JWT Token with jti: " + jti + "has been reused after the allowed expiry time:"
                     + jwtExpiryTimeMillis);
         } else {
-            return logAndReturnFalse("JWT Token with jti: " + jti + " Has been replayed before the allowed expiry time : "
+            return logAndReturnFalse("JWT Token with jti: " + jti + " Has been replayed before the allowed expiry time:"
                     + jwtExpiryTimeMillis);
         }
     }
