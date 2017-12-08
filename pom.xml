@@ -23,7 +23,7 @@
         <artifactId>wso2</artifactId>
         <version>1</version>
     </parent>
-    <groupId>org.wso2.carbon.extension.identity.oauth2</groupId>
+    <groupId>org.wso2.carbon.extension.identity.oauth.addons</groupId>
     <artifactId>identity-oauth2-extenstions</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>

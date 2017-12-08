@@ -17,7 +17,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>org.wso2.carbon.extension.identity.oauth2</groupId>
+        <groupId>org.wso2.carbon.extension.identity.oauth.addons</groupId>
         <artifactId>identity-oauth2-extenstions</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
@@ -30,7 +30,7 @@
     <description>This feature contains extension feature for JWT Grant Type</description>
     <dependencies>
         <dependency>
-            <groupId>org.wso2.carbon.extension.identity.oauth2</groupId>
+            <groupId>org.wso2.carbon.extension.identity.oauth.addons</groupId>
             <artifactId>org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt</artifactId>
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
@@ -58,7 +58,7 @@
                                 </properties>
                             </adviceFile>
                             <bundles>
-                                <bundleDef>org.wso2.carbon.extension.identity.oauth2:org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt
+                                <bundleDef>org.wso2.carbon.extension.identity.oauth.addons:org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt
                                 </bundleDef>
                             </bundles>
                         </configuration>
