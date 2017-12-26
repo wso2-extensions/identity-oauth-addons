@@ -35,6 +35,7 @@ public class Constants {
     public static final boolean DEFAULT_ENABLE_JTI_CACHE = true;
     public static final String CLIENT_ID = "client_id";
     public static final String UTC = "UTC";
+    public static final String TOKEN_ENDPOINT_ALIAS = "TokenEndpointAlias";
 
     public static class SQLQueries {
         public static final String GET_JWT_ID = "SELECT 1 FROM IDN_JWT_PRIVATE_KEY WHERE JWT_ID =?;";

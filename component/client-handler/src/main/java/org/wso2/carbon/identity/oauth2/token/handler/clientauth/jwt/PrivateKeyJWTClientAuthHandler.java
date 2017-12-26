@@ -43,6 +43,7 @@ import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Const
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.OAUTH_JWT_BEARER_GRANT_TYPE;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.PREVENT_TOKEN_REUSE;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.REJECT_BEFORE_PERIOD;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.TOKEN_ENDPOINT_ALIAS;
 
 /**
  * Client Authentication handler to implement oidc private_key_jwt client authentication spec
@@ -74,6 +75,10 @@ public class PrivateKeyJWTClientAuthHandler extends AbstractClientAuthHandler {
             String rejectBeforePeriodConfigVal = properties.getProperty(REJECT_BEFORE_PERIOD);
             if (isNotEmpty(rejectBeforePeriodConfigVal)) {
                 notAcceptBeforeTimeInMins = Integer.parseInt(rejectBeforePeriodConfigVal);
+            }
+            String tokenEndpointAlias = properties.getProperty(TOKEN_ENDPOINT_ALIAS);
+            if (isNotEmpty(tokenEndpointAlias)) {
+                validAudience = tokenEndpointAlias;
             }
             if (log.isDebugEnabled()) {
                 log.debug("PrivateKeyJWT Validity period is set to:" + notAcceptBeforeTimeInMins);
