@@ -25,27 +25,51 @@
     </parent>
     <groupId>org.wso2.carbon.extension.identity.oauth.addons</groupId>
     <artifactId>identity-oauth2-extenstions</artifactId>
-    <version>1.0.3-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>WSO2 Carbon Extension - Identity OAuth Extensions Pom</name>
     <url>http://wso2.org</url>
+
+    <modules>
+        <module>component/client-handler</module>
+        <module>feature</module>
+    </modules>
+
     <profiles>
         <profile>
             <id>default</id>
             <activation>
                 <activeByDefault>true</activeByDefault>
             </activation>
-            <modules>
-                <module>component/client-handler</module>
-                <module>feature</module>
-            </modules>
+        </profile>
+        <profile>
+            <id>wso2-release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>2.10.1</version>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                                <configuration> <!-- add this to disable checking -->
+                                    <additionalparam>-Xdoclint:none</additionalparam>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
     <scm>
-        <connection>scm:git:https://github.com/wso2-extensions/identity-oauth2-grant-jwt.git</connection>
-        <url>https://github.com/wso2-extensions/identity-oauth2-grant-jwt.git</url>
-        <developerConnection>scm:git:https://github.com/wso2-extensions/identity-oauth2-grant-jwt.git
-        </developerConnection>
+        <connection>scm:git:https://github.com/wso2-extensions/identity-oauth-addons.git</connection>
+        <url>https://github.com/wso2-extensions/identity-oauth-addons.git</url>
+        <developerConnection>scm:git:https://github.com/wso2-extensions/identity-oauth-addons.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
     <dependencies>
