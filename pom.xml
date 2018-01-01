@@ -72,6 +72,7 @@
         <developerConnection>scm:git:https://github.com/wso2-extensions/identity-oauth-addons.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
+
     <dependencies>
         <dependency>
             <groupId>org.wso2.carbon.identity.framework</groupId>
@@ -265,6 +266,17 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.wso2.carbon.extension.identity.oauth.addons</groupId>
+                <artifactId>org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <build>
         <extensions>
             <extension>
