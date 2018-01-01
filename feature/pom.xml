@@ -19,12 +19,12 @@
     <parent>
         <groupId>org.wso2.carbon.extension.identity.oauth.addons</groupId>
         <artifactId>identity-oauth2-extenstions</artifactId>
-        <version>1.0.0</version>
+        <version>1.0.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>org.wso2.carbon.extension.identity.oauth2.extension.feature</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>WSO2 Carbon Extension- Identity Oauth Extensions Feature</name>
     <url>http://wso2.org</url>
