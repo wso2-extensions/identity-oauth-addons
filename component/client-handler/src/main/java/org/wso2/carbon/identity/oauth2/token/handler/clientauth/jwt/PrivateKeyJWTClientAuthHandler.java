@@ -18,8 +18,10 @@
 
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt;
 
+import com.nimbusds.jwt.ReadOnlyJWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.oauth.common.OAuthConstants;
@@ -111,15 +113,21 @@ public class PrivateKeyJWTClientAuthHandler extends AbstractClientAuthHandler {
     }
 
     @Override
-    public boolean authenticateClient(OAuthTokenReqMessageContext tokReqMsgCtx)
-            throws IdentityOAuth2Exception {
+    public boolean authenticateClient(OAuthTokenReqMessageContext tokReqMsgCtx) throws IdentityOAuth2Exception {
+        boolean isValid = false;
         try {
             SignedJWT signedJWT = getSignedJWT(tokReqMsgCtx);
-            return jwtValidator.isValidToken(signedJWT);
+            isValid = jwtValidator.isValidToken(signedJWT);
+            if (isValid && StringUtils.isEmpty(tokReqMsgCtx.getOauth2AccessTokenReqDTO().getClientId())) {
+                ReadOnlyJWTClaimsSet claimsSet = jwtValidator.getClaimSet(signedJWT);
+                String jwtSubject = jwtValidator.resolveSubject(claimsSet);
+                tokReqMsgCtx.getOauth2AccessTokenReqDTO().setClientId(jwtSubject);
+            }
         } catch (IdentityOAuth2Exception e) {
-            //IdentityOAuth2Exception are logged when thrown
+            log.error("Error occurred validating the signed JWT", e);
             return false;
         }
+        return isValid;
     }
 
     /**
