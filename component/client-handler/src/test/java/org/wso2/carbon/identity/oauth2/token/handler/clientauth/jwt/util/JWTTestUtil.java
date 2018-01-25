@@ -51,7 +51,7 @@ import java.util.Properties;
 
 public class JWTTestUtil {
 
-    /**
+   /* *//**
      * Return a JWT string with provided info, and default time
      * @param issuer
      * @param subject
@@ -62,7 +62,7 @@ public class JWTTestUtil {
      * @param notBeforeMillis
      * @return
      * @throws IdentityOAuth2Exception
-     */
+     *//*
     public static String buildJWT(String issuer, String subject, String jti, String audience, String algorythm,
                                   Key privateKey, long notBeforeMillis)
             throws IdentityOAuth2Exception {
@@ -119,14 +119,14 @@ public class JWTTestUtil {
         return signJWTWithRSA(jwtClaimsSet, privateKey);
     }
 
-    /**
+    *//**
      * sign JWT token from RSA algorithm
      *
      * @param jwtClaimsSet contains JWT body
      * @param privateKey
      * @return signed JWT token
      * @throws IdentityOAuth2Exception
-     */
+     *//*
     public static String signJWTWithRSA(JWTClaimsSet jwtClaimsSet, Key privateKey)
             throws IdentityOAuth2Exception {
         try {
@@ -139,12 +139,12 @@ public class JWTTestUtil {
         }
     }
 
-    /**
+    *//**
      * Create a auth-app in the given tenant with given consumerKey and consumerSecreat
      * @param consumerKey
      * @param consumerSecret
      * @param tenantId
-     */
+     *//*
     public static void createApplication(String consumerKey, String consumerSecret, int tenantId) {
         try (Connection connection = IdentityDatabaseUtil.getDBConnection();
              PreparedStatement prepStmt = connection.prepareStatement(SQLQueries.OAuthAppDAOSQLQueries.ADD_OAUTH_APP)){
@@ -166,14 +166,14 @@ public class JWTTestUtil {
         }
     }
 
-    /**
+    *//**
      * Read Keystore from the file identified by given keystorename, password
      * @param keystoreName
      * @param password
      * @param home
      * @return
      * @throws Exception
-     */
+     *//*
     public static KeyStore getKeyStoreFromFile(String keystoreName, String password,
                                                String home) throws Exception {
         Path tenantKeystorePath = Paths.get(home, "repository",
@@ -184,11 +184,11 @@ public class JWTTestUtil {
         return keystore;
     }
 
-    /**
+    *//**
      * Create and return a JWTValidator instance with given properties
      * @param properties
      * @return
-     */
+     *//*
     public static JWTValidator getJWTValidator(Properties properties) {
         int rejectBeforePeriod;
         boolean cacheUsedJTI = true;
@@ -236,5 +236,5 @@ public class JWTTestUtil {
 
         return new JWTValidator(rejectBeforePeriod, preventTokenReuse, cacheUsedJTI,
                 validAudience, validIssuer);
-    }
+    }*/
 }

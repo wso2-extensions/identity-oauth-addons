@@ -30,7 +30,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class JWTClientAuthValidatorTest {
-    private JWTClientAuthValidator JWTClientAuthValidator;
+   /* private JWTClientAuthValidator JWTClientAuthValidator;
     HttpServletRequest mockedRequest;
 
     @BeforeClass
@@ -65,5 +65,5 @@ public class JWTClientAuthValidatorTest {
         Mockito.when(mockedRequest.getParameter(Constants.OAUTH_JWT_ASSERTION_TYPE)).thenReturn("");
         Mockito.when(mockedRequest.getParameter(Constants.OAUTH_JWT_ASSERTION)).thenReturn("");
         JWTClientAuthValidator.validateClientAuthenticationCredentials(mockedRequest);
-    }
+    }*/
 }

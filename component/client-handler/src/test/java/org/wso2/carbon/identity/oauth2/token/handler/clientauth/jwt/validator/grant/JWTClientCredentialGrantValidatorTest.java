@@ -29,7 +29,7 @@ import javax.servlet.http.HttpServletRequest;
 
 public class JWTClientCredentialGrantValidatorTest {
 
-    HttpServletRequest mockedRequest;
+    /*HttpServletRequest mockedRequest;
     private org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.grant.JWTClientCredentialGrantValidator JWTClientCredentialGrantValidator;
 
     @BeforeClass
@@ -45,5 +45,5 @@ public class JWTClientCredentialGrantValidatorTest {
         Mockito.when(mockedRequest.getParameter(Constants.OAUTH_JWT_ASSERTION_TYPE)).thenReturn("");
         Mockito.when(mockedRequest.getParameter(Constants.OAUTH_JWT_ASSERTION)).thenReturn("");
         JWTClientCredentialGrantValidator.validateClientAuthenticationCredentials(mockedRequest);
-    }
+    }*/
 }

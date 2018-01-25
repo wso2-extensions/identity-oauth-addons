@@ -16,28 +16,25 @@
  * under the License
  */
 
-package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.cache;
-
-import com.nimbusds.jwt.SignedJWT;
-import org.wso2.carbon.identity.application.common.cache.CacheEntry;
-
-import java.text.ParseException;
+package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.dao;
 
 /**
- * Cache Entry for JWT Cache
+ * JWT token is persisted in database as JWTEntry objects
  */
-public class JWTCacheEntry extends CacheEntry {
-    private String encodedJWT;
+public class JWTEntry {
+    private long exp;
+    private long createdTime;
 
-    public JWTCacheEntry(SignedJWT jwt) {
-        this.encodedJWT = jwt.serialize();
+    public JWTEntry(long exp, long createdTime) {
+        this.exp = exp;
+        this.createdTime = createdTime;
     }
 
-    public SignedJWT getJwt() throws ParseException {
-        return SignedJWT.parse(this.encodedJWT);
+    public long getExp() {
+        return exp;
     }
 
-    public String getEncodedJWt() {
-        return this.encodedJWT;
+    public long getCreatedTime() {
+        return createdTime;
     }
 }

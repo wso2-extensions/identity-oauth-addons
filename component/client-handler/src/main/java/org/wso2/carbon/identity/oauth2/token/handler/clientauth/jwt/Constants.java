@@ -28,11 +28,9 @@ public class Constants {
     public static final int DEFAULT_VALIDITY_PERIOD_IN_MINUTES = 300;
     public static final String REJECT_BEFORE_PERIOD = "RejectBeforePeriodInMinutes";
     public static final boolean PREVENT_TOKEN_REUSE = true;
-    public static final String DEFAULT_AUDIENCE = "";
-    public static final String DEFAULT_ISSUER = "";
+    public static final String DEFAULT_AUDIENCE = null;
+    public static final String DEFAULT_ISSUER = null;
     public static final String SP = "SP";
-    public static final String USE_CACHE_FOR_JTI = "EnableCacheForJTI";
-    public static final boolean DEFAULT_ENABLE_JTI_CACHE = true;
     public static final String CLIENT_ID = "client_id";
     public static final String UTC = "UTC";
     public static final String TOKEN_ENDPOINT_ALIAS = "TokenEndpointAlias";

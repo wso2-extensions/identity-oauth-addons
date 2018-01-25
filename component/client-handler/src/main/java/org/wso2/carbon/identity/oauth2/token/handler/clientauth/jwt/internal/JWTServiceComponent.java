@@ -19,7 +19,10 @@ package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.osgi.framework.BundleContext;
 import org.osgi.service.component.ComponentContext;
+import org.wso2.carbon.identity.oauth2.client.authentication.OAuthClientAuthenticator;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.PrivateKeyJWTClientAuthenticator;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
@@ -38,8 +41,13 @@ public class JWTServiceComponent {
         return JWTServiceDataHolder.getInstance().getRealmService();
     }
 
+    private BundleContext bundleContext;
     protected void activate(ComponentContext ctxt) {
         try {
+            PrivateKeyJWTClientAuthenticator privateKeyJWTClientAuthenticator = new PrivateKeyJWTClientAuthenticator();
+            bundleContext = ctxt.getBundleContext();
+            bundleContext.registerService(OAuthClientAuthenticator.class.getName(), privateKeyJWTClientAuthenticator,
+                    null);
             if (log.isDebugEnabled()) {
                 log.debug("Private Key JWT client handler is activated");
             }

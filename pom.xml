@@ -453,7 +453,7 @@
     </distributionManagement>
     <properties>
         <carbon.identity.version>5.7.0</carbon.identity.version>
-        <identity.inbound.auth.oauth.version>5.3.4</identity.inbound.auth.oauth.version>
+        <identity.inbound.auth.oauth.version>5.6.5</identity.inbound.auth.oauth.version>
         <commons-logging.version>4.4.7</commons-logging.version>
         <carbon.kernel.version>4.4.7</carbon.kernel.version>
         <org.apache.oltu.oauth2.client.version>1.0.0</org.apache.oltu.oauth2.client.version>

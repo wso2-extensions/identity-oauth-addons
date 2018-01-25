@@ -27,7 +27,7 @@ import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants;
 import javax.servlet.http.HttpServletRequest;
 
 public class JWTAuthorizationCodeGrantValidatorTest {;
-    org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.grant.JWTAuthorizationCodeGrantValidator JWTAuthorizationCodeGrantValidator;
+   /* org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.grant.JWTAuthorizationCodeGrantValidator JWTAuthorizationCodeGrantValidator;
     HttpServletRequest  mockedRequest;
 
     @BeforeClass
@@ -44,5 +44,5 @@ public class JWTAuthorizationCodeGrantValidatorTest {;
         Mockito.when(mockedRequest.getParameter(Constants.OAUTH_JWT_ASSERTION)).thenReturn("some-assertion");
         Whitebox.setInternalState(JWTAuthorizationCodeGrantValidator, "enforceClientAuthentication", true);
         JWTAuthorizationCodeGrantValidator.validateClientAuthenticationCredentials(mockedRequest);
-    }
+    }*/
 }

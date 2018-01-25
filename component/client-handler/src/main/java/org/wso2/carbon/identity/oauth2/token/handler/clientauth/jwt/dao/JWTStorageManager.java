@@ -17,7 +17,7 @@
  * under the License
  */
 
-package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.storage;
+package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.dao;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -39,9 +39,10 @@ import java.util.TimeZone;
  */
 public class JWTStorageManager {
     private static final Log log = LogFactory.getLog(JWTStorageManager.class);
+
     /**
      * check whether a JWT Entry with given jti exists in the DB
-     * @param jti JWT TOKEN ID
+     * @param jti JWT token id
      * @return true if an entry is found
      * @throws IdentityOAuth2Exception when exception occures
      */
@@ -63,6 +64,9 @@ public class JWTStorageManager {
             }
         } catch (SQLException e) {
             String error = "Error when retrieving the JWT ID: " + jti;
+            if(log.isDebugEnabled()){
+                log.debug(error);
+            }
             throw new IdentityOAuth2Exception(error,  e);
         } finally {
             IdentityDatabaseUtil.closeAllConnections(dbConnection, rs, prepStmt);
@@ -71,10 +75,10 @@ public class JWTStorageManager {
     }
 
     /**
-     * To retrieve a JWT Entry with given jti if, exists in the DB
-     * @param jti JWT TOKEN ID
-     * @return JWT entry if found, null otherwise
-     * @throws IdentityOAuth2Exception when exception occurs
+     * To get persisted JWT.
+     * @param jti jti
+     * @return JWTEntry
+     * @throws IdentityOAuth2Exception
      */
     public JWTEntry getJwtFromDB(String jti) throws IdentityOAuth2Exception {
         Connection dbConnection = IdentityDatabaseUtil.getDBConnection();
@@ -92,6 +96,9 @@ public class JWTStorageManager {
             }
         } catch (SQLException e) {
             String error = "Error when retrieving the JWT ID: " + jti;
+            if(log.isDebugEnabled()){
+                log.debug(error);
+            }
             throw new IdentityOAuth2Exception(error,  e);
         } finally {
             IdentityDatabaseUtil.closeAllConnections(dbConnection, rs, prepStmt);
@@ -100,20 +107,20 @@ public class JWTStorageManager {
     }
 
     /**
-     * Save JWT entry to database
-     * @param jti JWT TOKEN ID
+     *  To persist unique id for jti in the table
+     * @param jti jti a unique id
      * @param expTime expiration time
-     * @param created created time
+     * @param timeCreated jti inserted time
      * @throws IdentityOAuth2Exception
      */
-    public void persistJWTIdInDB(String jti, long expTime, long created) throws IdentityOAuth2Exception {
+    public void persistJWTIdInDB(String jti, long expTime, long timeCreated) throws IdentityOAuth2Exception {
         Connection connection = null;
         PreparedStatement preparedStatement = null;
         try {
             connection = IdentityDatabaseUtil.getDBConnection();
             preparedStatement = connection.prepareStatement(Constants.SQLQueries.INSERT_JWD_ID);
             preparedStatement.setString(1, jti);
-            Timestamp timestamp = new Timestamp(created);
+            Timestamp timestamp = new Timestamp(timeCreated);
             Timestamp expTimestamp = new Timestamp(expTime);
             preparedStatement.setTimestamp(2, expTimestamp, Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC)));
             preparedStatement.setTimestamp(3, timestamp,
@@ -123,6 +130,9 @@ public class JWTStorageManager {
             connection.commit();
         } catch (SQLException e) {
             String error = "Error when storing the JWT ID: " + jti + " with exp: " +expTime;
+            if(log.isDebugEnabled()){
+                log.debug(error);
+            }
             throw new IdentityOAuth2Exception(error, e);
         } finally {
             IdentityDatabaseUtil.closeAllConnections(connection, null, preparedStatement);
