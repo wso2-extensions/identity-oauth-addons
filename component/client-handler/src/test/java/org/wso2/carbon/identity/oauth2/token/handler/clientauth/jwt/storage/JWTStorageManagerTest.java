@@ -22,36 +22,44 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.wso2.carbon.identity.common.testng.WithH2Database;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
+import org.wso2.carbon.identity.oauth2.client.authentication.OAuthClientAuthnException;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.dao.JWTStorageManager;
 
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 @WithH2Database(jndiName = "jdbc/WSO2CarbonDB", files = {"dbscripts/identity.sql"})
 public class JWTStorageManagerTest {
-   /* private JWTStorageManager JWTStorageManager;
+
+    private JWTStorageManager JWTStorageManager;
 
     @BeforeClass
     public void setUp() throws Exception {
+
         JWTStorageManager = new JWTStorageManager();
     }
 
     @Test()
     public void testIsJTIExistsInDB() throws Exception {
+
         assertTrue(JWTStorageManager.isJTIExistsInDB("2000"));
     }
 
     @Test()
     public void testGetJwtFromDB() throws Exception {
+
         assertNotNull(JWTStorageManager.getJwtFromDB("2000"));
     }
 
     @Test()
     public void testPersistJWTIdInDB() throws Exception {
+
         JWTStorageManager.persistJWTIdInDB("2004", 10000000, 10000000);
     }
 
-    @Test(expectedExceptions = IdentityOAuth2Exception.class)
+    @Test(expectedExceptions = OAuthClientAuthnException.class)
     public void testPersistJWTIdInDBExceptionCase() throws Exception {
+
         JWTStorageManager.persistJWTIdInDB("2000", 10000000, 10000000);
-    }*/
+    }
 }

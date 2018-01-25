@@ -19,6 +19,7 @@
     <artifactId>org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt</artifactId>
     <packaging>bundle</packaging>
     <name>Private Key JWT client handler</name>
+    <version>1.0.2</version>
     <url>http://wso2.org</url>
     <parent>
         <groupId>org.wso2.carbon.extension.identity.oauth.addons</groupId>
@@ -68,8 +69,6 @@
                             com.nimbusds.jwt; version="${nimbusds.osgi.version.range}",
                             org.wso2.carbon.idp.mgt.*; version="${carbon.identity.version}",
                             org.wso2.carbon.user.core.util; version="${carbon.kernel.package.import.version.range}",
-                            org.apache.commons.lang; version="${commons-lang.wso2.osgi.version.range}",
-                            org.apache.commons.logging; version="${commons-logging.osgi.version.range}",
                             org.wso2.carbon.user.core.service;version="${carbon.kernel.package.import.version.range}",
                             net.minidev.json; version="${net.minidev.json.imp.pkg.version.range}",
                             org.wso2.carbon.context; version="${carbon.kernel.package.import.version.range}",
@@ -166,7 +165,7 @@
                                         <limit implementation="org.jacoco.report.check.Limit">
                                             <counter>COMPLEXITY</counter>
                                             <value>COVEREDRATIO</value>
-                                          <!--  <minimum>0.60</minimum>-->
+                                            <!--<minimum>0.60</minimum>-->
                                         </limit>
                                     </limits>
                                 </rule>

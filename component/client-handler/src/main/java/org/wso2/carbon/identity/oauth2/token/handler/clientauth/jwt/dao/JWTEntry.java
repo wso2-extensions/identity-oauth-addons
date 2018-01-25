@@ -19,22 +19,26 @@
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.dao;
 
 /**
- * JWT token is persisted in database as JWTEntry objects
+ * A model class which is use to persist the JWT token in database as JWTEntry objects.
  */
 public class JWTEntry {
+
     private long exp;
     private long createdTime;
 
     public JWTEntry(long exp, long createdTime) {
+
         this.exp = exp;
         this.createdTime = createdTime;
     }
 
     public long getExp() {
+
         return exp;
     }
 
     public long getCreatedTime() {
+
         return createdTime;
     }
 }
