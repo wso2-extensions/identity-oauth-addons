@@ -42,6 +42,8 @@ import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.client.authentication.OAuthClientAuthnException;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.cache.JWTCache;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.cache.JWTCacheEntry;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.dao.JWTEntry;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.dao.JWTStorageManager;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceComponent;
@@ -74,20 +76,25 @@ public class JWTValidator {
     private boolean preventTokenReuse;
     private String validAudience;
     private String validIssuer;
-    private int rejectBefore;
+    private int rejectBeforeInMinutes;
+    //Adding different types of values for mandatory claims list. Hence need to use object type.
     List<Object> mandatoryClaims;
+    private JWTCache jwtCache;
+    private boolean enableJTICache;
 
     private JWTStorageManager jwtStorageManager;
 
     public JWTValidator(boolean preventTokenReuse, String validAudience, int rejectBefore, String validIssuer,
-                        List<Object> mandatoryClaims) {
+                        List<Object> mandatoryClaims, boolean enableJTICache) {
 
         this.preventTokenReuse = preventTokenReuse;
         this.validAudience = validAudience;
         this.validIssuer = validIssuer;
         this.jwtStorageManager = new JWTStorageManager();
         this.mandatoryClaims = mandatoryClaims;
-        this.rejectBefore = rejectBefore;
+        this.rejectBeforeInMinutes = rejectBefore;
+        this.enableJTICache = enableJTICache;
+        this.jwtCache = JWTCache.getInstance();
     }
 
     /**
@@ -162,7 +169,8 @@ public class JWTValidator {
                     !checkNotBeforeTime(notBeforeTime, currentTimeInMillis, timeStampSkewMillis) ||
                     !validateJWTWithExpTime(expirationTime, currentTimeInMillis, timeStampSkewMillis) ||
                     !validateNotBeforeClaim(currentTimeInMillis, timeStampSkewMillis, nbf) ||
-                    !validateJTI(jti, currentTimeInMillis, timeStampSkewMillis, expTime, issuedTime)) {
+                    !validateJTI(signedJWT, jti, currentTimeInMillis, timeStampSkewMillis, expTime, issuedTime) ||
+                    !validateAgeOfTheToken(issuedAtTime, currentTimeInMillis, timeStampSkewMillis)) {
                 return false;
             }
 
@@ -184,8 +192,8 @@ public class JWTValidator {
 
     private boolean validateMandatoryFeilds(List<Object> mandatoryClaims) throws OAuthClientAuthnException {
 
-        for (Object mandotaryClaim : mandatoryClaims) {
-            if (mandotaryClaim == null) {
+        for (Object mandataryClaim : mandatoryClaims) {
+            if (mandataryClaim == null) {
                 String errorMessage = "Mandatory field/feilds (Issuer, Subject, Expiration time , JWT ID or " +
                         "Audience) are missing in the JWT assertion";
                 if (log.isDebugEnabled()) {
@@ -258,7 +266,7 @@ public class JWTValidator {
     // "REQUIRED. JWT ID. A unique identifier for the token, which can be used to prevent reuse of the token. These tokens
     // MUST only be used once, unless conditions for reuse were negotiated between the parties; any such negotiation is
     // beyond the scope of this specification."
-    private boolean validateJTI(String jti, long currentTimeInMillis,
+    private boolean validateJTI(SignedJWT signedJWT, String jti, long currentTimeInMillis,
                                 long timeStampSkewMillis, long expTime, long issuedTime) throws OAuthClientAuthnException {
 
         if (jti == null) {
@@ -267,6 +275,12 @@ public class JWTValidator {
                 log.debug(message);
             }
             throw new OAuthClientAuthnException(message);
+        }
+        if (enableJTICache) {
+            JWTCacheEntry entry = jwtCache.getValueFromCache(jti);
+            if (!validateJTIInCache(jti, signedJWT, entry, currentTimeInMillis, timeStampSkewMillis, this.jwtCache)) {
+                return false;
+            }
         }
         // Check JWT ID in DB
         if (!validateJWTInDataBase(jti, currentTimeInMillis, timeStampSkewMillis)) {
@@ -558,4 +572,75 @@ public class JWTValidator {
         return signedJWT.verify(verifier);
     }
 
+    private boolean validateAgeOfTheToken(Date issuedAtTime, long currentTimeInMillis, long timeStampSkewMillis) throws
+            OAuthClientAuthnException {
+
+        if (issuedAtTime == null) {
+            return true;
+        }
+        if (rejectBeforeInMinutes > 0) {
+            long issuedAtTimeMillis = issuedAtTime.getTime();
+            long rejectBeforeMillis = 1000L * 60 * rejectBeforeInMinutes;
+            if (currentTimeInMillis + timeStampSkewMillis - issuedAtTimeMillis >
+                    rejectBeforeMillis) {
+                String logMsg = getTokenTooOldMessage(currentTimeInMillis, timeStampSkewMillis, issuedAtTimeMillis,
+                        rejectBeforeMillis);
+                if (log.isDebugEnabled()) {
+                    log.debug(logMsg);
+                }
+                throw new OAuthClientAuthnException("The jwt is too old to use.", OAuth2ErrorCodes.INVALID_REQUEST);
+            }
+        }
+        return true;
+    }
+
+    private String getTokenTooOldMessage(long currentTimeInMillis, long timeStampSkewMillis, long issuedAtTimeMillis,
+                                         long rejectBeforeMillis) {
+
+        StringBuilder tmp = new StringBuilder();
+        tmp.append("JSON Web Token is issued before the allowed time.");
+        tmp.append(" Issued At Time(ms) : ");
+        tmp.append(issuedAtTimeMillis);
+        tmp.append(", Reject before limit(ms) : ");
+        tmp.append(rejectBeforeMillis);
+        tmp.append(", TimeStamp Skew : ");
+        tmp.append(timeStampSkewMillis);
+        tmp.append(", Current Time : ");
+        tmp.append(currentTimeInMillis);
+        tmp.append(". JWT Rejected and validation terminated");
+        return tmp.toString();
+    }
+
+    private boolean validateJTIInCache(String jti, SignedJWT signedJWT, JWTCacheEntry entry, long currentTimeInMillis,
+                                       long timeStampSkewMillis, JWTCache jwtCache) throws OAuthClientAuthnException {
+
+        if (entry == null) {
+            // Update the cache with the new JWT for the same JTI.
+            jwtCache.addToCache(jti, new JWTCacheEntry(signedJWT));
+        } else if (preventTokenReuse) {
+            throw new OAuthClientAuthnException("JWT Token with jti: " + jti + "Has been replayed",
+                    OAuth2ErrorCodes.INVALID_REQUEST);
+        } else {
+            try {
+                SignedJWT cachedJWT = entry.getJwt();
+                long cachedJWTExpiryTimeMillis = cachedJWT.getJWTClaimsSet().getExpirationTime().getTime();
+                if (checkJTIValidityPeriod(jti, cachedJWTExpiryTimeMillis, currentTimeInMillis, timeStampSkewMillis)) {
+                    // Update the cache with the new JWT for the same JTI.
+                    jwtCache.addToCache(jti, new JWTCacheEntry(signedJWT));
+                } else {
+                    return false;
+                }
+            } catch (ParseException e) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Unable to parse the cached jwt assertion : " + entry.getEncodedJWt());
+                }
+                throw new OAuthClientAuthnException("JTI validation failed.", OAuth2ErrorCodes.INVALID_REQUEST);
+            }
+        }
+        if (log.isDebugEnabled()) {
+            log.debug("JWT id: " + jti + " not found in the cache and the JWT has been validated " +
+                    "successfully in cache.");
+        }
+        return true;
+    }
 }

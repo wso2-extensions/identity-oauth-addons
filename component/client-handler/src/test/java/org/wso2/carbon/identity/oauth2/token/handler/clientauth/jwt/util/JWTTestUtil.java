@@ -163,6 +163,6 @@ public class JWTTestUtil {
     public static JWTValidator getJWTValidator() {
 
         return new JWTValidator(true, null, DEFAULT_VALIDITY_PERIOD_IN_MINUTES,
-                null, new ArrayList<Object>());
+                null, new ArrayList<Object>(), true);
     }
 }

@@ -19,7 +19,6 @@
     <artifactId>org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt</artifactId>
     <packaging>bundle</packaging>
     <name>Private Key JWT client handler</name>
-    <version>1.0.2</version>
     <url>http://wso2.org</url>
     <parent>
         <groupId>org.wso2.carbon.extension.identity.oauth.addons</groupId>

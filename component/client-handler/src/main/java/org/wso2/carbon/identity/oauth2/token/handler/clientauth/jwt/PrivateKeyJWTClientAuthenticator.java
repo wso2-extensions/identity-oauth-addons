@@ -38,12 +38,15 @@ import javax.servlet.http.HttpServletRequest;
 
 import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.apache.commons.lang.StringUtils.isNotEmpty;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.DEFAULT_ENABLE_JTI_CACHE;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.DEFAULT_VALIDITY_PERIOD_IN_MINUTES;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.ISSUER;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.OAUTH_JWT_ASSERTION;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.OAUTH_JWT_ASSERTION_TYPE;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.OAUTH_JWT_BEARER_GRANT_TYPE;
-import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.PREVENT_JTI_REPLAY;
-import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.REJECT_BEFORE;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.PREVENT_TOKEN_REUSE;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.REJECT_BEFORE_IN_MINUTES;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.SIGNED_JWT;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.TOKEN_ENDPOINT_ALIAS;
 
 /**
@@ -53,18 +56,18 @@ import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Const
 public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthenticator {
 
     private static final Log log = LogFactory.getLog(PrivateKeyJWTClientAuthenticator.class);
-
     private JWTValidator jwtValidator;
 
     public PrivateKeyJWTClientAuthenticator() {
 
         String tokenEPAlias = properties.getProperty(TOKEN_ENDPOINT_ALIAS);
-        boolean preventJTIReplay = Boolean.parseBoolean(properties.getProperty(PREVENT_JTI_REPLAY));
+        String issuer = properties.getProperty(ISSUER);
+        boolean preventTokenReuse = Boolean.parseBoolean(properties.getProperty(PREVENT_TOKEN_REUSE));
         int rejectBeforePeriod = DEFAULT_VALIDITY_PERIOD_IN_MINUTES;
-        if (properties.getProperty(REJECT_BEFORE) != null) {
-            rejectBeforePeriod = Integer.parseInt(properties.getProperty(REJECT_BEFORE));
+        if (properties.getProperty(REJECT_BEFORE_IN_MINUTES) != null) {
+            rejectBeforePeriod = Integer.parseInt(properties.getProperty(REJECT_BEFORE_IN_MINUTES));
         }
-        jwtValidator = createJWTValidator(tokenEPAlias, preventJTIReplay, rejectBeforePeriod);
+        jwtValidator = createJWTValidator(tokenEPAlias, issuer, preventTokenReuse, rejectBeforePeriod);
     }
 
     /**
@@ -80,13 +83,12 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
     public boolean authenticateClient(HttpServletRequest httpServletRequest, Map<String, List> bodyParameters,
                                       OAuthClientAuthnContext oAuthClientAuthnContext) throws OAuthClientAuthnException {
 
-        String clientAssertion = null;
-        List oauthJWTAssertion = bodyParameters.get(OAUTH_JWT_ASSERTION);
-
-        if (oauthJWTAssertion != null && oauthJWTAssertion.get(0) != null) {
-            clientAssertion = oauthJWTAssertion.get(0).toString();
+        String oauthJWTAssertion = getBodyParameters(bodyParameters).get(OAUTH_JWT_ASSERTION);
+        Object signedJWT = oAuthClientAuthnContext.getParameter(SIGNED_JWT);
+        if (signedJWT != null) {
+            return jwtValidator.isValidAssertion((SignedJWT) signedJWT);
         }
-        return jwtValidator.isValidAssertion(getSignedJWT(clientAssertion));
+        return jwtValidator.isValidAssertion(getSignedJWT(oauthJWTAssertion));
     }
 
     /**
@@ -121,9 +123,9 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
 
         String oauthJWTAssertion = getBodyParameters(bodyParameters).get(OAUTH_JWT_ASSERTION);
         SignedJWT signedJWT = getSignedJWT(oauthJWTAssertion);
+        oAuthClientAuthnContext.addParameter(SIGNED_JWT, signedJWT);
         ReadOnlyJWTClaimsSet claimsSet = jwtValidator.getClaimSet(signedJWT);
-        String jwtSubject = jwtValidator.resolveSubject(claimsSet);
-        return jwtSubject;
+        return jwtValidator.resolveSubject(claimsSet);
     }
 
     private SignedJWT getSignedJWT(String assertion) throws OAuthClientAuthnException {
@@ -165,10 +167,12 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
         return OAUTH_JWT_BEARER_GRANT_TYPE.equals(clientAssertionType) && isNotEmpty(clientAssertion);
     }
 
-    private JWTValidator createJWTValidator(String tokenEPAlias, boolean preventTokenReuse, int rejectBefore) {
+    private JWTValidator createJWTValidator(String tokenEPAlias, String issuer, boolean preventTokenReuse,
+                                            int rejectBefore) {
 
         List<Object> mandatoryClaims = new ArrayList<>();
-        return new JWTValidator(preventTokenReuse, tokenEPAlias, rejectBefore, null, mandatoryClaims);
+        boolean enableJTICache = DEFAULT_ENABLE_JTI_CACHE;
+        return new JWTValidator(preventTokenReuse, tokenEPAlias, rejectBefore, issuer, mandatoryClaims, enableJTICache);
     }
 
 }

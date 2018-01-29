@@ -26,16 +26,19 @@ public class Constants {
     public static final String OAUTH_JWT_ASSERTION = "client_assertion";
     public static final String OAUTH_JWT_ASSERTION_TYPE = "client_assertion_type";
     public static final int DEFAULT_VALIDITY_PERIOD_IN_MINUTES = 300;
-    public static final boolean PREVENT_TOKEN_REUSE = true;
+    public static final boolean DEFAULT_ENABLE_JTI_CACHE = true;
     public static final String UTC = "UTC";
     public static final String TOKEN_ENDPOINT_ALIAS = "TokenEndpointAlias";
-    public static final String PREVENT_JTI_REPLAY = "PreventJTIReplay";
-    public static final String REJECT_BEFORE = "RejectBefore";
+    public static final String PREVENT_TOKEN_REUSE = "preventTokenReuse";
+    public static final String REJECT_BEFORE_IN_MINUTES = "RejectBeforeInMinutes";
+    public static final String ISSUER = "Issuer";
+    public static final String SIGNED_JWT = "signedJWT";
 
     public static class SQLQueries {
-        public static final String GET_JWT_ID = "SELECT 1 FROM IDN_OIDC_JTI WHERE JWT_ID =?;";
-        public static final String GET_JWT = "SELECT EXP_TIME,TIME_CREATED FROM IDN_OIDC_JTI WHERE JWT_ID =?;";
-        public static final String INSERT_JWD_ID = "INSERT INTO IDN_OIDC_JTI (JWT_ID,EXP_TIME," +
-                "TIME_CREATED)VALUES (?,?,?)";
+
+        public static final String GET_JWT_ID = "SELECT 1 FROM IDN_OIDC_JTI WHERE JWT_ID =?";
+        public static final String GET_JWT = "SELECT EXP_TIME,TIME_CREATED FROM IDN_OIDC_JTI WHERE JWT_ID =?";
+        public static final String INSERT_JWD_ID = "INSERT INTO IDN_OIDC_JTI (JWT_ID, EXP_TIME, TIME_CREATED)" +
+                "VALUES (?,?,?)";
     }
 }
