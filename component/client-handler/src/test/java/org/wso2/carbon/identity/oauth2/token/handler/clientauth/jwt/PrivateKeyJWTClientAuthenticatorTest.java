@@ -63,8 +63,8 @@ public class PrivateKeyJWTClientAuthenticatorTest {
     PrivateKeyJWTClientAuthenticator privateKeyJWTClientAuthenticator = new PrivateKeyJWTClientAuthenticator();
     @Mock
     HttpServletRequest httpServletRequest;
-    @Mock
-    OAuthClientAuthnContext oAuthClientAuthnContext;
+
+    OAuthClientAuthnContext oAuthClientAuthnContext =new OAuthClientAuthnContext();
 
     KeyStore clientKeyStore;
     Key key1;

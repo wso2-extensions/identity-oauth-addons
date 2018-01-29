@@ -78,7 +78,6 @@
             <artifactId>org.wso2.carbon.idp.mgt</artifactId>
             <version>${carbon.identity.version}</version>
         </dependency>
-
         <dependency>
             <groupId>org.wso2.carbon.identity.framework</groupId>
             <artifactId>org.wso2.carbon.identity.application.common</artifactId>
@@ -139,7 +138,6 @@
             <artifactId>json</artifactId>
             <version>${wso2.json}</version>
         </dependency>
-
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>servlet-api</artifactId>
@@ -151,8 +149,6 @@
             <artifactId>jstl</artifactId>
             <version>${javax.servelet.jstl.version}</version>
         </dependency>
-
-
         <dependency>
             <groupId>com.nimbusds.wso2</groupId>
             <artifactId>nimbus-jose-jwt</artifactId>
@@ -173,7 +169,6 @@
             <artifactId>org.wso2.securevault</artifactId>
             <version>${org.wso2.securevault.version}</version>
             <exclusions>
-
             </exclusions>
         </dependency>
         <dependency>
@@ -188,7 +183,6 @@
             <artifactId>junit</artifactId>
             <version>${junit.version}</version>
         </dependency>
-
 
         <dependency>
             <groupId>org.testng</groupId>
@@ -431,8 +425,7 @@
     <properties>
 
         <carbon.identity.version>5.11.9</carbon.identity.version>
-        <identity.inbound.auth.oauth.version>5.6.5</identity.inbound.auth.oauth.version>
-
+        <identity.inbound.auth.oauth.version>5.6.8</identity.inbound.auth.oauth.version>
         <carbon.kernel.version>4.4.7</carbon.kernel.version>
         <org.apache.oltu.oauth2.client.version>1.0.0</org.apache.oltu.oauth2.client.version>
         <oltu.package.import.version.range>[1.0.0, 2.0.0)</oltu.package.import.version.range>

@@ -77,15 +77,14 @@ public class JWTValidator {
     private String validAudience;
     private String validIssuer;
     private int rejectBeforeInMinutes;
-    //Adding different types of values for mandatory claims list. Hence need to use object type.
-    List<Object> mandatoryClaims;
+    List<String> mandatoryClaims;
     private JWTCache jwtCache;
     private boolean enableJTICache;
 
     private JWTStorageManager jwtStorageManager;
 
     public JWTValidator(boolean preventTokenReuse, String validAudience, int rejectBefore, String validIssuer,
-                        List<Object> mandatoryClaims, boolean enableJTICache) {
+                        List<String> mandatoryClaims, boolean enableJTICache) {
 
         this.preventTokenReuse = preventTokenReuse;
         this.validAudience = validAudience;
@@ -132,9 +131,6 @@ public class JWTValidator {
             Date expirationTime = claimsSet.getExpirationTime();
             String jti = claimsSet.getJWTID();
             Date nbf = claimsSet.getNotBeforeTime();
-            addMandatoryClaims(jwtIssuer, jwtSubject, audience, expirationTime, jti);
-
-            Date notBeforeTime = claimsSet.getNotBeforeTime();
             Date issuedAtTime = claimsSet.getIssueTime();
             long currentTimeInMillis = System.currentTimeMillis();
             long timeStampSkewMillis = OAuthServerConfiguration.getInstance().getTimeStampSkewInSeconds() * 1000;
@@ -165,8 +161,7 @@ public class JWTValidator {
             }
 
             //Validate mandotory feilds, audience, nbf,exp time, jti.
-            if (!validateMandatoryFeilds(mandatoryClaims) || !validateAudience(validAud, audience) ||
-                    !checkNotBeforeTime(notBeforeTime, currentTimeInMillis, timeStampSkewMillis) ||
+            if (!validateMandatoryFeilds(mandatoryClaims, claimsSet) || !validateAudience(validAud, audience) ||
                     !validateJWTWithExpTime(expirationTime, currentTimeInMillis, timeStampSkewMillis) ||
                     !validateNotBeforeClaim(currentTimeInMillis, timeStampSkewMillis, nbf) ||
                     !validateJTI(signedJWT, jti, currentTimeInMillis, timeStampSkewMillis, expTime, issuedTime) ||
@@ -181,25 +176,16 @@ public class JWTValidator {
         }
     }
 
-    private void addMandatoryClaims(String jwtIssuer, String jwtSubject, List<String> audience, Date expirationTime, String jti) {
+    private boolean validateMandatoryFeilds(List<String> mandatoryClaims, ReadOnlyJWTClaimsSet claimsSet) throws OAuthClientAuthnException {
 
-        mandatoryClaims.add(jwtIssuer);
-        mandatoryClaims.add(jwtSubject);
-        mandatoryClaims.add(audience);
-        mandatoryClaims.add(expirationTime);
-        mandatoryClaims.add(jti);
-    }
-
-    private boolean validateMandatoryFeilds(List<Object> mandatoryClaims) throws OAuthClientAuthnException {
-
-        for (Object mandataryClaim : mandatoryClaims) {
-            if (mandataryClaim == null) {
+        for (String mandatoryClaim : mandatoryClaims) {
+            if (claimsSet.getAllClaims().get(mandatoryClaim) == null) {
                 String errorMessage = "Mandatory field/feilds (Issuer, Subject, Expiration time , JWT ID or " +
                         "Audience) are missing in the JWT assertion";
                 if (log.isDebugEnabled()) {
                     log.debug(errorMessage);
                 }
-                throw new OAuthClientAuthnException(errorMessage);
+                throw new OAuthClientAuthnException(errorMessage, OAuth2ErrorCodes.INVALID_REQUEST);
             }
         }
         return true;
@@ -223,7 +209,7 @@ public class JWTValidator {
             if (log.isDebugEnabled()) {
                 log.debug(errorMessage);
             }
-            throw new OAuthClientAuthnException(errorMessage);
+            throw new OAuthClientAuthnException(errorMessage, OAuth2ErrorCodes.INVALID_REQUEST);
         }
         return true;
     }
@@ -232,18 +218,18 @@ public class JWTValidator {
 
         if (oAuthAppDO == null) {
             if (log.isDebugEnabled()) {
-                log.debug("Unable to find OAuth application for provided JWT claim:" + jwtClaim);
+                log.debug("Unable to find OAuth application for provided JWT claim: " + jwtClaim);
             }
             throw new OAuthClientAuthnException("The issuer or the subject of the assertion is invalid.");
         }
         String consumerKey = oAuthAppDO.getOauthConsumerKey();
         if (isEmpty(jwtClaim) && !jwtClaim.equals(consumerKey)) {
-            String errorMessage = "Invalid field :" + jwtClaim + " is found in the JWT. It should be equal to the: " +
+            String errorMessage = "Invalid field: " + jwtClaim + " is found in the JWT. It should be equal to the: " +
                     consumerKey;
             if (log.isDebugEnabled()) {
                 log.debug(errorMessage);
             }
-            throw new OAuthClientAuthnException(errorMessage);
+            throw new OAuthClientAuthnException(errorMessage, OAuth2ErrorCodes.INVALID_REQUEST);
         }
         return true;
     }
@@ -256,11 +242,11 @@ public class JWTValidator {
                 return true;
             }
         }
-        String errorMessage = "None of the audience values matched the tokenEndpoint Alias:" + tokenEP;
+        String errorMessage = "None of the audience values matched the tokenEndpoint Alias :" + tokenEP;
         if (log.isDebugEnabled()) {
             log.debug(errorMessage);
         }
-        throw new OAuthClientAuthnException(errorMessage);
+        throw new OAuthClientAuthnException(errorMessage, OAuth2ErrorCodes.INVALID_REQUEST);
     }
 
     // "REQUIRED. JWT ID. A unique identifier for the token, which can be used to prevent reuse of the token. These tokens
@@ -274,7 +260,7 @@ public class JWTValidator {
             if (log.isDebugEnabled()) {
                 log.debug(message);
             }
-            throw new OAuthClientAuthnException(message);
+            throw new OAuthClientAuthnException(message, OAuth2ErrorCodes.INVALID_REQUEST);
         }
         if (enableJTICache) {
             JWTCacheEntry entry = jwtCache.getValueFromCache(jti);
@@ -305,7 +291,7 @@ public class JWTValidator {
                 if (log.isDebugEnabled()) {
                     log.debug(message);
                 }
-                throw new OAuthClientAuthnException(message);
+                throw new OAuthClientAuthnException(message, OAuth2ErrorCodes.INVALID_REQUEST);
             }
         } else {
             if (!checkJTIValidityPeriod(jti, jwtEntry.getExp(), currentTimeInMillis, timeStampSkewMillis)) {
@@ -320,17 +306,17 @@ public class JWTValidator {
 
         if (currentTimeInMillis + timeStampSkewMillis > jwtExpiryTimeMillis) {
             if (log.isDebugEnabled()) {
-                log.debug("JWT Token with jti: " + jti + "has been reused after the allowed expiry time:" +
+                log.debug("JWT Token with jti: " + jti + "has been reused after the allowed expiry time: " +
                         jwtExpiryTimeMillis);
             }
             return true;
         } else {
-            String message = "JWT Token with jti: " + jti + " Has been replayed before the allowed expiry time:"
+            String message = "JWT Token with jti: " + jti + " has been replayed before the allowed expiry time: "
                     + jwtExpiryTimeMillis;
             if (log.isDebugEnabled()) {
                 log.debug(message);
             }
-            throw new OAuthClientAuthnException(message);
+            throw new OAuthClientAuthnException(message, OAuth2ErrorCodes.INVALID_REQUEST);
         }
     }
 
@@ -352,7 +338,7 @@ public class JWTValidator {
             }
             throw new OAuthClientAuthnException(message + jwtSubject);
         } catch (IdentityOAuth2Exception e) {
-            throw new OAuthClientAuthnException(message + jwtSubject);
+            throw new OAuthClientAuthnException(message + jwtSubject, OAuth2ErrorCodes.INVALID_REQUEST);
         }
         return oAuthAppDO;
     }
@@ -366,31 +352,9 @@ public class JWTValidator {
             if (log.isDebugEnabled()) {
                 log.debug(errorMessage);
             }
-            throw new OAuthClientAuthnException(errorMessage);
+            throw new OAuthClientAuthnException(errorMessage, OAuth2ErrorCodes.INVALID_REQUEST);
         } else {
             return true;
-        }
-    }
-
-    //"The JWT MAY contain an "nbf" (not before) claim that identifies
-    //the time before which the token MUST NOT be accepted for
-    //processing."
-    private boolean checkNotBeforeTime(Date notBeforeTime, long currentTimeInMillis, long timeStampSkewMillis) throws
-            OAuthClientAuthnException {
-
-        if (notBeforeTime == null) {
-            return true;
-        }
-        long notBeforeTimeMillis = notBeforeTime.getTime();
-        if (currentTimeInMillis + timeStampSkewMillis >= notBeforeTimeMillis) {
-            return true;
-        } else {
-            String message = "NotBeforeTime check is failed. Token is used before the intended time. " +
-                    "nbf: " + notBeforeTime;
-            if (log.isDebugEnabled()) {
-                log.debug(message);
-            }
-            throw new OAuthClientAuthnException(message);
         }
     }
 
@@ -406,7 +370,7 @@ public class JWTValidator {
                 if (log.isDebugEnabled()) {
                     log.debug(message);
                 }
-                throw new OAuthClientAuthnException(message);
+                throw new OAuthClientAuthnException(message, OAuth2ErrorCodes.INVALID_REQUEST);
             }
         }
         return true;
@@ -439,11 +403,11 @@ public class JWTValidator {
             audience = IdentityApplicationManagementUtil.getProperty(oidcFedAuthn.getProperties(),
                     IdentityApplicationConstants.Authenticator.OIDC.OAUTH2_TOKEN_URL).getValue();
         } catch (IdentityProviderManagementException e) {
-            String message = "Error while loading OAuth2TokenEPUrl of the resident IDP of tenant:" + tenantDomain;
+            String message = "Error while loading OAuth2TokenEPUrl of the resident IDP of tenant: " + tenantDomain;
             if (log.isDebugEnabled()) {
                 log.debug(message);
             }
-            throw new OAuthClientAuthnException(message);
+            throw new OAuthClientAuthnException(message, OAuth2ErrorCodes.INVALID_REQUEST);
         }
 
         if (isEmpty(audience)) {
@@ -465,7 +429,7 @@ public class JWTValidator {
         String errorMessage;
         if (signedJWT == null) {
             errorMessage = "No Valid Assertion was found for " + Constants.OAUTH_JWT_BEARER_GRANT_TYPE;
-            throw new OAuthClientAuthnException(errorMessage);
+            throw new OAuthClientAuthnException(errorMessage, OAuth2ErrorCodes.INVALID_REQUEST);
         }
         try {
             claimsSet = signedJWT.getJWTClaimsSet();
@@ -478,7 +442,7 @@ public class JWTValidator {
             if (log.isDebugEnabled()) {
                 log.debug(errorMsg);
             }
-            throw new OAuthClientAuthnException(errorMsg);
+            throw new OAuthClientAuthnException(errorMsg, OAuth2ErrorCodes.INVALID_REQUEST);
         }
         return claimsSet;
     }
@@ -501,7 +465,7 @@ public class JWTValidator {
             tenantId = JWTServiceComponent.getRealmService().getTenantManager().getTenantId(tenantDomain);
         } catch (org.wso2.carbon.user.api.UserStoreException e) {
             String errorMsg = "Error getting the tenant ID for the tenant domain : " + tenantDomain;
-            throw new OAuthClientAuthnException(errorMsg);
+            throw new OAuthClientAuthnException(errorMsg, OAuth2ErrorCodes.INVALID_REQUEST);
         }
 
         KeyStoreManager keyStoreManager;
@@ -518,14 +482,14 @@ public class JWTValidator {
             return (X509Certificate) keyStore.getCertificate(alias);
 
         } catch (KeyStoreException e) {
-            String errorMsg = "Error instantiating an X509Certificate object for the certificate alias:" + alias +
+            String errorMsg = "Error instantiating an X509Certificate object for the certificate alias: " + alias +
                     " in tenant:" + tenantDomain;
             if (log.isDebugEnabled()) {
                 log.debug(errorMsg);
             }
-            throw new OAuthClientAuthnException(errorMsg);
+            throw new OAuthClientAuthnException(errorMsg, OAuth2ErrorCodes.INVALID_REQUEST);
         } catch (Exception e) {
-            String message = "Unable to load key store manager for the tenant domain:" + tenantDomain;
+            String message = "Unable to load key store manager for the tenant domain: " + tenantDomain;
             //keyStoreManager throws Exception
             if (log.isDebugEnabled()) {
                 log.debug(message);
@@ -546,7 +510,8 @@ public class JWTValidator {
         JWSVerifier verifier;
         ReadOnlyJWSHeader header = signedJWT.getHeader();
         if (x509Certificate == null) {
-            throw new OAuthClientAuthnException("Unable to locate certificate for JWT " + header.toString());
+            throw new OAuthClientAuthnException("Unable to locate certificate for JWT " + header.toString(),
+                    OAuth2ErrorCodes.INVALID_REQUEST);
         }
 
         String alg = signedJWT.getHeader().getAlgorithm().getName();
@@ -562,7 +527,8 @@ public class JWTValidator {
                 if (publicKey instanceof RSAPublicKey) {
                     verifier = new RSASSAVerifier((RSAPublicKey) publicKey);
                 } else {
-                    throw new OAuthClientAuthnException("Signature validation failed. Public key is not an RSA public key.");
+                    throw new OAuthClientAuthnException("Signature validation failed. Public key is not an RSA public key.",
+                            OAuth2ErrorCodes.INVALID_REQUEST);
                 }
             } else {
                 throw new OAuthClientAuthnException("Signature Algorithm not supported : " + alg);
@@ -618,7 +584,7 @@ public class JWTValidator {
             // Update the cache with the new JWT for the same JTI.
             jwtCache.addToCache(jti, new JWTCacheEntry(signedJWT));
         } else if (preventTokenReuse) {
-            throw new OAuthClientAuthnException("JWT Token with jti: " + jti + "Has been replayed",
+            throw new OAuthClientAuthnException("JWT Token with jti: " + jti + " has been replayed",
                     OAuth2ErrorCodes.INVALID_REQUEST);
         } else {
             try {
