@@ -139,7 +139,6 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
             return (SignedJWT) signedJWTFromContext;
         }
         String assertion = getBodyParameters(bodyParameters).get(OAUTH_JWT_ASSERTION);
-
         String errorMessage = "No Valid Assertion was found for " + Constants.OAUTH_JWT_BEARER_GRANT_TYPE;
         SignedJWT signedJWT;
         if (isEmpty(assertion)) {

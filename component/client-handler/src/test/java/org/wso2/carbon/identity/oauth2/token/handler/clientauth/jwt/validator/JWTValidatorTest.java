@@ -94,11 +94,8 @@ public class JWTValidatorTest {
     public static final String JWT_VALIDITY_PERIOD = "JwtValidityPeriod";
     public static final String ENABLE_CACHE_FOR_JTI = "EnableCacheForJTI";
     private KeyStore clientKeyStore;
-    private KeyStore clientKeyStore1;
     private KeyStore serverKeyStore;
     private X509Certificate cert;
-    private Key key1;
-    private String audience;
 
     private static final String CERTIFICATE =
             "MIIDVzCCAj+gAwIBAgIEN+6m4zANBgkqhkiG9w0BAQsFADBcMQswCQYDVQQGEwJGUjEMMAoGA1UE\n" +
@@ -128,8 +125,6 @@ public class JWTValidatorTest {
                 System.getProperty(CarbonBaseConstants.CARBON_HOME));
         serverKeyStore = getKeyStoreFromFile("wso2carbon.jks", "wso2carbon",
                 System.getProperty(CarbonBaseConstants.CARBON_HOME));
-        key1 = clientKeyStore.getKey("wso2carbon", "wso2carbon".toCharArray());
-        audience = IdentityUtil.getServerURL(IdentityConstants.OAuth.TOKEN, true, false);
 
         KeyStoreManager keyStoreManager = Mockito.mock(KeyStoreManager.class);
         ConcurrentHashMap<String, KeyStoreManager> mtKeyStoreManagers = new ConcurrentHashMap();
