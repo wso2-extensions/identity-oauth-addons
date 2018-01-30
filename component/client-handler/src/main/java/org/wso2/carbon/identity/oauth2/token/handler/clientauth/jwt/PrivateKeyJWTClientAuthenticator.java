@@ -50,7 +50,7 @@ import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Const
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.OAUTH_JWT_BEARER_GRANT_TYPE;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.PREVENT_TOKEN_REUSE;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.REJECT_BEFORE_IN_MINUTES;
-import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.SIGNED_JWT;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.PRIVATE_KEY_JWT;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.SUBJECT_CLAIM;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.TOKEN_ENDPOINT_ALIAS;
 
@@ -66,7 +66,6 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
     public PrivateKeyJWTClientAuthenticator() {
 
         int rejectBeforePeriod = DEFAULT_VALIDITY_PERIOD_IN_MINUTES;
-
         try {
             String tokenEPAlias = properties.getProperty(TOKEN_ENDPOINT_ALIAS);
             String issuer = properties.getProperty(ISSUER);
@@ -94,7 +93,7 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
     public boolean authenticateClient(HttpServletRequest httpServletRequest, Map<String, List> bodyParameters,
                                       OAuthClientAuthnContext oAuthClientAuthnContext) throws OAuthClientAuthnException {
 
-        return jwtValidator.isValidAssertion((SignedJWT) oAuthClientAuthnContext.getParameter(SIGNED_JWT));
+        return jwtValidator.isValidAssertion(getSignedJWT(bodyParameters, oAuthClientAuthnContext));
     }
 
     /**
@@ -127,35 +126,35 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
     public String getClientId(HttpServletRequest httpServletRequest, Map<String, List> bodyParameters,
                               OAuthClientAuthnContext oAuthClientAuthnContext) throws OAuthClientAuthnException {
 
-        String oauthJWTAssertion = getBodyParameters(bodyParameters).get(OAUTH_JWT_ASSERTION);
-        SignedJWT signedJWT = getSignedJWT(oauthJWTAssertion, oAuthClientAuthnContext);
+        SignedJWT signedJWT = getSignedJWT(bodyParameters, oAuthClientAuthnContext);
         ReadOnlyJWTClaimsSet claimsSet = jwtValidator.getClaimSet(signedJWT);
         return jwtValidator.resolveSubject(claimsSet);
     }
 
-    private SignedJWT getSignedJWT(String assertion, OAuthClientAuthnContext oAuthClientAuthnContext)
+    private SignedJWT getSignedJWT(Map<String, List> bodyParameters, OAuthClientAuthnContext oAuthClientAuthnContext)
             throws OAuthClientAuthnException {
 
+        Object signedJWTFromContext = oAuthClientAuthnContext.getParameter(PRIVATE_KEY_JWT);
+        if (signedJWTFromContext != null) {
+            return (SignedJWT) signedJWTFromContext;
+        }
+        String assertion = getBodyParameters(bodyParameters).get(OAUTH_JWT_ASSERTION);
+
+        String errorMessage = "No Valid Assertion was found for " + Constants.OAUTH_JWT_BEARER_GRANT_TYPE;
         SignedJWT signedJWT;
         if (isEmpty(assertion)) {
-            String errorMessage = "No Valid Assertion was found for " + Constants.OAUTH_JWT_BEARER_GRANT_TYPE;
             throw new OAuthClientAuthnException(errorMessage, OAuth2ErrorCodes.INVALID_REQUEST);
         }
         try {
             signedJWT = SignedJWT.parse(assertion);
             logJWT(signedJWT);
         } catch (ParseException e) {
-            String errorMessage = "Error while parsing the JWT.";
-            throw new OAuthClientAuthnException(errorMessage, OAuth2ErrorCodes.INVALID_REQUEST);
+            throw new OAuthClientAuthnException("Error while parsing the JWT.", OAuth2ErrorCodes.INVALID_REQUEST);
         }
         if (signedJWT == null) {
-            String errorMessage = "No Valid Assertion was found for " + OAUTH_JWT_BEARER_GRANT_TYPE;
             throw new OAuthClientAuthnException(errorMessage, OAuth2ErrorCodes.INVALID_REQUEST);
         }
-        Object signedJWTFromContext = oAuthClientAuthnContext.getParameter(SIGNED_JWT);
-        if (signedJWTFromContext == null) {
-            oAuthClientAuthnContext.addParameter(SIGNED_JWT, signedJWT);
-        }
+        oAuthClientAuthnContext.addParameter(PRIVATE_KEY_JWT, signedJWT);
         return signedJWT;
     }
 
@@ -195,4 +194,3 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
         return mandatoryClaims;
     }
 }
-

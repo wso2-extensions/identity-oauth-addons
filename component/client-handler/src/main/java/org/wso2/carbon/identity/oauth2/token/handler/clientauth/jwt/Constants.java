@@ -38,6 +38,7 @@ public class Constants {
     public static final String AUDIENCE_CLAIM = "aud";
     public static final String SUBJECT_CLAIM = "sub";
     public static final String ISSUER_CLAIM = "iss";
+    public static final String PRIVATE_KEY_JWT = "signedJWT";
 
     public static class SQLQueries {
 

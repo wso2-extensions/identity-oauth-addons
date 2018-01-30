@@ -220,7 +220,7 @@ public class JWTValidator {
             if (log.isDebugEnabled()) {
                 log.debug("Unable to find OAuth application for provided JWT claim: " + jwtClaim);
             }
-            throw new OAuthClientAuthnException("The issuer or the subject of the assertion is invalid.");
+            throw new OAuthClientAuthnException("The issuer or the subject of the assertion is invalid.", OAuth2ErrorCodes.INVALID_REQUEST);
         }
         String consumerKey = oAuthAppDO.getOauthConsumerKey();
         if (isEmpty(jwtClaim) && !jwtClaim.equals(consumerKey)) {
@@ -336,7 +336,7 @@ public class JWTValidator {
             if (log.isDebugEnabled()) {
                 log.debug(message);
             }
-            throw new OAuthClientAuthnException(message + jwtSubject);
+            throw new OAuthClientAuthnException(message + jwtSubject, OAuth2ErrorCodes.INVALID_REQUEST);
         } catch (IdentityOAuth2Exception e) {
             throw new OAuthClientAuthnException(message + jwtSubject, OAuth2ErrorCodes.INVALID_REQUEST);
         }
@@ -383,7 +383,7 @@ public class JWTValidator {
             X509Certificate cert = getCertificate(tenantDomain, alias);
             return validateSignature(signedJWT, cert);
         } catch (JOSEException e) {
-            throw new OAuthClientAuthnException(e.getMessage());
+            throw new OAuthClientAuthnException(e.getMessage(), OAuth2ErrorCodes.INVALID_REQUEST);
         }
     }
 
@@ -435,7 +435,7 @@ public class JWTValidator {
             claimsSet = signedJWT.getJWTClaimsSet();
             if (claimsSet == null) {
                 errorMessage = "Claim values are empty in the given JSON Web Token.";
-                throw new OAuthClientAuthnException(errorMessage);
+                throw new OAuthClientAuthnException(errorMessage, OAuth2ErrorCodes.INVALID_REQUEST);
             }
         } catch (ParseException e) {
             String errorMsg = "Error when trying to retrieve claimsSet from the JWT.";
@@ -494,7 +494,7 @@ public class JWTValidator {
             if (log.isDebugEnabled()) {
                 log.debug(message);
             }
-            throw new OAuthClientAuthnException(message);
+            throw new OAuthClientAuthnException(message, OAuth2ErrorCodes.INVALID_REQUEST);
         }
     }
 
@@ -516,7 +516,8 @@ public class JWTValidator {
 
         String alg = signedJWT.getHeader().getAlgorithm().getName();
         if (isEmpty(alg)) {
-            throw new OAuthClientAuthnException("Signature validation failed. No algorithm is found in the JWT header.");
+            throw new OAuthClientAuthnException("Signature validation failed. No algorithm is found in the JWT header.",
+                    OAuth2ErrorCodes.INVALID_REQUEST);
         } else {
             if (log.isDebugEnabled()) {
                 log.debug("Signature Algorithm found in the JWT Header: " + alg);
@@ -531,7 +532,8 @@ public class JWTValidator {
                             OAuth2ErrorCodes.INVALID_REQUEST);
                 }
             } else {
-                throw new OAuthClientAuthnException("Signature Algorithm not supported : " + alg);
+                throw new OAuthClientAuthnException("Signature Algorithm not supported : " + alg,
+                        OAuth2ErrorCodes.INVALID_REQUEST);
             }
         }
         // At this point 'verifier' will never be null.
