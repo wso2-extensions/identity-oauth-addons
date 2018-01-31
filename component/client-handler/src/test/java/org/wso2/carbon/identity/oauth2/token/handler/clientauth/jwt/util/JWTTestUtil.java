@@ -48,12 +48,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Properties;
 
 public class JWTTestUtil {
 
     public static String buildWrongJWT(String issuer, String subject, String jti, String audience, String algorythm,
-                                  Key privateKey, long notBeforeMillis)
+                                       Key privateKey, long notBeforeMillis)
             throws IdentityOAuth2Exception {
 
         long lifetimeInMillis = 3600 * 1000;
@@ -144,6 +145,7 @@ public class JWTTestUtil {
      */
     public static String signJWTWithRSA(JWTClaimsSet jwtClaimsSet, Key privateKey)
             throws IdentityOAuth2Exception {
+
         try {
             JWSSigner signer = new RSASSASigner((RSAPrivateKey) privateKey);
             SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.RS256), jwtClaimsSet);
@@ -154,9 +156,9 @@ public class JWTTestUtil {
         }
     }
 
-
     /**
      * Read Keystore from the file identified by given keystorename, password
+     *
      * @param keystoreName
      * @param password
      * @param home
@@ -165,6 +167,7 @@ public class JWTTestUtil {
      */
     public static KeyStore getKeyStoreFromFile(String keystoreName, String password,
                                                String home) throws Exception {
+
         Path tenantKeystorePath = Paths.get(home, "repository",
                 "resources", "security", keystoreName);
         FileInputStream file = new FileInputStream(tenantKeystorePath.toString());
@@ -175,15 +178,18 @@ public class JWTTestUtil {
 
     /**
      * Create and return a JWTValidator instance with given properties
+     *
      * @param properties
      * @return
      */
     public static JWTValidator getJWTValidator(Properties properties) {
+
         int rejectBeforePeriod;
         boolean cacheUsedJTI = true;
         String validAudience = null;
         String validIssuer = null;
         boolean preventTokenReuse = true;
+        List<String> mandatoryClaims = new ArrayList<>();
         try {
 
             String rejectBeforePeriodConfigVal = properties.getProperty(Constants.REJECT_BEFORE_IN_MINUTES);
@@ -219,10 +225,15 @@ public class JWTTestUtil {
                 preventTokenReuse = Boolean.parseBoolean(preventTokenReuseProperty);
             }
 
+            String mandatory = properties.getProperty("mandatory");
+            if (StringUtils.isNotEmpty(mandatory)) {
+                mandatoryClaims.add(mandatory);
+            }
+
         } catch (NumberFormatException e) {
             rejectBeforePeriod = Constants.DEFAULT_VALIDITY_PERIOD_IN_MINUTES;
         }
 
-        return new JWTValidator(preventTokenReuse,validAudience,rejectBeforePeriod,validIssuer,new ArrayList<String>(),cacheUsedJTI);
+        return new JWTValidator(preventTokenReuse, validAudience, rejectBeforePeriod, validIssuer, mandatoryClaims, cacheUsedJTI);
     }
 }

@@ -69,6 +69,7 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertNull;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.REJECT_BEFORE_IN_MINUTES;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.buildJWT;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.buildWrongJWT;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.getJWTValidator;
@@ -143,6 +144,7 @@ public class JWTValidatorTest {
         IdpMgtServiceComponentHolder.getInstance().setRealmService(realmService);
 
     }
+
     @DataProvider(name = "provideJWT")
     public Object[][] createJWT() {
 
@@ -151,14 +153,19 @@ public class JWTValidatorTest {
         Properties properties3 = new Properties();
         Properties properties4 = new Properties();
         Properties properties5 = new Properties();
+        Properties properties6 = new Properties();
+        Properties properties7 = new Properties();
 
         properties1.setProperty(ENABLE_CACHE_FOR_JTI, "true");
         properties1.setProperty(JWT_VALIDITY_PERIOD, "30");
         properties1.setProperty(PREVENT_TOKEN_REUSE, "true");
         properties2.setProperty(VALID_ISSUER, VALID_ISSUER_VAL);
         properties4.setProperty(VALID_AUDIENCE, SOME_VALID_AUDIENCE);
-
         properties5.setProperty(PREVENT_TOKEN_REUSE, "false");
+        properties6.setProperty(ENABLE_CACHE_FOR_JTI, "false");
+        properties6.setProperty(PREVENT_TOKEN_REUSE, "false");
+        properties6.setProperty(REJECT_BEFORE_IN_MINUTES, "1");
+        properties7.setProperty("mandatory", "some_claim");
 
         try {
             Key key1 = clientKeyStore.getKey("wso2carbon", "wso2carbon".toCharArray());
@@ -189,6 +196,8 @@ public class JWTValidatorTest {
 
             String jsonWebToken16 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3008", "some_audience",
                     "RSA265", key1, 0);
+            String jsonWebToken17 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3010", audience, "RSA265", key1, 0);
+            String jsonWebToken18 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3011", audience, "RSA265", key1, 0);
 
             return new Object[][]{
                     {jsonWebToken1, properties1, true, "Correct authentication request is failed."},
@@ -212,6 +221,8 @@ public class JWTValidatorTest {
                     {jsonWebToken13, properties1, false, ""},
                     {jsonWebToken15, properties1, false, ""},
                     {jsonWebToken16, properties4, false, "Token with invalid audience should fail."},
+                    {jsonWebToken17, properties6, false, "Token with invalid audience should fail."},
+                    {jsonWebToken18, properties7, false, "Token with invalid audience should fail."},
             };
         } catch (KeyStoreException e) {
             e.printStackTrace();
@@ -234,7 +245,7 @@ public class JWTValidatorTest {
             SignedJWT signedJWT = SignedJWT.parse(jwt);
             assertEquals(jwtValidator.isValidAssertion(signedJWT),
                     expected, errorMsg);
-        }  catch (OAuthClientAuthnException e) {
+        } catch (OAuthClientAuthnException e) {
             assertFalse(expected);
         }
 

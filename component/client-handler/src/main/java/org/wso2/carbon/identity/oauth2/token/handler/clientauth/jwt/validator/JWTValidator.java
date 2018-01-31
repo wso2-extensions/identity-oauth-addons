@@ -223,7 +223,7 @@ public class JWTValidator {
             throw new OAuthClientAuthnException("The issuer or the subject of the assertion is invalid.", OAuth2ErrorCodes.INVALID_REQUEST);
         }
         String consumerKey = oAuthAppDO.getOauthConsumerKey();
-        if (isEmpty(jwtClaim) && !jwtClaim.equals(consumerKey)) {
+        if (!jwtClaim.equals(consumerKey)) {
             String errorMessage = "Invalid field: " + jwtClaim + " is found in the JWT. It should be equal to the: " +
                     consumerKey;
             if (log.isDebugEnabled()) {
