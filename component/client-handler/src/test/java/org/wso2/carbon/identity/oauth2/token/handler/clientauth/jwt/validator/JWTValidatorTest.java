@@ -20,7 +20,6 @@ package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator;
 
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.lang.StringUtils;
 import org.mockito.Mockito;
 import org.powermock.reflect.internal.WhiteboxImpl;
 import org.testng.annotations.BeforeClass;
@@ -42,7 +41,6 @@ import org.wso2.carbon.identity.oauth2.client.authentication.OAuthClientAuthnExc
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceComponent;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceDataHolder;
-import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil;
 import org.wso2.carbon.identity.testutil.ReadCertStoreSampleUtil;
 import org.wso2.carbon.idp.mgt.internal.IdpMgtServiceComponentHolder;
 import org.wso2.carbon.user.api.UserRealm;
@@ -59,19 +57,15 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.text.ParseException;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-import static org.testng.AssertJUnit.assertNull;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.REJECT_BEFORE_IN_MINUTES;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.buildExpiredJWT;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.buildJWT;
-import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.buildWrongJWT;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.getJWTValidator;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.getKeyStoreFromFile;
 import static org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
@@ -94,6 +88,7 @@ public class JWTValidatorTest {
     public static final String PREVENT_TOKEN_REUSE = "PreventTokenReuse";
     public static final String JWT_VALIDITY_PERIOD = "JwtValidityPeriod";
     public static final String ENABLE_CACHE_FOR_JTI = "EnableCacheForJTI";
+    public static final String MANDATORY = "mandatory";
     private KeyStore clientKeyStore;
     private KeyStore serverKeyStore;
     private X509Certificate cert;
@@ -145,6 +140,20 @@ public class JWTValidatorTest {
 
     }
 
+    @Test
+    public void testValidateTokenForNullJWT(Object properties, boolean expected,
+                                            String errorMsg) {
+
+        try {
+            JWTValidator jwtValidator = getJWTValidator((Properties) properties);
+            assertEquals(jwtValidator.isValidAssertion(null),
+                    expected, errorMsg);
+        } catch (OAuthClientAuthnException e) {
+            assertFalse(expected);
+        }
+
+    }
+
     @DataProvider(name = "provideJWT")
     public Object[][] createJWT() {
 
@@ -155,6 +164,8 @@ public class JWTValidatorTest {
         Properties properties5 = new Properties();
         Properties properties6 = new Properties();
         Properties properties7 = new Properties();
+        Properties properties8 = new Properties();
+        Properties properties9 = new Properties();
 
         properties1.setProperty(ENABLE_CACHE_FOR_JTI, "true");
         properties1.setProperty(JWT_VALIDITY_PERIOD, "30");
@@ -165,12 +176,17 @@ public class JWTValidatorTest {
         properties6.setProperty(ENABLE_CACHE_FOR_JTI, "false");
         properties6.setProperty(PREVENT_TOKEN_REUSE, "false");
         properties6.setProperty(REJECT_BEFORE_IN_MINUTES, "1");
-        properties7.setProperty("mandatory", "some_claim");
+        properties7.setProperty(MANDATORY, "some_claim");
+        properties8.setProperty(VALID_ISSUER, "some_issuer");
+        properties9.setProperty(ENABLE_CACHE_FOR_JTI, "false");
+        properties9.setProperty(PREVENT_TOKEN_REUSE, "false");
+        properties9.setProperty(REJECT_BEFORE_IN_MINUTES, "1");
+
 
         try {
             Key key1 = clientKeyStore.getKey("wso2carbon", "wso2carbon".toCharArray());
             String audience = IdentityUtil.getServerURL(IdentityConstants.OAuth.TOKEN, true, false);
-
+            String jsonWebToken0 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "4000", audience, "RSA265", key1, 0);
             String jsonWebToken1 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3000", audience, "RSA265", key1, 0);
             String jsonWebToken2 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3000", audience, "RSA265", key1,
                     6000000);
@@ -200,6 +216,7 @@ public class JWTValidatorTest {
             String jsonWebToken18 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3011", audience, "RSA265", key1, 0);
 
             return new Object[][]{
+                    {jsonWebToken0, properties8, false, "Correct authentication request is failed."},
                     {jsonWebToken1, properties1, true, "Correct authentication request is failed."},
                     {jsonWebToken2, properties1, false, "JWT replay with preventTokenReuse enabled is not " +
                             "failed. "},
@@ -245,9 +262,37 @@ public class JWTValidatorTest {
             SignedJWT signedJWT = SignedJWT.parse(jwt);
             assertEquals(jwtValidator.isValidAssertion(signedJWT),
                     expected, errorMsg);
+            if (((Properties) properties).getProperty(MANDATORY) != null) {
+                assertEquals(jwtValidator.isValidAssertion(null),
+                        expected, errorMsg);
+            }
+
         } catch (OAuthClientAuthnException e) {
             assertFalse(expected);
+
+        }
+    }
+
+    @Test
+    public void testValidateNullToken() throws Exception {
+
+        try {
+            JWTValidator jwtValidator = getJWTValidator(new Properties());
+            jwtValidator.isValidAssertion(null);
+        } catch (OAuthClientAuthnException e) {
+            assertFalse(false, "Validation should fail when token is null");
         }
 
+    }
+
+    @Test(dependsOnMethods = "testValidateToken")
+    public void testValidateTokenSignedByHmac() throws Exception {
+
+        JWTValidator jwtValidator = getJWTValidator(new Properties());
+        String hsSignedJWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9" +
+                ".eyJzdWIiOiJLclZMb3Y0QmwzbmF0VWtzRjJIbVdzZHc2ODRhIiwibmFtZSI6IkpvaG4gRG9lIiwiaXNzdWVyIjoiS3JWTG92NEJsM2" +
+                "5hdFVrc0YySG1Xc2R3Njg0YSIsImp0aSI6MTAwOCwiZXhwIjoiMjU1NDQ0MDEzMjAwMCIsImF1ZCI6WyJzb21lLWF1ZGllbmNlIl19." +
+                "m0RrVUrZHr1M7R4I_4dzpoWD8jNA2fKkOadEsFg9Wj4";
+        SignedJWT signedJWT = SignedJWT.parse(hsSignedJWT);
     }
 }

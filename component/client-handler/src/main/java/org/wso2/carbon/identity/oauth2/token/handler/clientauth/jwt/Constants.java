@@ -32,7 +32,6 @@ public class Constants {
     public static final String PREVENT_TOKEN_REUSE = "PreventTokenReuse";
     public static final String REJECT_BEFORE_IN_MINUTES = "RejectBeforeInMinutes";
     public static final String ISSUER = "Issuer";
-    public static final String SIGNED_JWT = "signedJWT";
     public static final String JWT_ID_CLAIM = "jti";
     public static final String EXPIRATION_TIME_CLAIM = "exp";
     public static final String AUDIENCE_CLAIM = "aud";

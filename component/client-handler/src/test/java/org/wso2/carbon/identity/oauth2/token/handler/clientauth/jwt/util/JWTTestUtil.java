@@ -53,30 +53,6 @@ import java.util.Properties;
 
 public class JWTTestUtil {
 
-    public static String buildWrongJWT(String issuer, String subject, String jti, String audience, String algorythm,
-                                       Key privateKey, long notBeforeMillis)
-            throws IdentityOAuth2Exception {
-
-        long lifetimeInMillis = 3600 * 1000;
-        long curTimeInMillis = Calendar.getInstance().getTimeInMillis();
-
-        // Set claims to jwt token.
-        JWTClaimsSet jwtClaimsSet = new JWTClaimsSet();
-        jwtClaimsSet.setIssuer(issuer);
-        jwtClaimsSet.setSubject(subject);
-        jwtClaimsSet.setAudience(Arrays.asList(audience));
-        jwtClaimsSet.setExpirationTime(new Date(curTimeInMillis + lifetimeInMillis));
-        jwtClaimsSet.setIssueTime(new Date(curTimeInMillis));
-
-        if (notBeforeMillis > 0) {
-            jwtClaimsSet.setNotBeforeTime(new Date(curTimeInMillis + notBeforeMillis));
-        }
-        if (JWSAlgorithm.NONE.getName().equals(algorythm)) {
-            return new PlainJWT(jwtClaimsSet).serialize();
-        }
-
-        return signJWTWithRSA(jwtClaimsSet, privateKey);
-    }
 
     public static String buildJWT(String issuer, String subject, String jti, String audience, String algorythm,
                                   Key privateKey, long notBeforeMillis)
@@ -134,6 +110,38 @@ public class JWTTestUtil {
 
         return signJWTWithRSA(jwtClaimsSet, privateKey);
     }
+
+    public static String buildExpiredJWT(String issuer, String subject, String jti, String audience, String algorythm,
+                                  Key privateKey, long notBeforeMillis, long lifetimeInMillis, long issuedTime)
+            throws IdentityOAuth2Exception {
+
+        long curTimeInMillis = Calendar.getInstance().getTimeInMillis();
+        if (issuedTime < 0) {
+            issuedTime = curTimeInMillis;
+        }
+        if (lifetimeInMillis <= 0) {
+            lifetimeInMillis = 3600 * 1000;
+        }
+        // Set claims to jwt token.
+        JWTClaimsSet jwtClaimsSet = new JWTClaimsSet();
+        jwtClaimsSet.setIssuer(issuer);
+        jwtClaimsSet.setSubject(subject);
+        jwtClaimsSet.setAudience(Arrays.asList(audience));
+        jwtClaimsSet.setJWTID(jti);
+        jwtClaimsSet.setExpirationTime(new Date(issuedTime - lifetimeInMillis));
+        jwtClaimsSet.setIssueTime(new Date(issuedTime));
+        jwtClaimsSet.setNotBeforeTime(new Date(notBeforeMillis));
+
+        if (notBeforeMillis > 0) {
+            jwtClaimsSet.setNotBeforeTime(new Date(issuedTime + notBeforeMillis));
+        }
+        if (JWSAlgorithm.NONE.getName().equals(algorythm)) {
+            return new PlainJWT(jwtClaimsSet).serialize();
+        }
+
+        return signJWTWithRSA(jwtClaimsSet, privateKey);
+    }
+
 
     /**
      * sign JWT token from RSA algorithm

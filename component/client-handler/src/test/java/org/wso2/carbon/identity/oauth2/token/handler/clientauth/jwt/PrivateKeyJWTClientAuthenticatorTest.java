@@ -108,17 +108,4 @@ public class PrivateKeyJWTClientAuthenticatorTest {
         assertEquals(received, true, "A valid request refused to authenticate.");
 
     }
-
-    @Test(expectedExceptions = OAuthClientAuthnException.class)
-    public void testGetAuthenticateClient() throws Exception {
-
-        Map<String, List> bodyContent = new HashMap<>();
-        List<String> assertion = new ArrayList<>();
-        assertion.add(buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "5000", audience, "RSA265", key1, 0));
-        bodyContent.put(OAUTH_JWT_ASSERTION, assertion);
-        boolean authenticated = privateKeyJWTClientAuthenticator.authenticateClient(httpServletRequest, bodyContent,
-                oAuthClientAuthnContext);
-        assertEquals(authenticated, true, "The expected client id is the jwt subject.");
-
-    }
 }
