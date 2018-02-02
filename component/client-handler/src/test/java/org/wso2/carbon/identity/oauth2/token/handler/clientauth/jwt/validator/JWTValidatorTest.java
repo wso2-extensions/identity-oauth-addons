@@ -237,9 +237,9 @@ public class JWTValidatorTest {
                     {jsonWebToken12, properties5, false, ""},
                     {jsonWebToken13, properties1, false, ""},
                     {jsonWebToken15, properties1, false, ""},
-                    {jsonWebToken16, properties4, false, "Token with invalid audience should fail."},
-                    {jsonWebToken17, properties6, false, "Token with invalid audience should fail."},
-                    {jsonWebToken18, properties7, false, "Token with invalid audience should fail."},
+                    {jsonWebToken16, properties4, false, ""},
+                    {jsonWebToken17, properties6, false, ""},
+                    {jsonWebToken18, properties7, false, ""},
             };
         } catch (KeyStoreException e) {
             e.printStackTrace();

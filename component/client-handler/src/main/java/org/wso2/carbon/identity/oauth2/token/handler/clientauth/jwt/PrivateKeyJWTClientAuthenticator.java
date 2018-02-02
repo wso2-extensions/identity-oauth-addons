@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt;
 
 import com.nimbusds.jwt.ReadOnlyJWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.base.IdentityConstants;
@@ -66,14 +67,16 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
     public PrivateKeyJWTClientAuthenticator() {
 
         int rejectBeforePeriod = DEFAULT_VALIDITY_PERIOD_IN_MINUTES;
+        boolean preventTokenReuse = true;
         try {
             String tokenEPAlias = properties.getProperty(TOKEN_ENDPOINT_ALIAS);
-            String issuer = properties.getProperty(ISSUER);
-            boolean preventTokenReuse = Boolean.parseBoolean(properties.getProperty(PREVENT_TOKEN_REUSE));
+            if (isNotEmpty(properties.getProperty(PREVENT_TOKEN_REUSE))) {
+                preventTokenReuse = Boolean.parseBoolean(properties.getProperty(PREVENT_TOKEN_REUSE));
+            }
             if (isNotEmpty(properties.getProperty(REJECT_BEFORE_IN_MINUTES))) {
                 rejectBeforePeriod = Integer.parseInt(properties.getProperty(REJECT_BEFORE_IN_MINUTES));
             }
-            jwtValidator = createJWTValidator(tokenEPAlias, issuer, preventTokenReuse, rejectBeforePeriod);
+            jwtValidator = createJWTValidator(tokenEPAlias, preventTokenReuse, rejectBeforePeriod);
         } catch (NumberFormatException e) {
             log.warn("Invalid PrivateKeyJWT Validity period found in the configuration. Using default value: " +
                     rejectBeforePeriod);
@@ -175,10 +178,9 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
         return OAUTH_JWT_BEARER_GRANT_TYPE.equals(clientAssertionType) && isNotEmpty(clientAssertion);
     }
 
-    private JWTValidator createJWTValidator(String tokenEPAlias, String issuer, boolean preventTokenReuse,
-                                            int rejectBefore) {
+    private JWTValidator createJWTValidator(String tokenEPAlias, boolean preventTokenReuse, int rejectBefore) {
 
-        return new JWTValidator(preventTokenReuse, tokenEPAlias, rejectBefore, issuer, populateMandatoryClaims(),
+        return new JWTValidator(preventTokenReuse, tokenEPAlias, rejectBefore, null, populateMandatoryClaims(),
                 DEFAULT_ENABLE_JTI_CACHE);
     }
 

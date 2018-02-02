@@ -135,21 +135,22 @@ public class JWTValidator {
             long currentTimeInMillis = System.currentTimeMillis();
             long timeStampSkewMillis = OAuthServerConfiguration.getInstance().getTimeStampSkewInSeconds() * 1000;
             OAuthAppDO oAuthAppDO = getOAuthAppDO(jwtSubject);
+            String consumerKey = oAuthAppDO.getOauthConsumerKey();
             String tenantDomain = oAuthAppDO.getUser().getTenantDomain();
-
-            if (!isValidSignature(signedJWT, tenantDomain, jwtSubject)) {
+            if (!validateMandatoryFeilds(mandatoryClaims, claimsSet)) {
                 return false;
             }
+
             //Validate issuer and subject.
-            if (!validateIssuer(jwtIssuer, oAuthAppDO) || !validateSubject(jwtSubject)) {
+            if (!validateIssuer(jwtIssuer, consumerKey) || !validateSubject(jwtSubject, consumerKey)) {
                 if (log.isDebugEnabled()) {
-                    log.debug("Invalid jwtIssuer: " + jwtIssuer + " or jwtSubject: " + jwtSubject + " is found in the assertion." +
-                            " Expected value for issuer and subject is: " + oAuthAppDO.getOauthConsumerKey());
+                    log.debug("Invalid jwtIssuer: " + jwtIssuer + " or jwtSubject: " + jwtSubject + " is found in the " +
+                            "assertion." + "Expected value for issuer and subject is: " + oAuthAppDO.getOauthConsumerKey());
                 }
                 return false;
             }
 
-            //Get audience.
+            // Get audience.
             String validAud = getValidAudience(tenantDomain);
             long expTime = 0;
             long issuedTime = 0;
@@ -160,12 +161,13 @@ public class JWTValidator {
                 issuedTime = issuedAtTime.getTime();
             }
 
-            //Validate mandotory feilds, audience, nbf,exp time, jti.
-            if (!validateMandatoryFeilds(mandatoryClaims, claimsSet) || !validateAudience(validAud, audience) ||
+            //Validate signature validation, audience, nbf,exp time, jti.
+            if (!validateAudience(validAud, audience) ||
                     !validateJWTWithExpTime(expirationTime, currentTimeInMillis, timeStampSkewMillis) ||
                     !validateNotBeforeClaim(currentTimeInMillis, timeStampSkewMillis, nbf) ||
                     !validateJTI(signedJWT, jti, currentTimeInMillis, timeStampSkewMillis, expTime, issuedTime) ||
-                    !validateAgeOfTheToken(issuedAtTime, currentTimeInMillis, timeStampSkewMillis)) {
+                    !validateAgeOfTheToken(issuedAtTime, currentTimeInMillis, timeStampSkewMillis) || !isValidSignature
+                    (signedJWT, tenantDomain, jwtSubject)) {
                 return false;
             }
 
@@ -179,9 +181,8 @@ public class JWTValidator {
     private boolean validateMandatoryFeilds(List<String> mandatoryClaims, ReadOnlyJWTClaimsSet claimsSet) throws OAuthClientAuthnException {
 
         for (String mandatoryClaim : mandatoryClaims) {
-            if (claimsSet.getAllClaims().get(mandatoryClaim) == null) {
-                String errorMessage = "Mandatory field/feilds (Issuer, Subject, Expiration time , JWT ID or " +
-                        "Audience) are missing in the JWT assertion";
+            if (claimsSet.getClaim(mandatoryClaim) == null) {
+                String errorMessage = "Mandatory field :" + mandatoryClaim + " is missing in the JWT assertion.";
                 if (log.isDebugEnabled()) {
                     log.debug(errorMessage);
                 }
@@ -191,19 +192,20 @@ public class JWTValidator {
         return true;
     }
 
-    //"REQUIRED. sub. This MUST contain the client_id of the OAuth Client."
-    public boolean validateSubject(String jwtSubject) throws OAuthClientAuthnException {
+    // "REQUIRED. sub. This MUST contain the client_id of the OAuth Client."
+    public boolean validateSubject(String jwtSubject, String consumerKey) throws OAuthClientAuthnException {
 
-        OAuthAppDO oAuthAppDO = getOAuthAppDO(jwtSubject);
-        return validateWithClientId(jwtSubject, oAuthAppDO);
+        return validateWithClientId(jwtSubject, consumerKey);
     }
 
-    //"REQUIRED. iss. This MUST contain the client_id of the OAuth Client."
-    private boolean validateIssuer(String issuer, OAuthAppDO oAuthAppDO) throws OAuthClientAuthnException {
+    // "REQUIRED. iss. This MUST contain the client_id of the OAuth Client." when a valid issuer is not specified in the
+    // jwtValidator.
+    private boolean validateIssuer(String issuer, String consumerKey) throws OAuthClientAuthnException {
+
         //check whether the issuer is client_id
         if (isEmpty(validIssuer)) {
-            return validateWithClientId(issuer, oAuthAppDO);
-        } else if (isNotEmpty(validIssuer) && !validIssuer.equals(issuer)) {
+            return validateWithClientId(issuer, consumerKey);
+        } else if (!validIssuer.equals(issuer)) {
             String errorMessage = "Invalid field :" + issuer + " is found in the JWT. It should be equal to the: " +
                     validIssuer;
             if (log.isDebugEnabled()) {
@@ -214,27 +216,28 @@ public class JWTValidator {
         return true;
     }
 
-    private Boolean validateWithClientId(String jwtClaim, OAuthAppDO oAuthAppDO) throws OAuthClientAuthnException {
+    private Boolean validateWithClientId(String jwtClaim, String consumerKey) throws OAuthClientAuthnException {
 
-        if (oAuthAppDO == null) {
+        if (consumerKey == null) {
             if (log.isDebugEnabled()) {
                 log.debug("Unable to find OAuth application for provided JWT claim: " + jwtClaim);
             }
-            throw new OAuthClientAuthnException("The issuer or the subject of the assertion is invalid.", OAuth2ErrorCodes.INVALID_REQUEST);
+            throw new OAuthClientAuthnException("The issuer or the subject of the assertion is invalid.",
+                    OAuth2ErrorCodes.INVALID_REQUEST);
         }
-        String consumerKey = oAuthAppDO.getOauthConsumerKey();
-        if (!jwtClaim.equals(consumerKey)) {
+        if (!jwtClaim.trim().equals(consumerKey)) {
             String errorMessage = "Invalid field: " + jwtClaim + " is found in the JWT. It should be equal to the: " +
                     consumerKey;
             if (log.isDebugEnabled()) {
                 log.debug(errorMessage);
             }
-            throw new OAuthClientAuthnException(errorMessage, OAuth2ErrorCodes.INVALID_REQUEST);
+            throw new OAuthClientAuthnException("Invalid field: " + jwtClaim + " is found in the JWT", OAuth2ErrorCodes.
+                    INVALID_REQUEST);
         }
         return true;
     }
 
-    //"The Audience SHOULD be the URL of the Authorization Server's Token Endpoint."
+    // "The Audience SHOULD be the URL of the Authorization Server's Token Endpoint."
     private boolean validateAudience(String tokenEP, List<String> audience) throws OAuthClientAuthnException {
 
         for (String aud : audience) {

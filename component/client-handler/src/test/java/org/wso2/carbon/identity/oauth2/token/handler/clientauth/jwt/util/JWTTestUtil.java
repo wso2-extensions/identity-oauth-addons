@@ -27,13 +27,9 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.PlainJWT;
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.commons.lang.StringUtils;
-import org.testng.Assert;
-import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
-import org.wso2.carbon.identity.oauth.dao.SQLQueries;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.JWTValidator;
-import org.wso2.carbon.user.core.UserCoreConstants;
 
 import java.io.FileInputStream;
 import java.nio.file.Path;
@@ -41,9 +37,6 @@ import java.nio.file.Paths;
 import java.security.Key;
 import java.security.KeyStore;
 import java.security.interfaces.RSAPrivateKey;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -52,7 +45,6 @@ import java.util.List;
 import java.util.Properties;
 
 public class JWTTestUtil {
-
 
     public static String buildJWT(String issuer, String subject, String jti, String audience, String algorythm,
                                   Key privateKey, long notBeforeMillis)
@@ -112,7 +104,7 @@ public class JWTTestUtil {
     }
 
     public static String buildExpiredJWT(String issuer, String subject, String jti, String audience, String algorythm,
-                                  Key privateKey, long notBeforeMillis, long lifetimeInMillis, long issuedTime)
+                                         Key privateKey, long notBeforeMillis, long lifetimeInMillis, long issuedTime)
             throws IdentityOAuth2Exception {
 
         long curTimeInMillis = Calendar.getInstance().getTimeInMillis();
@@ -141,7 +133,6 @@ public class JWTTestUtil {
 
         return signJWTWithRSA(jwtClaimsSet, privateKey);
     }
-
 
     /**
      * sign JWT token from RSA algorithm
@@ -242,6 +233,7 @@ public class JWTTestUtil {
             rejectBeforePeriod = Constants.DEFAULT_VALIDITY_PERIOD_IN_MINUTES;
         }
 
-        return new JWTValidator(preventTokenReuse, validAudience, rejectBeforePeriod, validIssuer, mandatoryClaims, cacheUsedJTI);
+        return new JWTValidator(preventTokenReuse, validAudience, rejectBeforePeriod, validIssuer, mandatoryClaims
+                , cacheUsedJTI);
     }
 }
