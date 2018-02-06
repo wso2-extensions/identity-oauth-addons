@@ -149,7 +149,6 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
         }
         try {
             signedJWT = SignedJWT.parse(assertion);
-            logJWT(signedJWT);
         } catch (ParseException e) {
             throw new OAuthClientAuthnException("Error while parsing the JWT.", OAuth2ErrorCodes.INVALID_REQUEST);
         }
@@ -158,13 +157,6 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
         }
         oAuthClientAuthnContext.addParameter(PRIVATE_KEY_JWT, signedJWT);
         return signedJWT;
-    }
-
-    private void logJWT(SignedJWT signedJWT) {
-
-        if (log.isDebugEnabled() && IdentityUtil.isTokenLoggable(IdentityConstants.IdentityTokens.ACCESS_TOKEN)) {
-            log.debug(signedJWT);
-        }
     }
 
     private boolean isValidJWTClientAssertionRequest(String clientAssertionType, String clientAssertion) {

@@ -119,9 +119,6 @@ public class JWTValidator {
 
             if (claimsSet == null) {
                 errorMessage = "Claim set is missing in the JWT assertion";
-                if (log.isDebugEnabled()) {
-                    log.debug(errorMessage);
-                }
                 throw new OAuthClientAuthnException(errorMessage, OAuth2ErrorCodes.INVALID_REQUEST);
             }
 
@@ -162,10 +159,9 @@ public class JWTValidator {
             }
 
             //Validate signature validation, audience, nbf,exp time, jti.
-            if (!validateAudience(validAud, audience) ||
-                    !validateJWTWithExpTime(expirationTime, currentTimeInMillis, timeStampSkewMillis) ||
-                    !validateNotBeforeClaim(currentTimeInMillis, timeStampSkewMillis, nbf) ||
-                    !validateJTI(signedJWT, jti, currentTimeInMillis, timeStampSkewMillis, expTime, issuedTime) ||
+            if (!validateJTI(signedJWT, jti, currentTimeInMillis, timeStampSkewMillis, expTime, issuedTime) ||
+                    !validateAudience(validAud, audience) || !validateJWTWithExpTime(expirationTime, currentTimeInMillis
+                    , timeStampSkewMillis) || !validateNotBeforeClaim(currentTimeInMillis, timeStampSkewMillis, nbf) ||
                     !validateAgeOfTheToken(issuedAtTime, currentTimeInMillis, timeStampSkewMillis) || !isValidSignature
                     (signedJWT, tenantDomain, jwtSubject)) {
                 return false;
@@ -206,7 +202,7 @@ public class JWTValidator {
         if (isEmpty(validIssuer)) {
             return validateWithClientId(issuer, consumerKey);
         } else if (!validIssuer.equals(issuer)) {
-            String errorMessage = "Invalid field :" + issuer + " is found in the JWT. It should be equal to the: " +
+            String errorMessage = "Invalid value :" + issuer + " is found in the JWT. It should be equal to the: " +
                     validIssuer;
             if (log.isDebugEnabled()) {
                 log.debug(errorMessage);
@@ -226,30 +222,30 @@ public class JWTValidator {
                     OAuth2ErrorCodes.INVALID_REQUEST);
         }
         if (!jwtClaim.trim().equals(consumerKey)) {
-            String errorMessage = "Invalid field: " + jwtClaim + " is found in the JWT. It should be equal to the: " +
+            String errorMessage = "Invalid value: " + jwtClaim + " is found in the JWT. It should be equal to the: " +
                     consumerKey;
             if (log.isDebugEnabled()) {
                 log.debug(errorMessage);
             }
-            throw new OAuthClientAuthnException("Invalid field: " + jwtClaim + " is found in the JWT", OAuth2ErrorCodes.
+            throw new OAuthClientAuthnException("Invalid value: " + jwtClaim + " is found in the JWT", OAuth2ErrorCodes.
                     INVALID_REQUEST);
         }
         return true;
     }
 
-    // "The Audience SHOULD be the URL of the Authorization Server's Token Endpoint."
-    private boolean validateAudience(String tokenEP, List<String> audience) throws OAuthClientAuthnException {
+    // "The Audience SHOULD be the URL of the Authorization Server's Token Endpoint", if a valid audience is not
+    // specified.
+    private boolean validateAudience(String expectedAudience, List<String> audience) throws OAuthClientAuthnException {
 
         for (String aud : audience) {
-            if (StringUtils.equals(tokenEP, aud)) {
+            if (StringUtils.equals(expectedAudience, aud)) {
                 return true;
             }
         }
-        String errorMessage = "None of the audience values matched the tokenEndpoint Alias :" + tokenEP;
         if (log.isDebugEnabled()) {
-            log.debug(errorMessage);
+            log.debug("None of the audience values matched the tokenEndpoint Alias :" + expectedAudience);
         }
-        throw new OAuthClientAuthnException(errorMessage, OAuth2ErrorCodes.INVALID_REQUEST);
+        throw new OAuthClientAuthnException("Failed to match audience values.", OAuth2ErrorCodes.INVALID_REQUEST);
     }
 
     // "REQUIRED. JWT ID. A unique identifier for the token, which can be used to prevent reuse of the token. These tokens
@@ -258,13 +254,6 @@ public class JWTValidator {
     private boolean validateJTI(SignedJWT signedJWT, String jti, long currentTimeInMillis,
                                 long timeStampSkewMillis, long expTime, long issuedTime) throws OAuthClientAuthnException {
 
-        if (jti == null) {
-            String message = "JTI cannot be found in the Assertion.";
-            if (log.isDebugEnabled()) {
-                log.debug(message);
-            }
-            throw new OAuthClientAuthnException(message, OAuth2ErrorCodes.INVALID_REQUEST);
-        }
         if (enableJTICache) {
             JWTCacheEntry entry = jwtCache.getValueFromCache(jti);
             if (!validateJTIInCache(jti, signedJWT, entry, currentTimeInMillis, timeStampSkewMillis, this.jwtCache)) {

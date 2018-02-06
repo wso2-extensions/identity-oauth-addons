@@ -196,7 +196,6 @@ public class JWTValidatorTest {
             String jsonWebToken5 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3002", audience, "RSA265", key1, 0);
             String jsonWebToken6 = buildJWT(VALID_ISSUER_VAL, TEST_CLIENT_ID_1, "3003", audience, "RSA265", key1, 0);
             String jsonWebToken7 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "2002", audience, "RSA265", key1, 0);
-            String jsonWebToken8 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, null, audience, "RSA265", key1, 0);
             String jsonWebToken9 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3002", audience, "RSA265", key1,
                     Calendar.getInstance().getTimeInMillis());
             String jsonWebToken10 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3004", SOME_VALID_AUDIENCE,
@@ -227,7 +226,6 @@ public class JWTValidatorTest {
                     {jsonWebToken6, properties2, true, "Valid JWT token with custom issuer validation should pass."},
                     {jsonWebToken7, properties3, false, "JWT persisted in database with preventTokenReuse " +
                             "enabled is not failed."},
-                    {jsonWebToken8, properties3, false, "JWT with jti null is not failed"},
                     {jsonWebToken9, properties1, false, "JWT persisted in database with preventTokenReuse " +
                             "disabled is not failed."},
                     {jsonWebToken10, properties4, true, "Valid JWT token with custom audience validation should pass" +
