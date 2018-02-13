@@ -109,10 +109,7 @@ public class JWTValidator {
 
         if (signedJWT == null) {
             errorMessage = "No valid JWT assertion found for " + Constants.OAUTH_JWT_BEARER_GRANT_TYPE;
-            if (log.isDebugEnabled()) {
-                log.debug(errorMessage);
-            }
-            throw new OAuthClientAuthnException(errorMessage, OAuth2ErrorCodes.INVALID_REQUEST);
+            return logAndThrowException(errorMessage);
         }
         try {
             ReadOnlyJWTClaimsSet claimsSet = getClaimSet(signedJWT);
@@ -170,7 +167,7 @@ public class JWTValidator {
             return true;
 
         } catch (IdentityOAuth2Exception e) {
-            throw new OAuthClientAuthnException(e.getMessage(), OAuth2ErrorCodes.INVALID_REQUEST);
+            return logAndThrowException(e.getMessage());
         }
     }
 
@@ -179,10 +176,7 @@ public class JWTValidator {
         for (String mandatoryClaim : mandatoryClaims) {
             if (claimsSet.getClaim(mandatoryClaim) == null) {
                 String errorMessage = "Mandatory field :" + mandatoryClaim + " is missing in the JWT assertion.";
-                if (log.isDebugEnabled()) {
-                    log.debug(errorMessage);
-                }
-                throw new OAuthClientAuthnException(errorMessage, OAuth2ErrorCodes.INVALID_REQUEST);
+                logAndThrowException(errorMessage);
             }
         }
         return true;
@@ -191,44 +185,39 @@ public class JWTValidator {
     // "REQUIRED. sub. This MUST contain the client_id of the OAuth Client."
     public boolean validateSubject(String jwtSubject, String consumerKey) throws OAuthClientAuthnException {
 
-        return validateWithClientId(jwtSubject, consumerKey);
+        String errorMessage = String.format("Invalid Subject '%s' is found in the JWT. It should be equal to the '%s'",
+                jwtSubject, consumerKey);
+        if (!jwtSubject.trim().equals(consumerKey)) {
+            if (log.isDebugEnabled()) {
+                log.debug(errorMessage);
+            }
+            throw new OAuthClientAuthnException("Invalid Subject: " + jwtSubject + " is found in the JWT", OAuth2ErrorCodes.
+                    INVALID_REQUEST);
+        }
+        return true;
     }
 
     // "REQUIRED. iss. This MUST contain the client_id of the OAuth Client." when a valid issuer is not specified in the
     // jwtValidator.
     private boolean validateIssuer(String issuer, String consumerKey) throws OAuthClientAuthnException {
 
+        String errorMessage = String.format("Invalid issuer '%s' is found in the JWT. It should be equal to the '%s'"
+                , issuer, consumerKey);
+        String error = String.format("Invalid issuer %s:, is found in the JWT. ", issuer);
         //check whether the issuer is client_id
         if (isEmpty(validIssuer)) {
-            return validateWithClientId(issuer, consumerKey);
+            if (!issuer.trim().equals(consumerKey)) {
+                if (log.isDebugEnabled()) {
+                    log.debug(errorMessage);
+                }
+                throw new OAuthClientAuthnException(error, OAuth2ErrorCodes.INVALID_REQUEST);
+            }
+            return true;
         } else if (!validIssuer.equals(issuer)) {
-            String errorMessage = "Invalid value :" + issuer + " is found in the JWT. It should be equal to the: " +
-                    validIssuer;
             if (log.isDebugEnabled()) {
                 log.debug(errorMessage);
             }
-            throw new OAuthClientAuthnException(errorMessage, OAuth2ErrorCodes.INVALID_REQUEST);
-        }
-        return true;
-    }
-
-    private Boolean validateWithClientId(String jwtClaim, String consumerKey) throws OAuthClientAuthnException {
-
-        if (consumerKey == null) {
-            if (log.isDebugEnabled()) {
-                log.debug("Unable to find OAuth application for provided JWT claim: " + jwtClaim);
-            }
-            throw new OAuthClientAuthnException("The issuer or the subject of the assertion is invalid.",
-                    OAuth2ErrorCodes.INVALID_REQUEST);
-        }
-        if (!jwtClaim.trim().equals(consumerKey)) {
-            String errorMessage = "Invalid value: " + jwtClaim + " is found in the JWT. It should be equal to the: " +
-                    consumerKey;
-            if (log.isDebugEnabled()) {
-                log.debug(errorMessage);
-            }
-            throw new OAuthClientAuthnException("Invalid value: " + jwtClaim + " is found in the JWT", OAuth2ErrorCodes.
-                    INVALID_REQUEST);
+            throw new OAuthClientAuthnException(error, OAuth2ErrorCodes.INVALID_REQUEST);
         }
         return true;
     }
@@ -280,10 +269,7 @@ public class JWTValidator {
         } else if (preventTokenReuse) {
             if (jwtStorageManager.isJTIExistsInDB(jti)) {
                 String message = "JWT Token with JTI: " + jti + " has been replayed";
-                if (log.isDebugEnabled()) {
-                    log.debug(message);
-                }
-                throw new OAuthClientAuthnException(message, OAuth2ErrorCodes.INVALID_REQUEST);
+                logAndThrowException(message);
             }
         } else {
             if (!checkJTIValidityPeriod(jti, jwtEntry.getExp(), currentTimeInMillis, timeStampSkewMillis)) {
@@ -305,10 +291,7 @@ public class JWTValidator {
         } else {
             String message = "JWT Token with jti: " + jti + " has been replayed before the allowed expiry time: "
                     + jwtExpiryTimeMillis;
-            if (log.isDebugEnabled()) {
-                log.debug(message);
-            }
-            throw new OAuthClientAuthnException(message, OAuth2ErrorCodes.INVALID_REQUEST);
+            return logAndThrowException(message);
         }
     }
 
@@ -320,19 +303,27 @@ public class JWTValidator {
     private OAuthAppDO getOAuthAppDO(String jwtSubject) throws OAuthClientAuthnException {
 
         OAuthAppDO oAuthAppDO = null;
-        String message = null;
+        String message = String.format("Error while retrieving OAuth application with provided JWT information with " +
+                "subject '%s' ", jwtSubject);
         try {
             oAuthAppDO = OAuth2Util.getAppInformationByClientId(jwtSubject);
-        } catch (InvalidOAuthClientException e) {
-            message = "Error while retrieving OAuth application with provided JWT information with subject:";
-            if (log.isDebugEnabled()) {
-                log.debug(message);
+            if (oAuthAppDO == null) {
+                logAndThrowException(message);
             }
-            throw new OAuthClientAuthnException(message + jwtSubject, OAuth2ErrorCodes.INVALID_REQUEST);
+        } catch (InvalidOAuthClientException e) {
+            logAndThrowException(message);
         } catch (IdentityOAuth2Exception e) {
-            throw new OAuthClientAuthnException(message + jwtSubject, OAuth2ErrorCodes.INVALID_REQUEST);
+            logAndThrowException(message);
         }
         return oAuthAppDO;
+    }
+
+    private boolean logAndThrowException(String detailedMessage) throws OAuthClientAuthnException {
+
+        if (log.isDebugEnabled()) {
+            log.debug(detailedMessage);
+        }
+        throw new OAuthClientAuthnException(detailedMessage, OAuth2ErrorCodes.INVALID_REQUEST);
     }
 
     private boolean validateJWTWithExpTime(Date expTime, long currentTimeInMillis, long timeStampSkewMillis)

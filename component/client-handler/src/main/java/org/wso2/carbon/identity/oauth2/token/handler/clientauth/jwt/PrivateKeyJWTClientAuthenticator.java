@@ -41,6 +41,7 @@ import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.apache.commons.lang.StringUtils.isNotEmpty;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.AUDIENCE_CLAIM;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.DEFAULT_ENABLE_JTI_CACHE;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.DEFAULT_TOKEN_EP_ALIAS;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.DEFAULT_VALIDITY_PERIOD_IN_MINUTES;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.EXPIRATION_TIME_CLAIM;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.ISSUER;
@@ -68,8 +69,11 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
 
         int rejectBeforePeriod = DEFAULT_VALIDITY_PERIOD_IN_MINUTES;
         boolean preventTokenReuse = true;
+        String tokenEPAlias = DEFAULT_TOKEN_EP_ALIAS;
         try {
-            String tokenEPAlias = properties.getProperty(TOKEN_ENDPOINT_ALIAS);
+            if (isNotEmpty(properties.getProperty(TOKEN_ENDPOINT_ALIAS))) {
+                tokenEPAlias = properties.getProperty(TOKEN_ENDPOINT_ALIAS);
+            }
             if (isNotEmpty(properties.getProperty(PREVENT_TOKEN_REUSE))) {
                 preventTokenReuse = Boolean.parseBoolean(properties.getProperty(PREVENT_TOKEN_REUSE));
             }
@@ -150,6 +154,9 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
         try {
             signedJWT = SignedJWT.parse(assertion);
         } catch (ParseException e) {
+            if (log.isDebugEnabled()) {
+                log.debug(e.getMessage());
+            }
             throw new OAuthClientAuthnException("Error while parsing the JWT.", OAuth2ErrorCodes.INVALID_REQUEST);
         }
         if (signedJWT == null) {
