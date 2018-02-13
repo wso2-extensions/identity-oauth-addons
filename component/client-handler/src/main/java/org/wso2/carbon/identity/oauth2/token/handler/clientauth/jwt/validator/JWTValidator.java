@@ -176,7 +176,7 @@ public class JWTValidator {
         for (String mandatoryClaim : mandatoryClaims) {
             if (claimsSet.getClaim(mandatoryClaim) == null) {
                 String errorMessage = "Mandatory field :" + mandatoryClaim + " is missing in the JWT assertion.";
-                logAndThrowException(errorMessage);
+                return logAndThrowException(errorMessage);
             }
         }
         return true;
@@ -203,7 +203,7 @@ public class JWTValidator {
 
         String errorMessage = String.format("Invalid issuer '%s' is found in the JWT. It should be equal to the '%s'"
                 , issuer, consumerKey);
-        String error = String.format("Invalid issuer %s:, is found in the JWT. ", issuer);
+        String error = String.format("Invalid issuer '%s' is found in the JWT. ", issuer);
         //check whether the issuer is client_id
         if (isEmpty(validIssuer)) {
             if (!issuer.trim().equals(consumerKey)) {
@@ -269,7 +269,7 @@ public class JWTValidator {
         } else if (preventTokenReuse) {
             if (jwtStorageManager.isJTIExistsInDB(jti)) {
                 String message = "JWT Token with JTI: " + jti + " has been replayed";
-                logAndThrowException(message);
+                return logAndThrowException(message);
             }
         } else {
             if (!checkJTIValidityPeriod(jti, jwtEntry.getExp(), currentTimeInMillis, timeStampSkewMillis)) {
