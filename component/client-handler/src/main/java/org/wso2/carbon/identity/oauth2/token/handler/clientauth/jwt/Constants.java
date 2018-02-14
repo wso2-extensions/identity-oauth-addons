@@ -26,7 +26,7 @@ public class Constants {
     public static final String OAUTH_JWT_ASSERTION = "client_assertion";
     public static final String OAUTH_JWT_ASSERTION_TYPE = "client_assertion_type";
     public static final int DEFAULT_VALIDITY_PERIOD_IN_MINUTES = 300;
-    public static final String DEFAULT_TOKEN_EP_ALIAS = "";
+    public static final String DEFAULT_AUDIENCE = "";
     public static final boolean DEFAULT_ENABLE_JTI_CACHE = true;
     public static final String UTC = "UTC";
     public static final String TOKEN_ENDPOINT_ALIAS = "TokenEndpointAlias";

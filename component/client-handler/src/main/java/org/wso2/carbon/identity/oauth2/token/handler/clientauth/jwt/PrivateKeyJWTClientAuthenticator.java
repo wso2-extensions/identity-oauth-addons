@@ -20,7 +20,6 @@ package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt;
 
 import com.nimbusds.jwt.ReadOnlyJWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.base.IdentityConstants;
@@ -41,10 +40,9 @@ import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.apache.commons.lang.StringUtils.isNotEmpty;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.AUDIENCE_CLAIM;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.DEFAULT_ENABLE_JTI_CACHE;
-import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.DEFAULT_TOKEN_EP_ALIAS;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.DEFAULT_AUDIENCE;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.DEFAULT_VALIDITY_PERIOD_IN_MINUTES;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.EXPIRATION_TIME_CLAIM;
-import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.ISSUER;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.ISSUER_CLAIM;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.JWT_ID_CLAIM;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.OAUTH_JWT_ASSERTION;
@@ -57,7 +55,7 @@ import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Const
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.TOKEN_ENDPOINT_ALIAS;
 
 /**
- * Client Authentication handler to implement oidc private_key_jwt client authentication spec
+ * Client Authentication handler to implement oidc private_key_jwt client authentication specDEFAULT_TOKEN_EP_ALIAS
  * http://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication.
  */
 public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthenticator {
@@ -69,7 +67,7 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
 
         int rejectBeforePeriod = DEFAULT_VALIDITY_PERIOD_IN_MINUTES;
         boolean preventTokenReuse = true;
-        String tokenEPAlias = DEFAULT_TOKEN_EP_ALIAS;
+        String tokenEPAlias = DEFAULT_AUDIENCE;
         try {
             if (isNotEmpty(properties.getProperty(TOKEN_ENDPOINT_ALIAS))) {
                 tokenEPAlias = properties.getProperty(TOKEN_ENDPOINT_ALIAS);

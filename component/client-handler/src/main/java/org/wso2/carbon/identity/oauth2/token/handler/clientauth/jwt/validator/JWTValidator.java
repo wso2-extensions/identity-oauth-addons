@@ -137,10 +137,6 @@ public class JWTValidator {
 
             //Validate issuer and subject.
             if (!validateIssuer(jwtIssuer, consumerKey) || !validateSubject(jwtSubject, consumerKey)) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Invalid jwtIssuer: " + jwtIssuer + " or jwtSubject: " + jwtSubject + " is found in the " +
-                            "assertion." + "Expected value for issuer and subject is: " + oAuthAppDO.getOauthConsumerKey());
-                }
                 return false;
             }
 
