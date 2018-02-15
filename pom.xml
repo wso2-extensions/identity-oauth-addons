@@ -25,7 +25,7 @@
     </parent>
     <groupId>org.wso2.carbon.extension.identity.oauth.addons</groupId>
     <artifactId>identity-oauth2-extenstions</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.0.2-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>WSO2 Carbon Extension - Identity OAuth Extensions Pom</name>
     <url>http://wso2.org</url>
@@ -80,11 +80,6 @@
             <version>${carbon.identity.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.wso2.carbon</groupId>
-            <artifactId>org.wso2.carbon.logging</artifactId>
-            <version>${commons-logging.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.wso2.carbon.identity.framework</groupId>
             <artifactId>org.wso2.carbon.identity.application.common</artifactId>
             <version>${carbon.identity.version}</version>
@@ -103,6 +98,11 @@
             <groupId>org.wso2.carbon.identity.framework</groupId>
             <artifactId>org.wso2.carbon.identity.application.authentication.framework</artifactId>
             <version>${carbon.identity.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-collections</groupId>
+            <artifactId>commons-collections</artifactId>
+            <version>${commons.collections.version}</version>
         </dependency>
         <dependency>
             <groupId>org.wso2.carbon.identity.framework</groupId>
@@ -145,11 +145,6 @@
             <version>${wso2.json}</version>
         </dependency>
         <dependency>
-            <groupId>commons-lang.wso2</groupId>
-            <artifactId>commons-lang</artifactId>
-            <version>${commons-lang.wso2.version}</version>
-        </dependency>
-        <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>servlet-api</artifactId>
             <version>${javax.servlet-api.version}</version>
@@ -159,16 +154,6 @@
             <groupId>javax.servlet</groupId>
             <artifactId>jstl</artifactId>
             <version>${javax.servelet.jstl.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-codec.wso2</groupId>
-            <artifactId>commons-codec</artifactId>
-            <version>${commons-codec.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.ws.commons.axiom</groupId>
-            <artifactId>axiom-api</artifactId>
-            <version>${axiom.version}</version>
         </dependency>
         <dependency>
             <groupId>com.nimbusds.wso2</groupId>
@@ -190,10 +175,6 @@
             <artifactId>org.wso2.securevault</artifactId>
             <version>${org.wso2.securevault.version}</version>
             <exclusions>
-                <exclusion>
-                    <groupId>commons-lang</groupId>
-                    <artifactId>commons-lang</artifactId>
-                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -253,18 +234,14 @@
             <version>${carbon.identity.test.version}</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>commons-codec</groupId>
-            <artifactId>commons-codec</artifactId>
-            <version>${commons-codec.test.version}</version>
-            <scope>test</scope>
-        </dependency>
+
         <dependency>
             <groupId>org.wso2.carbon</groupId>
             <artifactId>org.wso2.carbon.tomcat.ext</artifactId>
             <version>${carbon.kernel.version}</version>
             <scope>test</scope>
         </dependency>
+
     </dependencies>
 
     <dependencyManagement>
@@ -452,31 +429,29 @@
         </snapshotRepository>
     </distributionManagement>
     <properties>
-        <carbon.identity.version>5.7.0</carbon.identity.version>
-        <identity.inbound.auth.oauth.version>5.3.4</identity.inbound.auth.oauth.version>
-        <commons-logging.version>4.4.7</commons-logging.version>
+
+        <carbon.identity.version>5.11.9</carbon.identity.version>
+        <identity.inbound.auth.oauth.version>5.6.8</identity.inbound.auth.oauth.version>
         <carbon.kernel.version>4.4.7</carbon.kernel.version>
         <org.apache.oltu.oauth2.client.version>1.0.0</org.apache.oltu.oauth2.client.version>
         <oltu.package.import.version.range>[1.0.0, 2.0.0)</oltu.package.import.version.range>
         <wso2.json>3.0.0.wso2v1</wso2.json>
         <javax.servlet-api.version>3.0-alpha-1</javax.servlet-api.version>
         <javax.servelet.jstl.version>1.2</javax.servelet.jstl.version>
-        <commons-codec.version>1.4.0.wso2v1</commons-codec.version>
+
         <axiom.version>1.2.11-wso2v6</axiom.version>
         <org.wso2.securevault.version>1.0.0-wso2v2</org.wso2.securevault.version>
-        <commons-lang.wso2.version>2.6.0.wso2v1</commons-lang.wso2.version>
         <encoder.wso2.version>1.2.0.wso2v1</encoder.wso2.version>
         <nimbusds.version>2.26.1.wso2v2</nimbusds.version>
         <oltu.version>1.0.0.wso2v3</oltu.version>
         <carbon.identity.package.import.version.range>[5.0.0, 6.0.0)</carbon.identity.package.import.version.range>
         <carbon.kernel.package.import.version.range>[4.4.0, 5.0.0)</carbon.kernel.package.import.version.range>
         <nimbusds.osgi.version.range>[2.26.1,3.0.0)</nimbusds.osgi.version.range>
-        <commons-logging.osgi.version.range>[1.2,2.0)</commons-logging.osgi.version.range>
-        <commons-lang.wso2.osgi.version.range>[2.6.0,3.0.0)</commons-lang.wso2.osgi.version.range>
         <net.minidev.json.imp.pkg.version.range>[1.3.0, 2.0.0)</net.minidev.json.imp.pkg.version.range>
 
         <!--Test Dependencies-->
-        <carbon.identity.test.version>5.10.34</carbon.identity.test.version>
+        <carbon.identity.test.version>5.11.9</carbon.identity.test.version>
+        <commons.collections.version>3.2.2</commons.collections.version>
         <junit.version>4.12</junit.version>
         <testng.version>6.9.10</testng.version>
         <jacoco.version>0.7.9</jacoco.version>
@@ -484,8 +459,7 @@
         <maven.surefire.plugin.version>2.18.1</maven.surefire.plugin.version>
         <javaee.web.api.version>7.0</javaee.web.api.version>
         <h2database.version>1.0.60</h2database.version>
-        <commons-codec.test.version>1.4</commons-codec.test.version>
-        <org.wso2.carbon.identity.testutil.version>5.10.0</org.wso2.carbon.identity.testutil.version>
+        <org.wso2.carbon.identity.testutil.version>5.11.9</org.wso2.carbon.identity.testutil.version>
         <maven.plugins.version>2.0</maven.plugins.version>
         <maven.bundle.plugins.version>2.3.5</maven.bundle.plugins.version>
         <maven.source.plugin.version>1.7.2</maven.source.plugin.version>

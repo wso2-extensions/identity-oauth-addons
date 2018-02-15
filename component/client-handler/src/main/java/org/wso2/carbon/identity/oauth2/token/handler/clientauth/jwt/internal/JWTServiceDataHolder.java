@@ -21,23 +21,25 @@ package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
- * JWTServiceDataHolder data holder Class
+ * JWTServiceDataHolder data holder Class.
  */
 public class JWTServiceDataHolder {
 
     private RealmService realmService = null;
     public static JWTServiceDataHolder instance = new JWTServiceDataHolder();
 
-
     public static JWTServiceDataHolder getInstance() {
+
         return instance;
     }
 
     public RealmService getRealmService() {
+
         return realmService;
     }
 
     public void setRealmService(RealmService realmService) {
+
         this.realmService = realmService;
     }
 
