@@ -82,6 +82,10 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
             } else if (certObject instanceof X509Certificate){
                 requestCert = (X509Certificate) certObject;
             } else {
+                if (log.isDebugEnabled()) {
+                    log.debug("Could not find client certificate in required format for client: " +
+                            oAuthClientAuthnContext.getClientId());
+                }
                 return false;
             }
 
@@ -89,7 +93,6 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
             X509Certificate registeredCert = (X509Certificate) OAuth2Util
                     .getX509CertOfOAuthApp(oAuthClientAuthnContext.getClientId(), tenantDomain);
             return authenticate(registeredCert, requestCert);
-
 
         } catch (IdentityOAuth2Exception e) {
             throw new OAuthClientAuthnException(OAuth2ErrorCodes.SERVER_ERROR, "Error occurred while retrieving " +
@@ -120,8 +123,8 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
             return true;
         } else {
             if (log.isDebugEnabled()) {
-                log.debug("Client id is not available in body params or valid certificate not found in request " +
-                        "attributes. Hence returning false.");
+                log.debug("Mutual TLS authenticator cannot handle this request. Client id is not available in body " +
+                        "params or valid certificate not found in request attributes.");
             }
             return false;
         }
@@ -183,18 +186,17 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
                     log.debug("Client certificate thumbprint matched with the registered certificate thumbprint.");
                 }
                 trustedCert = true;
+            } else {
+                if (log.isDebugEnabled()) {
+                    log.debug("Client Authentication failed. Client certificate thumbprint did not match with the " +
+                            "registered certificate thumbprint.");
+                }
             }
         } catch (NoSuchAlgorithmException | CertificateEncodingException e) {
             throw new OAuthClientAuthnException(OAuth2ErrorCodes.INVALID_GRANT, "Error occurred while " +
                     "generating certificate thumbprint. Error: " + e.getMessage(), e);
         }
         return trustedCert;
-    }
-
-    @Override
-    public int getPriority() {
-
-        return 158;
     }
 
     @Override

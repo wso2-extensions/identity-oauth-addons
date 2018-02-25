@@ -23,6 +23,9 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 
+/**
+ * Util class for OAuth 2.0 client authentication using Mutual TLS.
+ */
 public class MutualTLSUtil {
 
     /**

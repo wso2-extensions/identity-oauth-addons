@@ -16,11 +16,6 @@
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <artifactId>org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls</artifactId>
-    <packaging>bundle</packaging>
-    <name>Mutual TLS client authenticator</name>
-    <url>http://wso2.org</url>
 
     <parent>
         <groupId>org.wso2.carbon.extension.identity.oauth.addons</groupId>
@@ -29,18 +24,11 @@
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.wso2.carbon.identity.inbound.auth.oauth2</groupId>
-            <artifactId>org.wso2.carbon.identity.oauth</artifactId>
-            <version>5.6.29</version>
-        </dependency>
-        <dependency>
-            <groupId>org.wso2.carbon.identity.framework</groupId>
-            <artifactId>org.wso2.carbon.identity.core</artifactId>
-            <version>5.11.16</version>
-        </dependency>
-    </dependencies>
+    <modelVersion>4.0.0</modelVersion>
+    <artifactId>org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls</artifactId>
+    <packaging>bundle</packaging>
+    <name>Mutual TLS client authenticator</name>
+    <url>http://wso2.org</url>
 
     <build>
         <plugins>
@@ -64,15 +52,25 @@
                         <Private-Package>org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.internal
                         </Private-Package>
                         <Import-Package>
-                            org.osgi.service.*,
-                            org.osgi.framework.*,
+                            javax.servlet.http;version="${javax.servlet.http.package.import.version.range}",
+                            org.apache.commons.lang;version="${apache.commons.lang.package.import.version.range}",
+                            org.apache.commons.logging;version="${apache.commons.logging.package.import.version.range}",
+                            org.apache.oltu.oauth2.common;version="${apache.oltu.oauth2.common.package.import.version.range}",
+                            org.osgi.framework;version="${osgi.framework.package.import.version.range}",
+                            org.osgi.service.component;version="${osgi.service.component.package.import.version.range}",
+                            org.wso2.carbon.identity.oauth.common;version="${identity.inbound.auth.oauth.imp.pkg.version}",
+                            org.wso2.carbon.identity.oauth.common.exception;version="${identity.inbound.auth.oauth.imp.pkg.version}",
+                            org.wso2.carbon.identity.oauth2;version="${identity.inbound.auth.oauth.imp.pkg.version}",
+                            org.wso2.carbon.identity.oauth2.bean;version="${identity.inbound.auth.oauth.imp.pkg.version}",
+                            org.wso2.carbon.identity.oauth2.client.authentication;version="${identity.inbound.auth.oauth.imp.pkg.version}",
+                            org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls,
+                            org.wso2.carbon.identity.oauth2.util;version="${identity.inbound.auth.oauth.imp.pkg.version}"
                         </Import-Package>
                         <Export-Package>
                             !org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.internal,
                             org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils.*,
                             org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.*,
                         </Export-Package>
-                        <DynamicImport-Package>*</DynamicImport-Package>
                     </instructions>
                 </configuration>
             </plugin>
