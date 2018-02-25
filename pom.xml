@@ -32,6 +32,8 @@
 
     <modules>
         <module>component/client-handler</module>
+        <!-- this should be released after the required supplementary features are merged -->
+        <module>component/org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls</module>
         <module>feature</module>
     </modules>
 
