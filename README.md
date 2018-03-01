@@ -20,7 +20,7 @@ Deploying and Configuring JWT client-handler artifacts:
 1. Execute "mvn clean install" to build the project.
 
 2. Place component/client-handler/org.wso2.carbon.identity.oauth2.grant.jwttarget/
-org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt-1.0.0-SNAPSHOT.jar in the <IS_HOME>/repository/component/dropins directory.
+org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt-<version>-SNAPSHOT.jar in the <IS_HOME>/repository/component/dropins directory.
 
 3. To register the JWT grant type, configure the <IS_HOME>/repository/conf/identity/identity.xml file by adding a new entry under the <OAuth><ClientAuthHandlers> element. Add a unique <ClientAuthHandler> identifier between as seen in the code block below.
 
