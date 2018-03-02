@@ -65,7 +65,17 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
 
         // In case if the client ID is not set from canAuthenticate method.
         if (StringUtils.isEmpty(oAuthClientAuthnContext.getClientId())) {
-            oAuthClientAuthnContext.setClientId(getClientId(request, bodyParams, oAuthClientAuthnContext));
+
+            String clientId = getClientId(request, bodyParams, oAuthClientAuthnContext);
+            if (StringUtils.isNotBlank(clientId)) {
+                oAuthClientAuthnContext.setClientId(clientId);
+            } else {
+                if (log.isDebugEnabled()) {
+                    log.debug("Mutual TLS authenticator cannot handle this request. Client id is not available in body " +
+                                    "params or valid certificate not found in request attributes.");
+                }
+                return false;
+            }
         }
 
         try {

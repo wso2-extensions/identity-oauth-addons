@@ -74,10 +74,18 @@ public class MutualTLSClientAuthenticatorTest extends PowerMockTestCase {
     @DataProvider(name = "testClientAuthnData")
     public Object[][] testClientAuthnData() {
 
+        Map<String, List> bodyParamsWithClientId = new HashMap<>();
+        List<String> clientIdList = new ArrayList<>();
+        clientIdList.add(CLIENT_ID);
+        bodyParamsWithClientId.put(OAuth.OAUTH_CLIENT_ID, clientIdList);
+
         return new Object[][]{
 
                 // Correct  client certificate present with client Id in request body.
                 {getCertificate(CERTIFICATE_CONTENT), new HashMap<String, List>(), buildOAuthClientAuthnContext(CLIENT_ID), true},
+
+                // Correct  client certificate present with client Id in request body.
+                {getCertificate(CERTIFICATE_CONTENT), bodyParamsWithClientId, buildOAuthClientAuthnContext(CLIENT_ID), true},
 
                 // Correct client certificate not provided.
                 {null, new HashMap<String, List>(), buildOAuthClientAuthnContext(null), false},
