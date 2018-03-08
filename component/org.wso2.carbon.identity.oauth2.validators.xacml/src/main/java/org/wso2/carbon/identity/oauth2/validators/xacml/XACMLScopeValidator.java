@@ -18,7 +18,7 @@
  */
 
 
-package org.wso2.carbon.identity.oauth2.validators;
+package org.wso2.carbon.identity.oauth2.validators.xacml;
 
 import org.apache.axiom.om.OMElement;
 import org.apache.axiom.om.impl.builder.StAXOMBuilder;
@@ -41,8 +41,9 @@ import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.model.AccessTokenDO;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
-import org.wso2.carbon.identity.oauth2.validators.constants.XACMLScopeValidatorConstants;
-import org.wso2.carbon.identity.oauth2.validators.internal.OAuthScopeValidatorDataHolder;
+import org.wso2.carbon.identity.oauth2.validators.OAuth2ScopeValidator;
+import org.wso2.carbon.identity.oauth2.validators.xacml.constants.XACMLScopeValidatorConstants;
+import org.wso2.carbon.identity.oauth2.validators.xacml.internal.OAuthScopeValidatorDataHolder;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;

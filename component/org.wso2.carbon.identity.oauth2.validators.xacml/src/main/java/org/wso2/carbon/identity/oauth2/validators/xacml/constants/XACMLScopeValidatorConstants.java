@@ -17,7 +17,7 @@
  *
  */
 
-package org.wso2.carbon.identity.oauth2.validators.constants;
+package org.wso2.carbon.identity.oauth2.validators.xacml.constants;
 
 public class XACMLScopeValidatorConstants {
 

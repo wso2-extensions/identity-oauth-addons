@@ -17,7 +17,7 @@
  *
  */
 
-package org.wso2.carbon.identity.oauth2.validators.internal;
+package org.wso2.carbon.identity.oauth2.validators.xacml.internal;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

@@ -41,7 +41,8 @@ import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.model.AccessTokenDO;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
-import org.wso2.carbon.identity.oauth2.validators.internal.OAuthScopeValidatorDataHolder;
+import org.wso2.carbon.identity.oauth2.validators.xacml.XACMLScopeValidator;
+import org.wso2.carbon.identity.oauth2.validators.xacml.internal.OAuthScopeValidatorDataHolder;
 import org.wso2.carbon.identity.testutil.IdentityBaseTest;
 
 import static org.mockito.Matchers.any;
@@ -75,7 +76,7 @@ public class XACMLScopeValidatorTest extends IdentityBaseTest {
             + "</ns:Decision>"
             + "</ns:Result>"
             + "</ns:root>";
-    private XACMLScopeValidator xacmlScopeValidator = new XACMLScopeValidator();
+    private org.wso2.carbon.identity.oauth2.validators.xacml.XACMLScopeValidator xacmlScopeValidator = new XACMLScopeValidator();
     private AccessTokenDO accessTokenDO;
     private OAuthAppDO authApp;
     private final String RESOURCE = "resource";

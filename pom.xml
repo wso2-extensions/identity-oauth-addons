@@ -177,6 +177,17 @@
                 <version>${oltu.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>org.apache.felix.scr.ds-annotations</artifactId>
+                <version>${apache.felix.scr.ds.annotations.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.wso2.eclipse.osgi</groupId>
+                <artifactId>org.eclipse.osgi.services</artifactId>
+                <version>${equinox.osgi.services.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.wso2.carbon.identity.inbound.auth.oauth2</groupId>
                 <artifactId>org.wso2.carbon.identity.oauth</artifactId>
                 <version>${identity.inbound.auth.oauth.version}</version>
@@ -272,7 +283,7 @@
                 <plugin>
                     <groupId>org.apache.felix</groupId>
                     <artifactId>maven-bundle-plugin</artifactId>
-                    <version>${maven.bundle.plugin.version}</version>
+                    <version>${maven.bundle.plugins.version}</version>
                     <extensions>true</extensions>
                     <configuration>
                         <obrRepository>NONE</obrRepository>
@@ -301,7 +312,7 @@
                 <plugin>
                     <groupId>org.apache.felix</groupId>
                     <artifactId>maven-scr-plugin</artifactId>
-                    <version>${maven.scr.plugin.version}</version>
+                    <version>${maven.source.plugin.version}</version>
                     <executions>
                         <execution>
                             <id>generate-scr-scrdescriptor</id>
@@ -429,8 +440,9 @@
         <encoder.wso2.version>1.2.0.wso2v1</encoder.wso2.version>
         <nimbusds.version>2.26.1.wso2v2</nimbusds.version>
         <oltu.version>1.0.0.wso2v3</oltu.version>
-        <maven.scr.plugin.version>1.21.0</maven.scr.plugin.version>
         <carbon.p2.plugin.version>1.5.3</carbon.p2.plugin.version>
+        <apache.felix.scr.ds.annotations.version>1.2.4</apache.felix.scr.ds.annotations.version>
+        <equinox.osgi.services.version>3.5.100.v20160504-1419</equinox.osgi.services.version>
 
         <carbon.identity.package.import.version.range>[5.0.0, 6.0.0)</carbon.identity.package.import.version.range>
         <carbon.kernel.package.import.version.range>[4.4.0, 5.0.0)</carbon.kernel.package.import.version.range>
@@ -461,11 +473,11 @@
         <h2database.version>1.0.60</h2database.version>
         <org.wso2.carbon.identity.testutil.version>5.11.9</org.wso2.carbon.identity.testutil.version>
         <maven.plugins.version>2.0</maven.plugins.version>
-        <maven.bundle.plugins.version>2.3.5</maven.bundle.plugins.version>
+        <!--<maven.bundle.plugins.version>2.3.5</maven.bundle.plugins.version>-->
         <maven.source.plugin.version>1.7.2</maven.source.plugin.version>
         <maven.resource.plugin.version>3.0.2</maven.resource.plugin.version>
         <maven.plugins.version.source>1.7</maven.plugins.version.source>
-        <maven.bundle.plugin.version>2.4.0</maven.bundle.plugin.version>
+        <maven.bundle.plugins.version>2.4.0</maven.bundle.plugins.version>
         <maven.compiler.plugin>3.7.0</maven.compiler.plugin>
         <maven.buildnumber.plugin.version>1.4</maven.buildnumber.plugin.version>
     </properties>

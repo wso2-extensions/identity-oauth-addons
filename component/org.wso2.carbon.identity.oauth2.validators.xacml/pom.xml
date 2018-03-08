@@ -50,7 +50,19 @@
             <groupId>org.wso2.carbon.identity.framework</groupId>
             <artifactId>org.wso2.carbon.identity.entitlement</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>org.wso2.carbon.identity.framework</groupId>
+            <artifactId>org.wso2.carbon.identity.application.authentication.framework</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>org.apache.felix.scr.ds-annotations</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.eclipse.osgi</groupId>
+            <artifactId>org.eclipse.osgi.services</artifactId>
+        </dependency>
         <!--Test dependencies.-->
         <dependency>
             <groupId>org.testng</groupId>
@@ -97,15 +109,17 @@
                         <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Name>${project.artifactId}</Bundle-Name>
                         <Private-Package>
-                            org.wso2.carbon.identity.oauth2.validators.internal
+                            org.wso2.carbon.identity.oauth2.validators.xacml.internal
                         </Private-Package>
                         <Import-Package>
                             javax.xml.stream,
                             org.apache.axiom.om; version="${axiom.osgi.version.range}",
                             org.apache.axiom.om.impl.builder; version="${axiom.osgi.version.range}",
                             org.apache.axiom.om.xpath; version="${axiom.osgi.version.range}",
-                            org.apache.commons.logging; version="${apache.commons.logging.package.import.version.range}",
-                            org.osgi.service.component; version="${osgi.service.component.package.import.version.range}",
+                            org.apache.commons.logging;
+                            version="${apache.commons.logging.package.import.version.range}",
+                            org.osgi.service.component;
+                            version="${osgi.service.component.package.import.version.range}",
                             org.osgi.framework; version="${osgi.service.component.package.import.version.range}",
                             org.wso2.balana.utils.exception;version="${balana.import.version.range}",
                             org.wso2.balana.utils.policy;version="${balana.import.version.range}",
@@ -113,6 +127,9 @@
                             org.wso2.carbon.identity.entitlement;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.entitlement.common.dto;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.entitlement.common.util;version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework.model;version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework.util;version="${carbon.identity.package.import.version.range}",
+
                             org.wso2.carbon.identity.oauth.common.exception;version="${identity.inbound.auth.oauth.imp.pkg.version}",
                             org.wso2.carbon.identity.oauth.dao;version="${identity.inbound.auth.oauth.imp.pkg.version}",
                             org.wso2.carbon.identity.oauth2;version="${identity.inbound.auth.oauth.imp.pkg.version}",
@@ -122,9 +139,8 @@
                             org.jaxen; version="${axiom.org.jaxen.imp.pkg.version.range}"
                         </Import-Package>
                         <Export-Package>
-                            !org.wso2.carbon.identity.oauth2.validators.internal",
-                            org.wso2.carbon.identity.oauth2.validators.impl",
-                            org.wso2.carbon.identity.oauth2.validators.constants"
+                            !org.wso2.carbon.identity.oauth2.validators.xacml.internal,
+                            org.wso2.carbon.identity.oauth2.validators.xacml.*,
                         </Export-Package>
                     </instructions>
                 </configuration>
@@ -192,4 +208,9 @@
             </plugin>
         </plugins>
     </build>
+
+    <properties>
+        <maven.source.plugin.version>1.22.0</maven.source.plugin.version>
+    </properties>
+
 </project>

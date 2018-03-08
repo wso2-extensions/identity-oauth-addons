@@ -17,7 +17,7 @@
  *
  */
 
-package org.wso2.carbon.identity.oauth2.validators.internal;
+package org.wso2.carbon.identity.oauth2.validators.xacml.internal;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -30,7 +30,7 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.entitlement.EntitlementService;
 
 @Component(
-        name = "identity.inbound.auth.scope.validator.xacml",
+        name = "identity.inbound.auth.scope.validators.xacml.component",
         immediate = true
 )
 public class OAuthScopeValidatorServiceComponent {
