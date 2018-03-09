@@ -234,7 +234,7 @@ public class XACMLScopeValidator extends OAuth2ScopeValidator {
         return XACMLScopeValidatorConstants.RULE_EFFECT_NOT_APPLICABLE.equalsIgnoreCase(validationResponse);
     }
 
-//    @Override
+    @Override
     public String getValidatorName() {
         return SCOPE_VALIDATOR_NAME;
     }
