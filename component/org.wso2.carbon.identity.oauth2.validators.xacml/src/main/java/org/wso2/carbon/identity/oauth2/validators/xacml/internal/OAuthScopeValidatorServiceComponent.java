@@ -29,6 +29,9 @@ import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.entitlement.EntitlementService;
 
+/**
+ * Service component for the XACML based scope validator component
+ */
 @Component(
         name = "identity.inbound.auth.scope.validators.xacml.component",
         immediate = true

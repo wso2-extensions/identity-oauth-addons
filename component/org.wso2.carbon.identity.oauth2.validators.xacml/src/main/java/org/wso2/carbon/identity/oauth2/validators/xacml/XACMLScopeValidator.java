@@ -63,7 +63,7 @@ public class XACMLScopeValidator extends OAuth2ScopeValidator {
     @Override
     public boolean validateScope(AccessTokenDO accessTokenDO, String resource) throws IdentityOAuth2Exception {
 
-        if (isUnAuthorizedToken(accessTokenDO)) {
+        if (isunauthorizedtoken(accessTokenDO)) {
             return false;
         }
         String authzUser = accessTokenDO.getAuthzUser().getUserName();
@@ -198,12 +198,12 @@ public class XACMLScopeValidator extends OAuth2ScopeValidator {
     }
 
     /**
-     * decides whether the token have and authorized user.
+     * Decides whether the token have and authorized user.
      *
      * @param accessTokenDO access token
      * @return boolean
      */
-    private boolean isUnAuthorizedToken(AccessTokenDO accessTokenDO) {
+    private boolean isunauthorizedtoken(AccessTokenDO accessTokenDO) {
         if (accessTokenDO.getAuthzUser() == null) {
             if (log.isDebugEnabled()) {
                 log.debug(String.format("There is no authorized user for access token id %s ",
@@ -215,7 +215,7 @@ public class XACMLScopeValidator extends OAuth2ScopeValidator {
     }
 
     /**
-     * decides whether the validation response is not applicable.
+     * Decides whether the validation response is not applicable.
      *
      * @param validationResponse extracted decision of the XACML response
      * @return true if it is not applicable
@@ -225,7 +225,7 @@ public class XACMLScopeValidator extends OAuth2ScopeValidator {
     }
 
     /**
-     * decides whether the validation response is permit.
+     * Decides whether the validation response is permit.
      *
      * @param validationResponse extracted decision of the XACML response
      * @return true if it is permit

@@ -34,7 +34,7 @@
     <packaging>bundle</packaging>
     <version>1.0.5-SNAPSHOT</version>
     <name>Identity Component - XACML based scope validator for OAuth access token</name>
-    <description>A custom wso2 feature</description>
+    <description>XACML based scope validator for OAuth access token</description>
     <url>http://wso2.org</url>
 
     <dependencies>
@@ -208,9 +208,4 @@
             </plugin>
         </plugins>
     </build>
-
-    <properties>
-        <maven.source.plugin.version>1.22.0</maven.source.plugin.version>
-    </properties>
-
 </project>

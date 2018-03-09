@@ -31,21 +31,52 @@
     </parent>
 
     <artifactId>org.wso2.carbon.identity.oauth2.validators.xacml.server.feature</artifactId>
-    <version>1.0.5-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Identity XACML based scope validator Feature for OAuth access token</name>
-    <description>A custom wso2 feature</description>
+    <description>This feature contains feature XACML based scope validator Feature for OAuth access token</description>
     <url>http://wso2.org</url>
 
     <dependencies>
         <dependency>
             <groupId>org.wso2.carbon.extension.identity.oauth.addons</groupId>
             <artifactId>org.wso2.carbon.identity.oauth2.validators.xacml</artifactId>
-            <version>${project.version}</version>
         </dependency>
     </dependencies>
     <build>
+        <resources>
+            <resource>
+                <directory>${project.build.directory}/runtime/</directory>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+        </resources>
         <plugins>
+            <plugin>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-dropins</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>org.wso2.carbon.extension.identity.oauth.addons</groupId>
+                                    <artifactId>org.wso2.carbon.identity.oauth2.validators.xacml</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>jar</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${project.build.directory}/runtime/dropins</outputDirectory>
+                                    <includes>**/*.jar</includes>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.wso2.maven</groupId>
                 <artifactId>carbon-p2-plugin</artifactId>
@@ -66,11 +97,12 @@
                                     <propertyDef>org.eclipse.equinox.p2.type.group:false</propertyDef>
                                 </properties>
                             </adviceFile>
-                            <bundles>
-                                <bundleDef>
-                                    org.wso2.carbon.extension.identity.oauth.addons:org.wso2.carbon.identity.oauth2.validators.xacml
-                                </bundleDef>
-                            </bundles>
+                            <importFeatures>
+                                <importFeatureDef>org.wso2.carbon.core:compatible:${carbon.kernel.version}</importFeatureDef>
+                                <importFeatureDef>org.wso2.carbon.identity.core.server:compatible:${carbon.identity.version}</importFeatureDef>
+                                <importFeatureDef>org.wso2.carbon.identity.application.authentication.framework.server:compatible:${carbon.identity.version}</importFeatureDef>
+                                <importFeatureDef>org.wso2.carbon.identity.xacml.server:compatible:${carbon.identity.version}</importFeatureDef>
+                            </importFeatures>
                         </configuration>
                     </execution>
                 </executions>
@@ -121,5 +153,4 @@
             </plugin>
         </plugins>
     </build>
-    
 </project>

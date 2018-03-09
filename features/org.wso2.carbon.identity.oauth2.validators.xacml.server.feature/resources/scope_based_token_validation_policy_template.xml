@@ -1,5 +1,5 @@
 <Policy xmlns="urn:oasis:names:tc:xacml:3.0:core:schema:wd-17" PolicyId="scope_based_token_validation_policy_template" RuleCombiningAlgId="urn:oasis:names:tc:xacml:1.0:rule-combining-algorithm:first-applicable" Version="1.0">
-    <Description>This policy template provides ability to validate OAuth2 access token to a given service provider(defined by SP_NAME) in the validation flow based on the scope (defined by SCOPE_1). It allows validation of token on time of the day (eg. between 09:00:00 to 17:00:00).</Description>
+    <Description>This policy template provides ability to validate OAuth2 access token to a given service provider(defined by SP_NAME) in the validation flow based on the scope (defined by SCOPE_1). It allows validation of token on time of the day (eg. between 09:00:00 to 18:00:00).</Description>
     <Target>
         <AnyOf>
             <AllOf>
