@@ -51,7 +51,6 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.xml.stream.XMLStreamException;
 
-
 /**
  * The Scope Validation implementation. This uses XACML policies to evaluate scope validation defined by the user.
  */
@@ -75,7 +74,7 @@ public class XACMLScopeValidator extends OAuth2ScopeValidator {
 
             if (log.isDebugEnabled()) {
                 log.debug(String.format("Inside XACML based scope validation flow for access token of consumer key :" +
-                        " %s of user %s", accessTokenDO.getConsumerKey(), authzUser));
+                        " %s of user %s.", accessTokenDO.getConsumerKey(), authzUser));
             }
 
             RequestDTO requestDTO = createRequestDTO(accessTokenDO, authApp, resource);
@@ -103,7 +102,7 @@ public class XACMLScopeValidator extends OAuth2ScopeValidator {
         } catch (InvalidOAuthClientException e) {
             throw new IdentityOAuth2Exception(String.format("Exception occurred when getting app information for " +
                     "client id %s of user %s. Error occurred when retrieving corresponding app for this specific" +
-                    " client id  ", accessTokenDO.getConsumerKey(), authzUser), e);
+                    " client id.", accessTokenDO.getConsumerKey(), authzUser), e);
         } catch (PolicyBuilderException e) {
             throw new IdentityOAuth2Exception(String.format("Exception occurred when building  XACML request for " +
                     "token with id  %s of user %s.", accessTokenDO.getTokenId(), authzUser), e);
@@ -162,7 +161,7 @@ public class XACMLScopeValidator extends OAuth2ScopeValidator {
     }
 
     /**
-     * Creates RowDTO object of xacml request using the resource name, attribute id, category value
+     * Creates RowDTO object of xacml request using the resource name, attribute id, category value.
      *
      * @param resourceName  resource name
      * @param attributeId   attribute id of the resource
@@ -206,7 +205,7 @@ public class XACMLScopeValidator extends OAuth2ScopeValidator {
     private boolean isunauthorizedtoken(AccessTokenDO accessTokenDO) {
         if (accessTokenDO.getAuthzUser() == null) {
             if (log.isDebugEnabled()) {
-                log.debug(String.format("There is no authorized user for access token id %s ",
+                log.debug(String.format("There is no authorized user for access token id %s.",
                         accessTokenDO.getTokenId()));
             }
             return true;

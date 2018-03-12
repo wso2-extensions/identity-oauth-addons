@@ -22,7 +22,7 @@ package org.wso2.carbon.identity.oauth2.validators.xacml.internal;
 import org.wso2.carbon.identity.entitlement.EntitlementService;
 
 /**
- * Data holder class for the XACML based scope validator component
+ * Data holder class for the XACML based scope validator component.
  */
 public class OAuthScopeValidatorDataHolder {
 

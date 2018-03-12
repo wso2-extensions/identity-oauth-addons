@@ -22,19 +22,24 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.component.ComponentContext;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
 import org.wso2.carbon.identity.oauth2.client.authentication.OAuthClientAuthenticator;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.MutualTLSClientAuthenticator;
 
 /**
- * TLS Mutual Auth osgi Component
- *
- * @scr.component name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls" immediate="true"
+ * TLS Mutual Auth osgi Component.
  */
+@Component(
+        name = "org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls",
+        immediate = true
+)
 public class MutualTLSServiceComponent {
 
     private static Log log = LogFactory.getLog(MutualTLSServiceComponent.class);
     private BundleContext bundleContext;
 
+    @Activate
     protected void activate(ComponentContext context) {
 
         try {

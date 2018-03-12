@@ -20,7 +20,7 @@
 package org.wso2.carbon.identity.oauth2.validators.xacml.constants;
 
 /**
- *  Constant class for the discovery component
+ *  Constant class for the discovery component.
  */
 public class XACMLScopeValidatorConstants {
 
