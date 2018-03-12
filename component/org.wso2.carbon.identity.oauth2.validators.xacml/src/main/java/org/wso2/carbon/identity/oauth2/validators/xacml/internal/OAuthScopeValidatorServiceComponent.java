@@ -30,7 +30,7 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.entitlement.EntitlementService;
 
 /**
- * Service component for the XACML based scope validator component
+ * Service component for the XACML based scope validator component.
  */
 @Component(
         name = "identity.inbound.auth.scope.validators.xacml.component",
@@ -44,8 +44,8 @@ public class OAuthScopeValidatorServiceComponent {
     @Activate
     protected void activate(ComponentContext ctxt) {
 
-        if (log.isDebugEnabled()){
-            log.debug("Application XACML based scope validator bundle is activated");
+        if (log.isDebugEnabled()) {
+            log.debug("Application XACML based scope validator bundle is activated.");
         }
     }
 
@@ -59,7 +59,7 @@ public class OAuthScopeValidatorServiceComponent {
     protected void setEntitlementService(EntitlementService entitlementService) {
 
         if (log.isDebugEnabled()) {
-            log.debug("EntitlementService is set in the  XACML based scope validator bundle");
+            log.debug("EntitlementService is set in the XACML based scope validator bundle.");
         }
         OAuthScopeValidatorDataHolder.getInstance().setEntitlementService(entitlementService);
     }
@@ -67,7 +67,7 @@ public class OAuthScopeValidatorServiceComponent {
     protected void unsetEntitlementService(EntitlementService entitlementService) {
 
         if (log.isDebugEnabled()) {
-            log.debug("EntitlementService is unset in the  XACML based scope validator bundle");
+            log.debug("EntitlementService is unset in the XACML based scope validator bundle.");
         }
         OAuthScopeValidatorDataHolder.getInstance().setEntitlementService(null);
     }
