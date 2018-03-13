@@ -28,7 +28,6 @@ import org.testng.annotations.Test;
 import org.wso2.carbon.base.CarbonBaseConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.core.util.KeyStoreManager;
-import org.wso2.carbon.identity.base.IdentityConstants;
 import org.wso2.carbon.identity.common.testng.WithAxisConfiguration;
 import org.wso2.carbon.identity.common.testng.WithCarbonHome;
 import org.wso2.carbon.identity.common.testng.WithH2Database;
@@ -36,7 +35,6 @@ import org.wso2.carbon.identity.common.testng.WithKeyStore;
 import org.wso2.carbon.identity.common.testng.WithRealmService;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
-import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.client.authentication.OAuthClientAuthnException;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceComponent;
@@ -49,14 +47,11 @@ import org.wso2.carbon.user.core.service.RealmService;
 import java.io.ByteArrayInputStream;
 import java.security.Key;
 import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.text.ParseException;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
@@ -64,7 +59,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.REJECT_BEFORE_IN_MINUTES;
-import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.buildExpiredJWT;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.buildJWT;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.getJWTValidator;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.getKeyStoreFromFile;
@@ -89,6 +83,7 @@ public class JWTValidatorTest {
     public static final String JWT_VALIDITY_PERIOD = "JwtValidityPeriod";
     public static final String ENABLE_CACHE_FOR_JTI = "EnableCacheForJTI";
     public static final String MANDATORY = "mandatory";
+    public static final String ID_TOKEN_ISSUER_ID = "http://localhost:9443/oauth2/token";
     private KeyStore clientKeyStore;
     private KeyStore serverKeyStore;
     private X509Certificate cert;
@@ -138,24 +133,13 @@ public class JWTValidatorTest {
         JWTServiceDataHolder.getInstance().setRealmService(realmService);
         IdpMgtServiceComponentHolder.getInstance().setRealmService(realmService);
 
-    }
-
-    @Test
-    public void testValidateTokenForNullJWT(Object properties, boolean expected,
-                                            String errorMsg) {
-
-        try {
-            JWTValidator jwtValidator = getJWTValidator((Properties) properties);
-            assertEquals(jwtValidator.isValidAssertion(null),
-                    expected, errorMsg);
-        } catch (OAuthClientAuthnException e) {
-            assertFalse(expected);
-        }
-
+        Map<String, Object> configuration = new HashMap<>();
+        configuration.put("OAuth.OpenIDConnect.IDTokenIssuerID", ID_TOKEN_ISSUER_ID);
+        WhiteboxImpl.setInternalState(IdentityUtil.class, "configuration", configuration);
     }
 
     @DataProvider(name = "provideJWT")
-    public Object[][] createJWT() {
+    public Object[][] createJWT() throws Exception {
 
         Properties properties1 = new Properties();
         Properties properties2 = new Properties();
@@ -183,72 +167,61 @@ public class JWTValidatorTest {
         properties9.setProperty(REJECT_BEFORE_IN_MINUTES, "1");
 
 
-        try {
-            Key key1 = clientKeyStore.getKey("wso2carbon", "wso2carbon".toCharArray());
-            String audience = IdentityUtil.getServerURL(IdentityConstants.OAuth.TOKEN, true, false);
-            String jsonWebToken0 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "4000", audience, "RSA265", key1, 0);
-            String jsonWebToken1 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3000", audience, "RSA265", key1, 0);
-            String jsonWebToken2 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3000", audience, "RSA265", key1,
-                    6000000);
-            String jsonWebToken3 = buildJWT("some-issuer", TEST_CLIENT_ID_1, "3001", audience, "RSA265", key1,
-                    6000000);
-            String jsonWebToken4 = buildJWT(TEST_CLIENT_ID_1, "some-client-id", "3002", audience, "RSA265", key1, 0);
-            String jsonWebToken5 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3002", audience, "RSA265", key1, 0);
-            String jsonWebToken6 = buildJWT(VALID_ISSUER_VAL, TEST_CLIENT_ID_1, "3003", audience, "RSA265", key1, 0);
-            String jsonWebToken7 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "2002", audience, "RSA265", key1, 0);
-            String jsonWebToken9 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3002", audience, "RSA265", key1,
-                    Calendar.getInstance().getTimeInMillis());
-            String jsonWebToken10 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3004", SOME_VALID_AUDIENCE,
-                    "RSA265", key1, 0);
-            String jsonWebToken11 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3005", audience, "RSA265", key1,
-                    0, 0, Calendar.getInstance().getTimeInMillis() - (1000L * 60 * 2 *
-                            Constants.DEFAULT_VALIDITY_PERIOD_IN_MINUTES));
+        Key key1 = clientKeyStore.getKey("wso2carbon", "wso2carbon".toCharArray());
+        String audience = ID_TOKEN_ISSUER_ID;
+        String jsonWebToken0 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "4000", audience, "RSA265", key1, 0);
+        String jsonWebToken1 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3000", audience, "RSA265", key1, 0);
+        String jsonWebToken2 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3000", audience, "RSA265", key1,
+                6000000);
+        String jsonWebToken3 = buildJWT("some-issuer", TEST_CLIENT_ID_1, "3001", audience, "RSA265", key1,
+                6000000);
+        String jsonWebToken4 = buildJWT(TEST_CLIENT_ID_1, "some-client-id", "3002", audience, "RSA265", key1, 0);
+        String jsonWebToken5 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3002", audience, "RSA265", key1, 0);
+        String jsonWebToken6 = buildJWT(VALID_ISSUER_VAL, TEST_CLIENT_ID_1, "3003", audience, "RSA265", key1, 0);
+        String jsonWebToken7 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "2002", audience, "RSA265", key1, 0);
+        String jsonWebToken9 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3002", audience, "RSA265", key1,
+                Calendar.getInstance().getTimeInMillis());
+        String jsonWebToken10 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3004", SOME_VALID_AUDIENCE,
+                "RSA265", key1, 0);
+        String jsonWebToken11 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3005", audience, "RSA265", key1,
+                0, 0, Calendar.getInstance().getTimeInMillis() - (1000L * 60 * 2 *
+                        Constants.DEFAULT_VALIDITY_PERIOD_IN_MINUTES));
 
-            String jsonWebToken12 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3006", audience, "RSA265", key1, 0);
-            String jsonWebToken13 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "2001", audience, "RSA265", key1, 0);
-            String jsonWebToken15 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3007", audience, "RSA265", key1,
-                    600000000);
+        String jsonWebToken12 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3006", audience, "RSA265", key1, 0);
+        String jsonWebToken13 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "2001", audience, "RSA265", key1, 0);
+        String jsonWebToken15 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3007", audience, "RSA265", key1,
+                600000000);
 
-            String jsonWebToken16 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3008", "some_audience",
-                    "RSA265", key1, 0);
-            String jsonWebToken17 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3010", audience, "RSA265", key1, 0);
-            String jsonWebToken18 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3011", audience, "RSA265", key1, 0);
+        String jsonWebToken16 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3008", "some_audience",
+                "RSA265", key1, 0);
+        String jsonWebToken17 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3010", audience, "RSA265", key1, 0);
+        String jsonWebToken18 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3011", audience, "RSA265", key1, 0);
 
-            return new Object[][]{
-                    {jsonWebToken0, properties8, false, "Correct authentication request is failed."},
-                    {jsonWebToken1, properties1, true, "Correct authentication request is failed."},
-                    {jsonWebToken2, properties1, false, "JWT replay with preventTokenReuse enabled is not " +
-                            "failed. "},
-                    {jsonWebToken3, properties3, false, "JWT with Invalid field Issuer must be fail."},
-                    {jsonWebToken4, properties3, false, "Request with non existing SP client-id should fail."},
-                    {jsonWebToken5, properties5, true, "JWT replay with preventTokenReuse disabled but " +
-                            "not-expired is not failed"},
-                    {jsonWebToken6, properties2, true, "Valid JWT token with custom issuer validation should pass."},
-                    {jsonWebToken7, properties3, false, "JWT persisted in database with preventTokenReuse " +
-                            "enabled is not failed."},
-                    {jsonWebToken9, properties1, false, "JWT persisted in database with preventTokenReuse " +
-                            "disabled is not failed."},
-                    {jsonWebToken10, properties4, true, "Valid JWT token with custom audience validation should pass" +
-                            "."},
-                    {jsonWebToken11, properties1, false, ""},
-                    {jsonWebToken12, properties5, true, ""},
-                    {jsonWebToken12, properties5, false, ""},
-                    {jsonWebToken13, properties1, false, ""},
-                    {jsonWebToken15, properties1, false, ""},
-                    {jsonWebToken16, properties4, false, ""},
-                    {jsonWebToken17, properties6, false, ""},
-                    {jsonWebToken18, properties7, false, ""},
-            };
-        } catch (KeyStoreException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (UnrecoverableKeyException e) {
-            e.printStackTrace();
-        } catch (IdentityOAuth2Exception e) {
-            e.printStackTrace();
-        }
-        return null;
+        return new Object[][]{
+                {jsonWebToken0, properties8, false, "Correct authentication request is failed."},
+                {jsonWebToken1, properties1, true, "Correct authentication request is failed."},
+                {jsonWebToken2, properties1, false, "JWT replay with preventTokenReuse enabled is not " +
+                        "failed. "},
+                {jsonWebToken3, properties3, false, "JWT with Invalid field Issuer must be fail."},
+                {jsonWebToken4, properties3, false, "Request with non existing SP client-id should fail."},
+                {jsonWebToken5, properties5, true, "JWT replay with preventTokenReuse disabled but " +
+                        "not-expired is not failed"},
+                {jsonWebToken6, properties2, true, "Valid JWT token with custom issuer validation should pass."},
+                {jsonWebToken7, properties3, false, "JWT persisted in database with preventTokenReuse " +
+                        "enabled is not failed."},
+                {jsonWebToken9, properties1, false, "JWT persisted in database with preventTokenReuse " +
+                        "disabled is not failed."},
+                {jsonWebToken10, properties4, true, "Valid JWT token with custom audience validation should pass" +
+                        "."},
+                {jsonWebToken11, properties1, false, ""},
+                {jsonWebToken12, properties5, true, ""},
+                {jsonWebToken12, properties5, false, ""},
+                {jsonWebToken13, properties1, false, ""},
+                {jsonWebToken15, properties1, false, ""},
+                {jsonWebToken16, properties4, false, ""},
+                {jsonWebToken17, properties6, false, ""},
+                {jsonWebToken18, properties7, false, ""},
+        };
     }
 
     @Test(dataProvider = "provideJWT")
