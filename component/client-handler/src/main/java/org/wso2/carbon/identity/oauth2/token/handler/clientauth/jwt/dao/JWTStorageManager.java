@@ -69,10 +69,10 @@ public class JWTStorageManager {
             }
         } catch (SQLException e) {
             if (log.isDebugEnabled()) {
-                log.debug("Error when retrieving the JWT ID: " + jti);
+                log.debug("Error when retrieving the JWT ID: " + jti, e);
             }
-            throw new OAuthClientAuthnException("Error occured while validating the JTI :" + jti + " of the assertion.",
-                    OAuth2ErrorCodes.INVALID_REQUEST);
+            throw new OAuthClientAuthnException("Error occurred while validating the JTI: " + jti + " of the " +
+                                                "assertion.", OAuth2ErrorCodes.INVALID_REQUEST);
         } finally {
             IdentityDatabaseUtil.closeAllConnections(dbConnection, rs, prepStmt);
         }
@@ -103,10 +103,10 @@ public class JWTStorageManager {
             }
         } catch (SQLException e) {
             if (log.isDebugEnabled()) {
-                log.debug("Error when retrieving the JWT ID: " + jti);
+                log.debug("Error when retrieving the JWT ID: " + jti, e);
             }
-            throw new OAuthClientAuthnException("Error occured while validating the JTI :" + jti + " of the assertion.",
-                    OAuth2ErrorCodes.INVALID_REQUEST);
+            throw new OAuthClientAuthnException("Error occurred while validating the JTI: " + jti + " of the " +
+                                                "assertion.", OAuth2ErrorCodes.INVALID_REQUEST);
         } finally {
             IdentityDatabaseUtil.closeAllConnections(dbConnection, rs, prepStmt);
         }
@@ -140,10 +140,10 @@ public class JWTStorageManager {
         } catch (SQLException e) {
             String error = "Error when storing the JWT ID: " + jti + " with exp: " + expTime;
             if (log.isDebugEnabled()) {
-                log.debug(error);
+                log.debug(error, e);
             }
-            throw new OAuthClientAuthnException("Error occured while validating the JTI :" + jti + " of the assertion.",
-                    OAuth2ErrorCodes.INVALID_REQUEST);
+            throw new OAuthClientAuthnException("Error occurred while validating the JTI: " + jti + " of the " +
+                                                "assertion.", OAuth2ErrorCodes.INVALID_REQUEST);
         } finally {
             IdentityDatabaseUtil.closeAllConnections(connection, null, preparedStatement);
         }

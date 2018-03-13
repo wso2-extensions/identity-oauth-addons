@@ -31,9 +31,9 @@ import org.wso2.carbon.base.MultitenantConstants;
 import org.wso2.carbon.core.util.KeyStoreManager;
 import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorConfig;
 import org.wso2.carbon.identity.application.common.model.IdentityProvider;
+import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationManagementUtil;
-import org.wso2.carbon.identity.base.IdentityConstants;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth.common.OAuth2ErrorCodes;
 import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
@@ -73,6 +73,8 @@ public class JWTValidator {
     public static final String DASH_DELIMITER = "-";
     public static final String KEYSTORE_FILE_EXTENSION = ".jks";
     public static final String RS = "RS";
+    private static final String IDP_ENTITY_ID = "IdPEntityId";
+    private static final String PROP_ID_TOKEN_ISSUER_ID = "OAuth.OpenIDConnect.IDTokenIssuerID";
     private boolean preventTokenReuse;
     private String validAudience;
     private String validIssuer;
@@ -379,8 +381,11 @@ public class JWTValidator {
             FederatedAuthenticatorConfig oidcFedAuthn = IdentityApplicationManagementUtil
                     .getFederatedAuthenticator(residentIdP.getFederatedAuthenticatorConfigs(),
                             IdentityApplicationConstants.Authenticator.OIDC.NAME);
-            audience = IdentityApplicationManagementUtil.getProperty(oidcFedAuthn.getProperties(),
-                    IdentityApplicationConstants.Authenticator.OIDC.OAUTH2_TOKEN_URL).getValue();
+            Property idpEntityId = IdentityApplicationManagementUtil.getProperty(oidcFedAuthn.getProperties(),
+                                                                              IDP_ENTITY_ID);
+            if (idpEntityId != null) {
+                audience = idpEntityId.getValue();
+            }
         } catch (IdentityProviderManagementException e) {
             String message = "Error while loading OAuth2TokenEPUrl of the resident IDP of tenant: " + tenantDomain;
             if (log.isDebugEnabled()) {
@@ -390,7 +395,7 @@ public class JWTValidator {
         }
 
         if (isEmpty(audience)) {
-            audience = IdentityUtil.getServerURL(IdentityConstants.OAuth.TOKEN, true, false);
+            audience = IdentityUtil.getProperty(PROP_ID_TOKEN_ISSUER_ID);
         }
         return audience;
     }
