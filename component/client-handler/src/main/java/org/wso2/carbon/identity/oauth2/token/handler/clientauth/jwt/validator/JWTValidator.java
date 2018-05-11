@@ -19,10 +19,10 @@
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator;
 
 import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSVerifier;
-import com.nimbusds.jose.ReadOnlyJWSHeader;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
-import com.nimbusds.jwt.ReadOnlyJWTClaimsSet;
+import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -114,7 +114,7 @@ public class JWTValidator {
             return logAndThrowException(errorMessage);
         }
         try {
-            ReadOnlyJWTClaimsSet claimsSet = getClaimSet(signedJWT);
+            JWTClaimsSet claimsSet = getClaimSet(signedJWT);
 
             if (claimsSet == null) {
                 errorMessage = "Claim set is missing in the JWT assertion";
@@ -169,7 +169,7 @@ public class JWTValidator {
         }
     }
 
-    private boolean validateMandatoryFeilds(List<String> mandatoryClaims, ReadOnlyJWTClaimsSet claimsSet) throws OAuthClientAuthnException {
+    private boolean validateMandatoryFeilds(List<String> mandatoryClaims, JWTClaimsSet claimsSet) throws OAuthClientAuthnException {
 
         for (String mandatoryClaim : mandatoryClaims) {
             if (claimsSet.getClaim(mandatoryClaim) == null) {
@@ -407,9 +407,9 @@ public class JWTValidator {
      * @return JWT claim set
      * @throws IdentityOAuth2Exception
      */
-    public ReadOnlyJWTClaimsSet getClaimSet(SignedJWT signedJWT) throws OAuthClientAuthnException {
+    public JWTClaimsSet getClaimSet(SignedJWT signedJWT) throws OAuthClientAuthnException {
 
-        ReadOnlyJWTClaimsSet claimsSet;
+        JWTClaimsSet claimsSet;
         String errorMessage;
         if (signedJWT == null) {
             errorMessage = "No Valid Assertion was found for " + Constants.OAUTH_JWT_BEARER_GRANT_TYPE;
@@ -437,7 +437,7 @@ public class JWTValidator {
      * @param claimsSet all the JWT claims
      * @return The subject, to be used
      */
-    public String resolveSubject(ReadOnlyJWTClaimsSet claimsSet) {
+    public String resolveSubject(JWTClaimsSet claimsSet) {
 
         return claimsSet.getSubject();
     }
@@ -492,7 +492,7 @@ public class JWTValidator {
             throws JOSEException, OAuthClientAuthnException {
 
         JWSVerifier verifier;
-        ReadOnlyJWSHeader header = signedJWT.getHeader();
+        JWSHeader header = signedJWT.getHeader();
         if (x509Certificate == null) {
             throw new OAuthClientAuthnException("Unable to locate certificate for JWT " + header.toString(),
                     OAuth2ErrorCodes.INVALID_REQUEST);
