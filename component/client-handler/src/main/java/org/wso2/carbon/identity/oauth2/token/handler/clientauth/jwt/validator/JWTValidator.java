@@ -158,7 +158,7 @@ public class JWTValidator {
                     !validateAudience(validAud, audience) || !validateJWTWithExpTime(expirationTime, currentTimeInMillis
                     , timeStampSkewMillis) || !validateNotBeforeClaim(currentTimeInMillis, timeStampSkewMillis, nbf) ||
                     !validateAgeOfTheToken(issuedAtTime, currentTimeInMillis, timeStampSkewMillis) || !isValidSignature
-                    (signedJWT, tenantDomain, jwtSubject)) {
+                    (consumerKey, signedJWT, tenantDomain, jwtSubject)) {
                 return false;
             }
 
@@ -357,11 +357,24 @@ public class JWTValidator {
         return true;
     }
 
-    private boolean isValidSignature(SignedJWT signedJWT, String tenantDomain,
+    private boolean isValidSignature(String clientId, SignedJWT signedJWT, String tenantDomain,
                                      String alias) throws OAuthClientAuthnException {
 
+        X509Certificate cert = null;
         try {
-            X509Certificate cert = getCertificate(tenantDomain, alias);
+            cert = (X509Certificate) OAuth2Util.getX509CertOfOAuthApp(clientId, tenantDomain);
+        } catch (IdentityOAuth2Exception e) {
+            if (log.isDebugEnabled()) {
+                log.debug(e.getMessage(), e);
+            }
+        }
+        // If certificate is not configured in service provider, it will throw an error.
+        // For the existing clients need to handle that error and get from truststore.
+        if (cert == null) {
+            cert = getCertificate(tenantDomain, alias);
+        }
+
+        try {
             return validateSignature(signedJWT, cert);
         } catch (JOSEException e) {
             throw new OAuthClientAuthnException(e.getMessage(), OAuth2ErrorCodes.INVALID_REQUEST);
