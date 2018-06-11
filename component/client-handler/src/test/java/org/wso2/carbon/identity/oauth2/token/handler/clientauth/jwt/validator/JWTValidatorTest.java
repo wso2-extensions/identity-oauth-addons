@@ -28,6 +28,8 @@ import org.testng.annotations.Test;
 import org.wso2.carbon.base.CarbonBaseConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.core.util.KeyStoreManager;
+import org.wso2.carbon.identity.application.common.model.ServiceProvider;
+import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.common.testng.WithAxisConfiguration;
 import org.wso2.carbon.identity.common.testng.WithCarbonHome;
 import org.wso2.carbon.identity.common.testng.WithH2Database;
@@ -36,6 +38,7 @@ import org.wso2.carbon.identity.common.testng.WithRealmService;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth2.client.authentication.OAuthClientAuthnException;
+import org.wso2.carbon.identity.oauth2.internal.OAuth2ServiceComponentHolder;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceComponent;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceDataHolder;
@@ -56,6 +59,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static org.mockito.Matchers.anyString;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.REJECT_BEFORE_IN_MINUTES;
@@ -126,6 +130,15 @@ public class JWTValidatorTest {
         Mockito.when(keyStoreManager.getDefaultPrimaryCertificate()).thenReturn(cert);
         Mockito.when(keyStoreManager.getPrimaryKeyStore()).thenReturn(serverKeyStore);
         Mockito.when(keyStoreManager.getKeyStore("wso2carbon.jks")).thenReturn(serverKeyStore);
+
+        ServiceProvider mockedServiceProvider = Mockito.mock(ServiceProvider.class);
+        Mockito.when(mockedServiceProvider.getCertificateContent()).thenReturn(CERTIFICATE);
+
+        ApplicationManagementService mockedApplicationManagementService = Mockito.mock(ApplicationManagementService
+                .class);
+        Mockito.when(mockedApplicationManagementService.getServiceProviderByClientId(anyString(), anyString(),
+                anyString())).thenReturn(mockedServiceProvider);
+        OAuth2ServiceComponentHolder.setApplicationMgtService(mockedApplicationManagementService);
 
         RealmService realmService = IdentityTenantUtil.getRealmService();
         UserRealm userRealm = realmService.getTenantUserRealm(SUPER_TENANT_ID);
