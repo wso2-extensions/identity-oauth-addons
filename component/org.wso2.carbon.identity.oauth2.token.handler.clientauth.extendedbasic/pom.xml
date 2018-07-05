@@ -5,7 +5,7 @@
     <parent>
         <artifactId>identity-oauth2-extenstions</artifactId>
         <groupId>org.wso2.carbon.extension.identity.oauth.addons</groupId>
-        <version>1.0.7</version>
+        <version>1.0.10-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 

@@ -69,9 +69,6 @@ public class MutualTLSWithIdSecretAuthenticator extends BasicAuthClientAuthentic
         } catch (InvalidOAuthClientException e) {
             throw new OAuthClientAuthnException(OAuth2ErrorCodes.INVALID_CLIENT, "Error occurred while retrieving " +
                     "tenant domain for the client ID: " + oAuthClientAuthnContext.getClientId(), e);
-        } catch (Exception e) {
-            throw new OAuthClientAuthnException(OAuth2ErrorCodes.SERVER_ERROR,
-                    "Unexpected error while authenticating client: " + oAuthClientAuthnContext.getClientId(), e);
         }
 
     }
