@@ -45,7 +45,8 @@ public class MutualTLSServiceComponent {
         try {
             // Registering MutualTLSClientAuthenticator as an OSGIService.
             bundleContext = context.getBundleContext();
-            MutualTLSWithIdSecretAuthenticator mutualTLSWithIdSecretAuthenticator = new MutualTLSWithIdSecretAuthenticator();
+            MutualTLSWithIdSecretAuthenticator mutualTLSWithIdSecretAuthenticator =
+                    new MutualTLSWithIdSecretAuthenticator();
             bundleContext.registerService(OAuthClientAuthenticator.class.getName(), mutualTLSWithIdSecretAuthenticator,
                     null);
             if (log.isDebugEnabled()) {
