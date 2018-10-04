@@ -64,9 +64,22 @@
                         <Private-Package>
                             org.wso2.carbon.identity.oauth2.token.handler.clientauth.tlswithidsecret.internal
                         </Private-Package>
+                        <Import-Package>
+                            javax.servlet.http;version="${javax.servlet.http.package.import.version.range}",
+                            org.apache.commons.lang;version="${apache.commons.lang.package.import.version.range}",
+                            org.apache.commons.logging;version="${apache.commons.logging.package.import.version.range}",
+                            org.osgi.framework;version="${osgi.framework.package.import.version.range}",
+                            org.osgi.service.component;version="${osgi.service.component.package.import.version.range}",
+                            org.wso2.carbon.identity.oauth.common; version="${identity.inbound.auth.oauth.imp.pkg.version}",
+                            org.wso2.carbon.identity.oauth.common.exception; version="${identity.inbound.auth.oauth.imp.pkg.version}",
+                            org.wso2.carbon.identity.oauth2; version="${identity.inbound.auth.oauth.imp.pkg.version}",
+                            org.wso2.carbon.identity.oauth2.bean; version="${identity.inbound.auth.oauth.imp.pkg.version}",
+                            org.wso2.carbon.identity.oauth2.client.authentication; version="${identity.inbound.auth.oauth.imp.pkg.version}",
+                            org.wso2.carbon.identity.oauth2.util; version="${identity.inbound.auth.oauth.imp.pkg.version}"
+                        </Import-Package>
                         <Export-Package>
                             !org.wso2.carbon.identity.oauth2.token.handler.clientauth.tlswithidsecret.internal,
-                            org.wso2.carbon.identity.oauth2.token.handler.clientauth.tlswithidsecret.*,
+                            org.wso2.carbon.identity.oauth2.token.handler.clientauth.tlswithidsecret.*
                         </Export-Package>
                     </instructions>
                 </configuration>
