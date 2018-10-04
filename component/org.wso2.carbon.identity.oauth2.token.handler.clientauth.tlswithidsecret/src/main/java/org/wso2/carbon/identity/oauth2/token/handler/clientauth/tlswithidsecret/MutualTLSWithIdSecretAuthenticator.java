@@ -40,9 +40,8 @@ import java.util.Map;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.tlswithidsecret.util.MutualTLSUtil.JAVAX_SERVLET_REQUEST_CERTIFICATE;
 
 /**
- * This class is an enhancement for BasicAuthClientAuthenticator which validates the client certificate
- * in addition to the client id and secret authentication
- *
+ * This class is an enhancement for BasicAuthClientAuthenticator. It validates the client certificate
+ * in addition to the client id and secret authentication.
  */
 public class MutualTLSWithIdSecretAuthenticator extends BasicAuthClientAuthenticator {
 
@@ -73,7 +72,12 @@ public class MutualTLSWithIdSecretAuthenticator extends BasicAuthClientAuthentic
                 } else {
                     // This means certificate is not configured in service provider. In that case basic authentication
                     // would be performed
-                    return super.authenticateClient(request, bodyParams, oAuthClientAuthnContext);
+                    if (log.isDebugEnabled()) {
+                        log.debug("Error while retrieving configured certificate.", e);
+                        log.debug("Client certificate is not configured for the app with client id: " +
+                                oAuthClientAuthnContext.getClientId() + ". Therefore not validating cert");
+                    }
+                    return true;
                 }
             }
 
