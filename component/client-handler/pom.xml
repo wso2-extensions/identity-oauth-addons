@@ -94,7 +94,7 @@
             <artifactId>jstl</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.wso2.orbit.com.nimbusds</groupId>
+            <groupId>com.nimbusds.wso2</groupId>
             <artifactId>nimbus-jose-jwt</artifactId>
         </dependency>
         <dependency>
