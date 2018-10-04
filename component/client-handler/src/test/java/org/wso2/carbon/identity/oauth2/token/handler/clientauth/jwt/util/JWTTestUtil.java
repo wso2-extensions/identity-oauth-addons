@@ -54,18 +54,17 @@ public class JWTTestUtil {
         long curTimeInMillis = Calendar.getInstance().getTimeInMillis();
 
         // Set claims to jwt token.
-        JWTClaimsSet.Builder jwtClaimsSetBuilder = new JWTClaimsSet.Builder();
-        jwtClaimsSetBuilder.issuer(issuer);
-        jwtClaimsSetBuilder.subject(subject);
-        jwtClaimsSetBuilder.audience(Arrays.asList(audience));
-        jwtClaimsSetBuilder.jwtID(jti);
-        jwtClaimsSetBuilder.expirationTime(new Date(curTimeInMillis + lifetimeInMillis));
-        jwtClaimsSetBuilder.issueTime(new Date(curTimeInMillis));
+        JWTClaimsSet jwtClaimsSet = new JWTClaimsSet();
+        jwtClaimsSet.setIssuer(issuer);
+        jwtClaimsSet.setSubject(subject);
+        jwtClaimsSet.setAudience(Arrays.asList(audience));
+        jwtClaimsSet.setJWTID(jti);
+        jwtClaimsSet.setExpirationTime(new Date(curTimeInMillis + lifetimeInMillis));
+        jwtClaimsSet.setIssueTime(new Date(curTimeInMillis));
 
         if (notBeforeMillis > 0) {
-            jwtClaimsSetBuilder.notBeforeTime(new Date(curTimeInMillis + notBeforeMillis));
+            jwtClaimsSet.setNotBeforeTime(new Date(curTimeInMillis + notBeforeMillis));
         }
-        JWTClaimsSet jwtClaimsSet = jwtClaimsSetBuilder.build();
         if (JWSAlgorithm.NONE.getName().equals(algorythm)) {
             return new PlainJWT(jwtClaimsSet).serialize();
         }
@@ -85,19 +84,18 @@ public class JWTTestUtil {
             lifetimeInMillis = 3600 * 1000;
         }
         // Set claims to jwt token.
-        JWTClaimsSet.Builder jwtClaimsSetBuilder = new JWTClaimsSet.Builder();
-        jwtClaimsSetBuilder.issuer(issuer);
-        jwtClaimsSetBuilder.subject(subject);
-        jwtClaimsSetBuilder.audience(Arrays.asList(audience));
-        jwtClaimsSetBuilder.jwtID(jti);
-        jwtClaimsSetBuilder.expirationTime(new Date(issuedTime + lifetimeInMillis));
-        jwtClaimsSetBuilder.issueTime(new Date(issuedTime));
-        jwtClaimsSetBuilder.notBeforeTime(new Date(notBeforeMillis));
+        JWTClaimsSet jwtClaimsSet = new JWTClaimsSet();
+        jwtClaimsSet.setIssuer(issuer);
+        jwtClaimsSet.setSubject(subject);
+        jwtClaimsSet.setAudience(Arrays.asList(audience));
+        jwtClaimsSet.setJWTID(jti);
+        jwtClaimsSet.setExpirationTime(new Date(issuedTime + lifetimeInMillis));
+        jwtClaimsSet.setIssueTime(new Date(issuedTime));
+        jwtClaimsSet.setNotBeforeTime(new Date(notBeforeMillis));
 
         if (notBeforeMillis > 0) {
-            jwtClaimsSetBuilder.notBeforeTime(new Date(issuedTime + notBeforeMillis));
+            jwtClaimsSet.setNotBeforeTime(new Date(issuedTime + notBeforeMillis));
         }
-        JWTClaimsSet jwtClaimsSet = jwtClaimsSetBuilder.build();
         if (JWSAlgorithm.NONE.getName().equals(algorythm)) {
             return new PlainJWT(jwtClaimsSet).serialize();
         }
@@ -117,19 +115,18 @@ public class JWTTestUtil {
             lifetimeInMillis = 3600 * 1000;
         }
         // Set claims to jwt token.
-        JWTClaimsSet.Builder jwtClaimsSetBuilder = new JWTClaimsSet.Builder();
-        jwtClaimsSetBuilder.issuer(issuer);
-        jwtClaimsSetBuilder.subject(subject);
-        jwtClaimsSetBuilder.audience(Arrays.asList(audience));
-        jwtClaimsSetBuilder.jwtID(jti);
-        jwtClaimsSetBuilder.expirationTime(new Date(issuedTime - lifetimeInMillis));
-        jwtClaimsSetBuilder.issueTime(new Date(issuedTime));
-        jwtClaimsSetBuilder.notBeforeTime(new Date(notBeforeMillis));
+        JWTClaimsSet jwtClaimsSet = new JWTClaimsSet();
+        jwtClaimsSet.setIssuer(issuer);
+        jwtClaimsSet.setSubject(subject);
+        jwtClaimsSet.setAudience(Arrays.asList(audience));
+        jwtClaimsSet.setJWTID(jti);
+        jwtClaimsSet.setExpirationTime(new Date(issuedTime - lifetimeInMillis));
+        jwtClaimsSet.setIssueTime(new Date(issuedTime));
+        jwtClaimsSet.setNotBeforeTime(new Date(notBeforeMillis));
 
         if (notBeforeMillis > 0) {
-            jwtClaimsSetBuilder.notBeforeTime(new Date(issuedTime + notBeforeMillis));
+            jwtClaimsSet.setNotBeforeTime(new Date(issuedTime + notBeforeMillis));
         }
-        JWTClaimsSet jwtClaimsSet = jwtClaimsSetBuilder.build();
         if (JWSAlgorithm.NONE.getName().equals(algorythm)) {
             return new PlainJWT(jwtClaimsSet).serialize();
         }

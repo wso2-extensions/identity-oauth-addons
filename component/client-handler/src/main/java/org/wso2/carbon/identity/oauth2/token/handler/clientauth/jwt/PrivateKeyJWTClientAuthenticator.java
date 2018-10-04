@@ -18,7 +18,7 @@
 
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt;
 
-import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.ReadOnlyJWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -132,7 +132,7 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
                               OAuthClientAuthnContext oAuthClientAuthnContext) throws OAuthClientAuthnException {
 
         SignedJWT signedJWT = getSignedJWT(bodyParameters, oAuthClientAuthnContext);
-        JWTClaimsSet claimsSet = jwtValidator.getClaimSet(signedJWT);
+        ReadOnlyJWTClaimsSet claimsSet = jwtValidator.getClaimSet(signedJWT);
         return jwtValidator.resolveSubject(claimsSet);
     }
 
