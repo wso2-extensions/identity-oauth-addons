@@ -34,6 +34,7 @@
         <module>component/client-handler</module>
         <!--this should be released after the required supplementary features are merged-->
         <module>component/org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls</module>
+        <module>component/org.wso2.carbon.identity.oauth2.token.handler.clientauth.tlswithidsecret</module>
         <module>component/org.wso2.carbon.identity.oauth2.validators.xacml</module>
         <module>features/org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.feature</module>
         <module>features/org.wso2.carbon.identity.oauth2.validators.xacml.server.feature</module>
