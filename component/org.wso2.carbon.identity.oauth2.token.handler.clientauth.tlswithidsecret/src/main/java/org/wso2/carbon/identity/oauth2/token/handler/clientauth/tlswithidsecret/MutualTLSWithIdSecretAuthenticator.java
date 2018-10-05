@@ -94,10 +94,7 @@ public class MutualTLSWithIdSecretAuthenticator extends BasicAuthClientAuthentic
             } else if (certObject instanceof X509Certificate){
                 requestCert = (X509Certificate) certObject;
             } else {
-                if (log.isDebugEnabled()) {
-                    log.debug("Could not find client certificate in required format for client: " +
-                            oAuthClientAuthnContext.getClientId());
-                }
+                log.error("Could not find client certificate in required format in the request");
                 return false;
             }
 
@@ -161,10 +158,7 @@ public class MutualTLSWithIdSecretAuthenticator extends BasicAuthClientAuthentic
                 }
                 trustedCert = true;
             } else {
-                if (log.isDebugEnabled()) {
-                    log.debug("Client Authentication failed. Client certificate thumbprint did not match with the " +
-                            "registered certificate thumbprint.");
-                }
+                log.error("Client certificate thumbprint did not match with the registered certificate thumbprint.");
             }
         } catch (NoSuchAlgorithmException e) {
             throw new OAuthClientAuthnException(OAuth2ErrorCodes.INVALID_GRANT, "Error occurred while " +
