@@ -24,13 +24,13 @@
     <parent>
         <groupId>org.wso2.carbon.extension.identity.oauth.addons</groupId>
         <artifactId>identity-oauth2-extenstions</artifactId>
-        <version>1.0.10</version>
+        <version>1.0.11-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <artifactId>org.wso2.carbon.identity.oauth2.validators.xacml</artifactId>
     <packaging>bundle</packaging>
-    <version>1.0.10</version>
+    <version>1.0.11-SNAPSHOT</version>
     <name>Identity Component - XACML based scope validator for OAuth access token</name>
     <description>XACML based scope validator for OAuth access token</description>
     <url>http://wso2.org</url>

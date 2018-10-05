@@ -25,7 +25,7 @@
     </parent>
     <groupId>org.wso2.carbon.extension.identity.oauth.addons</groupId>
     <artifactId>identity-oauth2-extenstions</artifactId>
-    <version>1.0.10</version>
+    <version>1.0.11-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>WSO2 Carbon Extension - Identity OAuth Extensions Pom</name>
     <url>http://wso2.org</url>
@@ -75,7 +75,7 @@
         <connection>scm:git:https://github.com/wso2-extensions/identity-oauth-addons.git</connection>
         <url>https://github.com/wso2-extensions/identity-oauth-addons.git</url>
         <developerConnection>scm:git:https://github.com/wso2-extensions/identity-oauth-addons.git</developerConnection>
-        <tag>v1.0.10</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <dependencyManagement>
