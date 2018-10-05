@@ -94,7 +94,8 @@ public class MutualTLSWithIdSecretAuthenticator extends BasicAuthClientAuthentic
             } else if (certObject instanceof X509Certificate){
                 requestCert = (X509Certificate) certObject;
             } else {
-                log.error("Could not find client certificate in required format in the request");
+                log.error("Could not find client certificate in required format in the request for client: " +
+                        oAuthClientAuthnContext.getClientId());
                 return false;
             }
 
