@@ -17,7 +17,6 @@
  *
  */
 
-
 package org.wso2.carbon.identity.oauth2.validators.xacml;
 
 import org.apache.axiom.om.OMElement;
@@ -62,13 +61,13 @@ public class XACMLScopeValidator extends OAuth2ScopeValidator {
     @Override
     public boolean validateScope(AccessTokenDO accessTokenDO, String resource) throws IdentityOAuth2Exception {
 
-        if (isunauthorizedtoken(accessTokenDO)) {
+        if (isUnauthorizedToken(accessTokenDO)) {
             return false;
         }
         String authzUser = accessTokenDO.getAuthzUser().getUserName();
         boolean isValidated = false;
-        FrameworkUtils.startTenantFlow(accessTokenDO.getAuthzUser().getTenantDomain());
         try {
+            FrameworkUtils.startTenantFlow(accessTokenDO.getAuthzUser().getTenantDomain());
             String consumerKey = accessTokenDO.getConsumerKey();
             OAuthAppDO authApp = OAuth2Util.getAppInformationByClientId(consumerKey);
 
@@ -197,12 +196,13 @@ public class XACMLScopeValidator extends OAuth2ScopeValidator {
     }
 
     /**
-     * Decides whether the token have and authorized user.
+     * Decide whether the token has is authorized.
      *
      * @param accessTokenDO access token
      * @return boolean
      */
-    private boolean isunauthorizedtoken(AccessTokenDO accessTokenDO) {
+    private boolean isUnauthorizedToken(AccessTokenDO accessTokenDO) {
+
         if (accessTokenDO.getAuthzUser() == null) {
             if (log.isDebugEnabled()) {
                 log.debug(String.format("There is no authorized user for access token id %s.",

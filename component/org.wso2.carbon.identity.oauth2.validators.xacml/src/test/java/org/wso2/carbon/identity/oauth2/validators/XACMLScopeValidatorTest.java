@@ -81,7 +81,6 @@ public class XACMLScopeValidatorTest extends IdentityBaseTest {
     private OAuthAppDO authApp;
     private final String RESOURCE = "resource";
 
-
     @ObjectFactory
     public IObjectFactory getObjectFactory() {
 
