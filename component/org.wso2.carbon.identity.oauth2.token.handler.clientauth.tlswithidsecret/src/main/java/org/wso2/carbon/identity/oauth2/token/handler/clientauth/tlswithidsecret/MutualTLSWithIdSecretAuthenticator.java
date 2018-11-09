@@ -20,6 +20,9 @@ package org.wso2.carbon.identity.oauth2.token.handler.clientauth.tlswithidsecret
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.identity.core.handler.AbstractIdentityHandler;
+import org.wso2.carbon.identity.core.model.IdentityEventListenerConfig;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth.common.OAuth2ErrorCodes;
 import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
@@ -45,12 +48,14 @@ import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.tlswithid
  */
 public class MutualTLSWithIdSecretAuthenticator extends BasicAuthClientAuthenticator {
 
+    public static final String MANDATE_MUTUAL_SSL = "MandateMutualSSL";
     private static Log log = LogFactory.getLog(MutualTLSWithIdSecretAuthenticator.class);
 
     public boolean authenticateClient(HttpServletRequest request, Map<String, List> bodyParams,
                                       OAuthClientAuthnContext oAuthClientAuthnContext)
             throws OAuthClientAuthnException {
 
+        boolean isMutualSSLMandated ;
         if (!super.authenticateClient(request, bodyParams, oAuthClientAuthnContext)) {
             return false;
         }
@@ -70,14 +75,26 @@ public class MutualTLSWithIdSecretAuthenticator extends BasicAuthClientAuthentic
                 if (e.getCause() instanceof CertificateException) {
                     throw e;
                 } else {
-                    // This means certificate is not configured in service provider. In that case basic authentication
-                    // would be performed
-                    if (log.isDebugEnabled()) {
-                        log.debug("Error while retrieving configured certificate.", e);
-                        log.debug("Client certificate is not configured for the app with client id: " +
-                                oAuthClientAuthnContext.getClientId() + ". Therefore not validating cert");
+                    isMutualSSLMandated = Boolean.parseBoolean(getMandateMutualSSLProperty());
+                    //MandateMutualSSL is enabled if the configuration is not available in identity.xml
+                    if (getMandateMutualSSLProperty() == null) {
+                        isMutualSSLMandated = true;
                     }
-                    return true;
+                    if (isMutualSSLMandated) {
+                        log.error("Mutual SSL is mandated from the property. Client certificate is not configured for" +
+                                " the app with client id: " + oAuthClientAuthnContext.getClientId() + ". Therefore " +
+                                "authentication failed.");
+                        return false;
+                    } else {
+                        // This means certificate is not configured in service provider. In that case basic authentication
+                        // would be performed
+                        if (log.isDebugEnabled()) {
+                            log.debug("Error while retrieving configured certificate.", e);
+                            log.debug("Client certificate is not configured for the app with client id: " +
+                                    oAuthClientAuthnContext.getClientId() + ". Therefore not validating cert");
+                        }
+                        return true;
+                    }
                 }
             }
 
@@ -91,7 +108,7 @@ public class MutualTLSWithIdSecretAuthenticator extends BasicAuthClientAuthentic
             if (certObject instanceof X509Certificate[]) {
                 X509Certificate[] cert = (X509Certificate[]) certObject;
                 requestCert = cert[0];
-            } else if (certObject instanceof X509Certificate){
+            } else if (certObject instanceof X509Certificate) {
                 requestCert = (X509Certificate) certObject;
             } else {
                 log.error("Could not find client certificate in required format in the request for client: " +
@@ -114,6 +131,13 @@ public class MutualTLSWithIdSecretAuthenticator extends BasicAuthClientAuthentic
 
     }
 
+    private String getMandateMutualSSLProperty() {
+
+        return IdentityUtil.readEventListenerProperty
+                (AbstractIdentityHandler.class.getName(), this.getClass().getName()).getProperties().
+                getProperty(MANDATE_MUTUAL_SSL);
+    }
+
     public boolean canAuthenticate(HttpServletRequest request, Map<String, List> bodyParams,
                                    OAuthClientAuthnContext oAuthClientAuthnContext) {
 
@@ -124,6 +148,7 @@ public class MutualTLSWithIdSecretAuthenticator extends BasicAuthClientAuthentic
     }
 
     public String getName() {
+
         return "MutualTLSWithIdSecretAuthenticator";
     }
 
@@ -136,6 +161,19 @@ public class MutualTLSWithIdSecretAuthenticator extends BasicAuthClientAuthentic
     public int getPriority() {
 
         return 101;
+    }
+
+    /**
+     * Returns whether the authenticator is enabled.
+     *
+     * @return true if configuration is available
+     */
+    @Override
+    public boolean isEnabled() {
+
+        IdentityEventListenerConfig identityEventListenerConfig =
+                IdentityUtil.readEventListenerProperty(AbstractIdentityHandler.class.getName(), this.getClass().getName());
+        return identityEventListenerConfig == null ? false : Boolean.parseBoolean(identityEventListenerConfig.getEnable());
     }
 
     /**
