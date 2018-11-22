@@ -73,6 +73,7 @@ public class JWTValidator {
     public static final String DASH_DELIMITER = "-";
     public static final String KEYSTORE_FILE_EXTENSION = ".jks";
     public static final String RS = "RS";
+    public static final String PS = "PS";
     private static final String IDP_ENTITY_ID = "IdPEntityId";
     private static final String PROP_ID_TOKEN_ISSUER_ID = "OAuth.OpenIDConnect.IDTokenIssuerID";
     private boolean preventTokenReuse;
@@ -519,7 +520,7 @@ public class JWTValidator {
             if (log.isDebugEnabled()) {
                 log.debug("Signature Algorithm found in the JWT Header: " + alg);
             }
-            if (alg.indexOf(RS) == 0) {
+            if (alg.indexOf(RS) == 0 || alg.indexOf(PS) == 0) {
                 // At this point 'x509Certificate' will never be null.
                 PublicKey publicKey = x509Certificate.getPublicKey();
                 if (publicKey instanceof RSAPublicKey) {
