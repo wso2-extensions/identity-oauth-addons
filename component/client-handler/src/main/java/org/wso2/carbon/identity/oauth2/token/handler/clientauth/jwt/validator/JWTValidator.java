@@ -32,6 +32,7 @@ import org.wso2.carbon.core.util.KeyStoreManager;
 import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorConfig;
 import org.wso2.carbon.identity.application.common.model.IdentityProvider;
 import org.wso2.carbon.identity.application.common.model.Property;
+import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationManagementUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
@@ -48,6 +49,7 @@ import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.dao.JWTEntry
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.dao.JWTStorageManager;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceComponent;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
+import org.wso2.carbon.identity.oauth2.validators.jwt.JWKSBasedJWTValidator;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementException;
 import org.wso2.carbon.idp.mgt.IdentityProviderManager;
 
@@ -58,10 +60,13 @@ import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.apache.commons.lang.StringUtils.isNotEmpty;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.OAUTH_JWT_ASSERTION;
 
 /**
  * This class is used to validate the JWT which is coming along with the request.
@@ -362,24 +367,57 @@ public class JWTValidator {
                                      String alias) throws OAuthClientAuthnException {
 
         X509Certificate cert = null;
+        String jwksUri = "";
+        boolean isValidSignature = false;
         try {
             cert = (X509Certificate) OAuth2Util.getX509CertOfOAuthApp(clientId, tenantDomain);
         } catch (IdentityOAuth2Exception e) {
             if (log.isDebugEnabled()) {
-                log.debug(e.getMessage(), e);
+                String message = "Unable to retrieve the certificate for the service provider";
+                log.debug(message, e);
+            }
+        }
+        // If cert is null check whether a jwks endpoint is configured for the service provider.
+        if (cert == null) {
+            try {
+                ServiceProviderProperty[] spProperties = OAuth2Util.getServiceProvider(clientId).getSpProperties();
+                for (ServiceProviderProperty spProperty : spProperties) {
+                    if (Constants.JWKS_URI.equals(spProperty.getName())) {
+                        jwksUri = spProperty.getValue();
+                        break;
+                    }
+                }
+                // Validate the signature of the assertion using the jwks end point.
+                if(!StringUtils.isBlank(jwksUri)) {
+                    if (log.isDebugEnabled()) {
+                        String message = "Found jwks end point for service provider "+jwksUri;
+                        log.debug(message);
+                    }
+                    String jwtString = signedJWT.getParsedString();
+                    String alg = signedJWT.getHeader().getAlgorithm().getName();
+                    Map<String, Object> options = new HashMap<String, Object>();
+                    isValidSignature = new JWKSBasedJWTValidator().validateSignature(jwtString, jwksUri, alg, options);
+                }
+            } catch (IdentityOAuth2Exception e) {
+                String errorMessage = "Error occurred while validating signature using jwks";
+                throw new OAuthClientAuthnException(errorMessage, OAuth2ErrorCodes.INVALID_REQUEST, e);
             }
         }
         // If certificate is not configured in service provider, it will throw an error.
         // For the existing clients need to handle that error and get from truststore.
-        if (cert == null) {
+        if (StringUtils.isBlank(jwksUri) && cert == null) {
             cert = getCertificate(tenantDomain, alias);
         }
+        if (StringUtils.isBlank(jwksUri) && cert != null) {
+            try {
+                isValidSignature = validateSignature(signedJWT, cert);
+            } catch (JOSEException e) {
+                String message = "Error while validating the signature";
+                throw new OAuthClientAuthnException(message, OAuth2ErrorCodes.INVALID_REQUEST, e);
+            }
 
-        try {
-            return validateSignature(signedJWT, cert);
-        } catch (JOSEException e) {
-            throw new OAuthClientAuthnException(e.getMessage(), OAuth2ErrorCodes.INVALID_REQUEST);
         }
+        return isValidSignature;
     }
 
     private String getValidAudience(String tenantDomain) throws OAuthClientAuthnException {
@@ -396,7 +434,7 @@ public class JWTValidator {
                     .getFederatedAuthenticator(residentIdP.getFederatedAuthenticatorConfigs(),
                             IdentityApplicationConstants.Authenticator.OIDC.NAME);
             Property idpEntityId = IdentityApplicationManagementUtil.getProperty(oidcFedAuthn.getProperties(),
-                                                                              IDP_ENTITY_ID);
+                    IDP_ENTITY_ID);
             if (idpEntityId != null) {
                 audience = idpEntityId.getValue();
             }
