@@ -373,46 +373,51 @@ public class JWTValidator {
             cert = (X509Certificate) OAuth2Util.getX509CertOfOAuthApp(clientId, tenantDomain);
         } catch (IdentityOAuth2Exception e) {
             if (log.isDebugEnabled()) {
-                log.debug(e.getMessage(), e);
+                String message = "Unable to retrieve the certificate for the service provider";
+                log.debug(message, e);
             }
         }
-        //if cert is null check whether a jwks endpoint is configured for the service provider
+        // If cert is null check whether a jwks endpoint is configured for the service provider.
         if (cert == null) {
             try {
                 ServiceProviderProperty[] spProperties = OAuth2Util.getServiceProvider(clientId).getSpProperties();
                 for (ServiceProviderProperty spProperty : spProperties) {
                     if (Constants.JWKS_URI.equals(spProperty.getName())) {
                         jwksUri = spProperty.getValue();
+                        break;
                     }
                 }
-                //validate the signature of the assertion using the jwks end point
-                String jwtString = signedJWT.getParsedString();
-                String alg = signedJWT.getHeader().getAlgorithm().getName();
-                Map<String, Object> options = new HashMap<String, Object>();
-                isValidSignature = new JWKSBasedJWTValidator().validateSignature(jwtString, jwksUri, alg, options);
-
+                // Validate the signature of the assertion using the jwks end point.
+                if(!StringUtils.isBlank(jwksUri)) {
+                    if (log.isDebugEnabled()) {
+                        String message = "Found jwks end point for service provider "+jwksUri;
+                        log.debug(message);
+                    }
+                    String jwtString = signedJWT.getParsedString();
+                    String alg = signedJWT.getHeader().getAlgorithm().getName();
+                    Map<String, Object> options = new HashMap<String, Object>();
+                    isValidSignature = new JWKSBasedJWTValidator().validateSignature(jwtString, jwksUri, alg, options);
+                }
             } catch (IdentityOAuth2Exception e) {
-                throw new OAuthClientAuthnException(e.getMessage(), OAuth2ErrorCodes.INVALID_REQUEST);
+                String errorMessage = "Error occurred while validating signature using jwks";
+                throw new OAuthClientAuthnException(errorMessage, OAuth2ErrorCodes.INVALID_REQUEST, e);
             }
         }
-
         // If certificate is not configured in service provider, it will throw an error.
         // For the existing clients need to handle that error and get from truststore.
         if (StringUtils.isBlank(jwksUri) && cert == null) {
-
             cert = getCertificate(tenantDomain, alias);
         }
-
         if (StringUtils.isBlank(jwksUri) && cert != null) {
             try {
                 isValidSignature = validateSignature(signedJWT, cert);
             } catch (JOSEException e) {
-                throw new OAuthClientAuthnException(e.getMessage(), OAuth2ErrorCodes.INVALID_REQUEST);
+                String message = "Error while validating the signature";
+                throw new OAuthClientAuthnException(message, OAuth2ErrorCodes.INVALID_REQUEST, e);
             }
 
         }
         return isValidSignature;
-
     }
 
     private String getValidAudience(String tenantDomain) throws OAuthClientAuthnException {
