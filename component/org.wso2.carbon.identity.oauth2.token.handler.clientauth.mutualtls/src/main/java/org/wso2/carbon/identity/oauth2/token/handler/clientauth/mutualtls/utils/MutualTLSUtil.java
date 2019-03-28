@@ -18,6 +18,9 @@
 
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils;
 
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.Charsets;
+
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateEncodingException;
@@ -47,7 +50,8 @@ public class MutualTLSUtil {
         MessageDigest md = MessageDigest.getInstance("SHA-1");
         byte[] certEncoded = cert.getEncoded();
         md.update(certEncoded);
-        return hexify(md.digest());
+        return new String(new Base64(0, null, true).encode(
+                hexify(md.digest()).getBytes(Charsets.UTF_8)), Charsets.UTF_8);
     }
 
     /**
