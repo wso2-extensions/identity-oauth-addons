@@ -25,6 +25,8 @@
         <classes>
             <class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.MutualTLSClientAuthenticatorTest"/>
             <class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.internal.MutualTLSServiceComponentTest"/>
+            <class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.JWKSCacheKeyTest"/>
+            <class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.JWKSCacheTest"/>
         </classes>
     </test>
 </suite>
