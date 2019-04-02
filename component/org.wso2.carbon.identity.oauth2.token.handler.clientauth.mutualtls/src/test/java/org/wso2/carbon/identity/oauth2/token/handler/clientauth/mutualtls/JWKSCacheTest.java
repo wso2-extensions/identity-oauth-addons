@@ -24,6 +24,10 @@ import org.testng.annotations.Test;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.cache.JWKSCache;
 
 import static org.testng.Assert.assertNotNull;
+
+/**
+ * Test class for JWKSCache class.
+ */
 public class JWKSCacheTest {
 
 

@@ -216,10 +216,10 @@
                             org.wso2.carbon.utils;version="${carbon.kernel.package.import.version.range}",
                             com.nimbusds.jose.util;version="${nimbusds.osgi.version.range}",
                             com.google.gson; version="${com.google.code.gson.osgi.version.range}",
-                            org.apache.commons.codec.binary.*;
+                            org.apache.commons.codec.binary;
                             version="${org.apache.commons.codec.package.import.version.range}",
-                            org.apache.commons.io.*; version="${org.apache.commons.io.package.import.version.range}",
-                            org.wso2.carbon.identity.core.util.*; version="${carbon.identity.package.import.version.range}"
+                            org.apache.commons.io; version="${org.apache.commons.io.package.import.version.range}",
+                            org.wso2.carbon.identity.core.util; version="${carbon.identity.package.import.version.range}"
                         </Import-Package>
                         <Export-Package>
                             !org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.internal,

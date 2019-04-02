@@ -22,29 +22,18 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.nimbusds.jose.util.DefaultResourceRetriever;
-import com.nimbusds.jose.util.Resource;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
-import org.wso2.carbon.identity.oauth.common.OAuth2ErrorCodes;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
-import org.wso2.carbon.identity.oauth2.client.authentication.OAuthClientAuthnException;
-import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.cache.JWKSCache;
-import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.cache.JWKSCacheEntry;
-import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.cache.JWKSCacheKey;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.MalformedURLException;
-import java.net.URL;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.Charsets;
 
@@ -62,10 +51,6 @@ public class MutualTLSUtil {
     private static Log log = LogFactory.getLog(MutualTLSUtil.class);
     private static final String JWKS_URI = "jwksURI";
     private static final String KEYS = "keys";
-    private static final String HTTP_CONNECTION_TIMEOUT_XPATH = "JWTValidatorConfigs.JWKSEndpoint" +
-            ".HTTPConnectionTimeout";
-    private static final String HTTP_READ_TIMEOUT_XPATH = "JWTValidatorConfigs.JWKSEndpoint" +
-            ".HTTPReadTimeout";
 
     /**
      * Attribute name for reading client certificate in the request.
@@ -108,83 +93,6 @@ public class MutualTLSUtil {
     }
 
     /**
-     * Fetch JWKS endpoint using client ID.
-     *
-     * @param clientID client ID
-     */
-    public static URL getJWKSEndpoint(String clientID) throws OAuthClientAuthnException {
-
-        String jwksUri = StringUtils.EMPTY;
-        ServiceProviderProperty[] spProperties;
-        try {
-            ServiceProvider serviceProvider = OAuth2Util.getServiceProvider(clientID);
-            spProperties = serviceProvider.getSpProperties();
-        } catch (IdentityOAuth2Exception e) {
-            throw new OAuthClientAuthnException("Error while getting the service provider for client ID " + clientID,
-                    OAuth2ErrorCodes.SERVER_ERROR, e);
-        }
-        jwksUri = getPropertyValue(spProperties, JWKS_URI);
-        if (jwksUri != null) {
-            URL url;
-            try {
-                url = new URL(jwksUri);
-            } catch (MalformedURLException e) {
-                throw new OAuthClientAuthnException("URL might be malformed " + clientID, OAuth2ErrorCodes.SERVER_ERROR,
-                        e);
-            }
-            return url;
-
-        } else {
-            throw new OAuthClientAuthnException(
-                    "jwks endpoint not configured for the service provider for client ID" + clientID,
-                    OAuth2ErrorCodes.SERVER_ERROR);
-        }
-
-    }
-    /**
-     * Fetch JWK Set as a String from JWKS endpoint.
-     *
-     * @param jwksUri JWKS Endpoint URL
-     */
-    public static String getResourceContent(URL jwksUri) throws IOException {
-
-        if (jwksUri != null) {
-
-            Resource resource = null;
-            JWKSCacheKey jwksCacheKey = new JWKSCacheKey(jwksUri.toString());
-            JWKSCacheEntry jwksCacheEntry = JWKSCache.getInstance().getValueFromCache(jwksCacheKey);
-            if (jwksCacheEntry != null) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Retrieving JWKS for " + jwksUri.toString() + " from cache.");
-                }
-                resource = jwksCacheEntry.getValue();
-                if (log.isDebugEnabled() && resource != null) {
-                    log.debug("Cache hit for " + jwksUri.toString());
-                }
-            }
-            if (resource == null) {
-
-                DefaultResourceRetriever defaultResourceRetriever;
-                defaultResourceRetriever = new DefaultResourceRetriever(
-                        readHTTPConnectionConfigValue(HTTP_CONNECTION_TIMEOUT_XPATH),
-                        readHTTPConnectionConfigValue(HTTP_READ_TIMEOUT_XPATH));
-                if (log.isDebugEnabled()) {
-                    log.debug("Fetching JWKS from remote endpoint.");
-                }
-                resource = defaultResourceRetriever.retrieveResource(jwksUri);
-                JWKSCache.getInstance().addToCache(jwksCacheKey, new JWKSCacheEntry(resource));
-            }
-            if (resource != null) {
-                return resource.getContent();
-            } else {
-                return null;
-            }
-        } else {
-            return null;
-        }
-    }
-
-    /**
      * Convert resource to a JsonArray.
      *
      * @param resource Resource Content received from JWKS endpoint
@@ -204,14 +112,13 @@ public class MutualTLSUtil {
 
     }
 
-
     /**
      * Read HTTP connection configurations from identity.xml file.
      *
      * @param xPath xpath of the config property.
      * @return Config property value.
      */
-    private static int readHTTPConnectionConfigValue(String xPath) {
+    public static int readHTTPConnectionConfigValue(String xPath) {
 
         int configValue = 0;
         String config = IdentityUtil.getProperty(xPath);
@@ -243,7 +150,6 @@ public class MutualTLSUtil {
         }
         return false;
     }
-
 
     /**
      * Obtaining Property value from a service provider property array
