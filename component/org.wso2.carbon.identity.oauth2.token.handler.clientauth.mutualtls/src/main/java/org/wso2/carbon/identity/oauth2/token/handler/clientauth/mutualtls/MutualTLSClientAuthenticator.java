@@ -47,6 +47,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils.MutualTLSUtil.JAVAX_SERVLET_REQUEST_CERTIFICATE;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils.MutualTLSUtil.isJwksUriConfigured;
 
 /**
  * This class is responsible for authenticating OAuth clients with Mutual TLS. The client will present
@@ -58,6 +59,8 @@ import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls
 public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticator {
 
     private static Log log = LogFactory.getLog(MutualTLSClientAuthenticator.class);
+    private static final String X5T = "x5t";
+    private static final String X5C = "x5c";
 
     /**
      * @param request                 HttpServletRequest which is the incoming request.
@@ -68,7 +71,7 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
      */
     @Override
     public boolean authenticateClient(HttpServletRequest request, Map<String, List> bodyParams,
-            OAuthClientAuthnContext oAuthClientAuthnContext)
+                                      OAuthClientAuthnContext oAuthClientAuthnContext)
             throws OAuthClientAuthnException {
 
         X509Certificate registeredCert = null;
@@ -94,7 +97,6 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
                 log.debug("Authenticating client : " + oAuthClientAuthnContext.getClientId() + " with public " +
                         "certificate.");
             }
-
             X509Certificate requestCert;
             Object certObject = request.getAttribute(JAVAX_SERVLET_REQUEST_CERTIFICATE);
             if (certObject instanceof X509Certificate[]) {
@@ -111,28 +113,13 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
             }
 
             String tenantDomain = OAuth2Util.getTenantDomainOfOauthApp(oAuthClientAuthnContext.getClientId());
-            try {
-                registeredCert = (X509Certificate) OAuth2Util
-                        .getX509CertOfOAuthApp(oAuthClientAuthnContext.getClientId(), tenantDomain);
-            } catch (IdentityOAuth2Exception e) {
-                String message = "Error retrieving public certificate for service provider checking whether a jwks "
-                        + "endpoint is configured for the service provider with client_id: " + oAuthClientAuthnContext
-                        .getClientId();
-                log.warn(message);
+            if (isJwksUriConfigured(oAuthClientAuthnContext.getClientId(), tenantDomain)) {
                 if (log.isDebugEnabled()) {
-                    log.debug(message, e);
-                }
-            }
-
-            if (registeredCert == null) {
-                if (log.isDebugEnabled()) {
-
                     log.debug("Public certificate not configured for Service Provider with " + "client_id: "
                             + oAuthClientAuthnContext.getClientId() + " of tenantDomain: " + tenantDomain + ". "
                             + "Fetching the jwks endpoint for validating request object");
                 }
-                jwksUri = MutualTLSUtil.getJWKSEndpoint(oAuthClientAuthnContext
-                        .getClientId());
+                jwksUri = MutualTLSUtil.getJWKSEndpoint(oAuthClientAuthnContext.getClientId());
                 return authenticate(jwksUri, requestCert);
             } else {
                 if (log.isDebugEnabled()) {
@@ -140,6 +127,8 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
                             + oAuthClientAuthnContext.getClientId() + " of tenantDomain: " + tenantDomain
                             + ". Using public certificate  for validating request object");
                 }
+                registeredCert = (X509Certificate) OAuth2Util
+                        .getX509CertOfOAuthApp(oAuthClientAuthnContext.getClientId(), tenantDomain);
                 return authenticate(registeredCert, requestCert);
             }
         } catch (IdentityOAuth2Exception e) {
@@ -290,25 +279,22 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
     private boolean isAuthenticated(JsonArray resourceArray, X509Certificate requestCert)
             throws CertificateException, OAuthClientAuthnException, NoSuchAlgorithmException {
 
-        String[] attributes = { "x5t", "x5c" }; // TODO: make this configurable by the xml file
-        for (String attribute : attributes) {
-
-            for (JsonElement jsonElement : resourceArray) {
-                JsonElement attributeValue = jsonElement.getAsJsonObject().get(attribute);
-                if (attributeValue != null) {
-                    if (attribute.equals("x5t")) {
-                        if (attributeValue.getAsString().equals(MutualTLSUtil.getThumbPrint(requestCert))) {
-                            return true;
-                        }
-                    } else {
-                        CertificateFactory factory = CertificateFactory.getInstance("X.509");
-                        X509Certificate cert = (X509Certificate) factory.generateCertificate(new ByteArrayInputStream(
-                                DatatypeConverter.parseBase64Binary(attributeValue.getAsString())));
-                        if (authenticate(cert, requestCert)) {
-                            return true;
-                        }
-                    }
+        for (JsonElement jsonElement : resourceArray) {
+            JsonElement attributeValue = jsonElement.getAsJsonObject().get(X5T);
+            if (attributeValue != null) {
+                if (attributeValue.getAsString().equals(MutualTLSUtil.getThumbPrint(requestCert))) {
+                    return true;
                 }
+            }
+            attributeValue = jsonElement.getAsJsonObject().get(X5C);
+            if (attributeValue != null) {
+                CertificateFactory factory = CertificateFactory.getInstance("X.509");
+                X509Certificate cert = (X509Certificate) factory.generateCertificate(new ByteArrayInputStream(
+                        DatatypeConverter.parseBase64Binary(attributeValue.getAsString())));
+                if (authenticate(cert, requestCert)) {
+                    return true;
+                }
+
             }
         }
         return false;

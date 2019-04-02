@@ -1,6 +1,6 @@
 
 /*
- * Copyright (c) 2017, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2019, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -33,8 +33,9 @@ public class JWKSCacheKeyTest {
 
     @Test
     public void testGetCacheKeyString() throws Exception {
+
         JWKSCacheKey jwksCacheKey = new JWKSCacheKey(cacheKeyString);
-        assertEquals(jwksCacheKey.getJWKSCacheKey(), cacheKeyString, "Get JWKSCacheKey successfully.");
+        assertEquals(jwksCacheKey.getJWKSCacheKey(), cacheKeyString, "Get JWKSCacheKey failed");
     }
 
     @DataProvider(name = "TestEqualsJWKSCache")
@@ -46,6 +47,7 @@ public class JWKSCacheKeyTest {
 
     @Test(dataProvider = "TestEqualsJWKSCache")
     public void testEquals(boolean istrue) throws Exception {
+
         Object object = new Object();
         JWKSCacheKey jwksCacheKey = new JWKSCacheKey(cacheKeyString);
         JWKSCacheKey jwksCacheKeySample = new JWKSCacheKey(cacheKeyString);
@@ -57,8 +59,9 @@ public class JWKSCacheKeyTest {
 
     @Test
     public void testHashCode() throws Exception {
+
         JWKSCacheKey jwksCacheKey = new JWKSCacheKey(cacheKeyString);
         Integer jwksCacheIdHashCodeSample = jwksCacheKey.hashCode();
-        assertEquals(jwksCacheIdHashCodeSample, cacheKeyStringHashCode, "Get cachekeyHashcode successfully.");
+        assertEquals(jwksCacheIdHashCodeSample, cacheKeyStringHashCode, "Get cache key Hashcode failed.");
     }
 }

@@ -41,7 +41,6 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URL;
 import java.nio.charset.Charset;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -53,6 +52,7 @@ import java.util.Map;
 import static org.mockito.Matchers.any;
 import static org.testng.Assert.assertEquals;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils.MutualTLSUtil.JAVAX_SERVLET_REQUEST_CERTIFICATE;
+import static org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
 
 @WithCarbonHome
 @PrepareForTest({OAuth2Util.class, HttpServletRequest.class, MutualTLSUtil.class})
@@ -146,7 +146,7 @@ public class MutualTLSClientAuthenticatorTest extends PowerMockTestCase {
             "  } ]\n" +
             "}";
 
-    private static String TEST_JSON ="{\n" +
+    private static String TEST_JSON = "{\n" +
             "  \"keys\" : [ {\n" +
             "    \"e\" : \"AQAB\",\n" +
             "    \"kid\" : \"dn/viC56rPBozVX4DxPaHIzxocfK\",\n" +
@@ -166,6 +166,22 @@ public class MutualTLSClientAuthenticatorTest extends PowerMockTestCase {
             "  } ]\n" +
             "}";
 
+    private static String TEST_JSON_X5T_XCT = "{\n" + "  \"keys\" : [ {\n" + "    \"e\" : \"AQAB\",\n"
+            + "    \"kid\" : \"uzPTFFKqK6VwzzdbFxmnTlE4ezc\",\n" + "    \"kty\" : \"RSA\",\n"
+            + "    \"n\" : \"x_AfraZx04boy3Xti7oPXMEi16ZiXWIiFy6ci_vpQKEqGXtbKK82i68ZaHDD6EvErR8DCc6QawK5AGd_gJKFwSqB0XbB8mq15S7Sv5WnZyQFHjFZBDLEpUHJV5UaGIVl60iEHUAupKqq4hnjE4APFj1pLrs55QGDoTgSuTRw2xIzMSVjcUREM-UZFBlOXduL2B1SiYQdT8ctprJRZPvOkYZyUoYLPg9n1pEp_CVYeYhV71gLUmCmrUe52LP-TERvjk7gF16c8UCVT7G4xtzWw1hJtc1eDB5v6NsxpWRr5j2F6VdRvN__wuRRglmN1Gdw039ZvEGdCt-SEnVn4dpVuQ\",\n"
+            + "    \"use\" : \"tls\",\n"
+            + "    \"x5c\" : [ \"MIIFODCCBCCgAwIBAgIEWcVdrDANBgkqhkiG9w0BAQsFADBTMQswCQYDVQQGEwJHQjEUMBIGA1UEChMLT3BlbkJhbmtpbmcxLjAsBgNVBAMTJU9wZW5CYW5raW5nIFByZS1Qcm9kdWN0aW9uIElzc3VpbmcgQ0EwHhcNMTgxMjA1MDMwMjU4WhcNMjAwMTA1MDMzMjU4WjBhMQswCQYDVQQGEwJHQjEUMBIGA1UEChMLT3BlbkJhbmtpbmcxGzAZBgNVBAsTEjAwMTU4MDAwMDFIUVFyWkFBWDEfMB0GA1UEAxMWMlgwMXRUTEQwaEJtd2pFZ1dWakd2ajCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMfwH62mcdOG6Mt17Yu6D1zBItemYl1iIhcunIv76UChKhl7WyivNouvGWhww+hLxK0fAwnOkGsCuQBnf4CShcEqgdF2wfJqteUu0r+Vp2ckBR4xWQQyxKVByVeVGhiFZetIhB1ALqSqquIZ4xOADxY9aS67OeUBg6E4Erk0cNsSMzElY3FERDPlGRQZTl3bi9gdUomEHU/HLaayUWT7zpGGclKGCz4PZ9aRKfwlWHmIVe9YC1Jgpq1Hudiz/kxEb45O4BdenPFAlU+xuMbc1sNYSbXNXgweb+jbMaVka+Y9helXUbzf/8LkUYJZjdRncNN/WbxBnQrfkhJ1Z+HaVbkCAwEAAaOCAgQwggIAMA4GA1UdDwEB/wQEAwIHgDAgBgNVHSUBAf8EFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwgeAGA1UdIASB2DCB1TCB0gYLKwYBBAGodYEGAWQwgcIwKgYIKwYBBQUHAgEWHmh0dHA6Ly9vYi50cnVzdGlzLmNvbS9wb2xpY2llczCBkwYIKwYBBQUHAgIwgYYMgYNVc2Ugb2YgdGhpcyBDZXJ0aWZpY2F0ZSBjb25zdGl0dXRlcyBhY2NlcHRhbmNlIG9mIHRoZSBPcGVuQmFua2luZyBSb290IENBIENlcnRpZmljYXRpb24gUG9saWNpZXMgYW5kIENlcnRpZmljYXRlIFByYWN0aWNlIFN0YXRlbWVudDBtBggrBgEFBQcBAQRhMF8wJgYIKwYBBQUHMAGGGmh0dHA6Ly9vYi50cnVzdGlzLmNvbS9vY3NwMDUGCCsGAQUFBzAChilodHRwOi8vb2IudHJ1c3Rpcy5jb20vb2JfcHBfaXNzdWluZ2NhLmNydDA6BgNVHR8EMzAxMC+gLaArhilodHRwOi8vb2IudHJ1c3Rpcy5jb20vb2JfcHBfaXNzdWluZ2NhLmNybDAfBgNVHSMEGDAWgBRQc5HGIXLTd/T+ABIGgVx5eW4/UDAdBgNVHQ4EFgQUwA+9otHiTEen8wHnnuitXR3ZuFowDQYJKoZIhvcNAQELBQADggEBADvRik60g4F43y8YMof/Ukle3pMuRUQlIe+Nk5LXbwcOI5iMZ0h768LbmqZRqN/yRUcvAeZFXE92O59iDWbVm2zTKvGaQaUwowvi9JuH2CTLQfW5+shmvEyJnRqf2mCpJWyh4W0JgckZwtljSYR0AsNnbjNhTE86MyaRZ1Uuun2fbNfQskKHb3bkPJcRkMfplGN5Y/uNFwnanfGnoACoMtimgWB2AD9i3cLowik5GGPtu7QGd3GFJaPnSLbV8vFxt/OBrF5fpBptCDvvN0aV9HYMlVRNiJrSJyc7kzEllNmCQR7GoyFzjnWJ2cMNp86CME/FRqNgaEAwV84x6i7W0xE=\" ],\n"
+            + "    \"x5t\" : \"vmeZ6lJD1EglN82nXk8qSODYxLI=\",\n"
+            + "    \"x5u\" : \"https://keystore.abc.org.lk/0015800001HQQrZAAX/uzPTFFKqK6VwzzdbFxmnTlE4ezc.pem\",\n"
+            + "    \"x5t#S256\" : \"tpqKoTkfPzQPxE0G-8t-sa-heMha9zGtEg0srbSTDUc=\"\n" + "  }, {\n"
+            + "    \"e\" : \"AQAB\",\n" + "    \"kid\" : \"CzUe1ecMKykHLhQAATzFBudOj0Y\",\n"
+            + "    \"kty\" : \"RSA\",\n"
+            + "    \"n\" : \"p5KzjtKkBSJRtWAmS5ueHRQ-CCAIVvFZBIPUPCLf_N0RSo95M8gSKRVAuR0trmzoJ_L-wQkysz9Ax93ziIq-mz_0Z65Lc6EtyE9O2PO5ED5fWt8_-g1hFttbORNAH9dJF0fbwdeJclG3rKuJDzLF80rIV88cFY1Iug_kRerjlSD5yQ5bJfNeP-V7XKILo570RR7GThgLwmWNWAWKA-63zmjr1OAI2IDx5R6krlY6dPQ57euwhMS8TWpuo27CHUirKAoBzPywcssPcpfRaT0dNv_83AkxRtsOUMizAWVh8MGhUUe2bHpQdRxKD_0X7U_5V3Y0aPFUikICTW2_Je8jbQ\",\n"
+            + "    \"use\" : \"sig\",\n"
+            + "    \"x5c\" : [ \"MIIFLTCCBBWgAwIBAgIEWcVdrTANBgkqhkiG9w0BAQsFADBTMQswCQYDVQQGEwJHQjEUMBIGA1UEChMLT3BlbkJhbmtpbmcxLjAsBgNVBAMTJU9wZW5CYW5raW5nIFByZS1Qcm9kdWN0aW9uIElzc3VpbmcgQ0EwHhcNMTgxMjA1MDMwMzUyWhcNMjAwMTA1MDMzMzUyWjBhMQswCQYDVQQGEwJHQjEUMBIGA1UEChMLT3BlbkJhbmtpbmcxGzAZBgNVBAsTEjAwMTU4MDAwMDFIUVFyWkFBWDEfMB0GA1UEAxMWMlgwMXRUTEQwaEJtd2pFZ1dWakd2ajCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKeSs47SpAUiUbVgJkubnh0UPgggCFbxWQSD1Dwi3/zdEUqPeTPIEikVQLkdLa5s6Cfy/sEJMrM/QMfd84iKvps/9GeuS3OhLchPTtjzuRA+X1rfP/oNYRbbWzkTQB/XSRdH28HXiXJRt6yriQ8yxfNKyFfPHBWNSLoP5EXq45Ug+ckOWyXzXj/le1yiC6Oe9EUexk4YC8JljVgFigPut85o69TgCNiA8eUepK5WOnT0Oe3rsITEvE1qbqNuwh1IqygKAcz8sHLLD3KX0Wk9HTb//NwJMUbbDlDIswFlYfDBoVFHtmx6UHUcSg/9F+1P+Vd2NGjxVIpCAk1tvyXvI20CAwEAAaOCAfkwggH1MA4GA1UdDwEB/wQEAwIGwDAVBgNVHSUEDjAMBgorBgEEAYI3CgMMMIHgBgNVHSAEgdgwgdUwgdIGCysGAQQBqHWBBgFkMIHCMCoGCCsGAQUFBwIBFh5odHRwOi8vb2IudHJ1c3Rpcy5jb20vcG9saWNpZXMwgZMGCCsGAQUFBwICMIGGDIGDVXNlIG9mIHRoaXMgQ2VydGlmaWNhdGUgY29uc3RpdHV0ZXMgYWNjZXB0YW5jZSBvZiB0aGUgT3BlbkJhbmtpbmcgUm9vdCBDQSBDZXJ0aWZpY2F0aW9uIFBvbGljaWVzIGFuZCBDZXJ0aWZpY2F0ZSBQcmFjdGljZSBTdGF0ZW1lbnQwbQYIKwYBBQUHAQEEYTBfMCYGCCsGAQUFBzABhhpodHRwOi8vb2IudHJ1c3Rpcy5jb20vb2NzcDA1BggrBgEFBQcwAoYpaHR0cDovL29iLnRydXN0aXMuY29tL29iX3BwX2lzc3VpbmdjYS5jcnQwOgYDVR0fBDMwMTAvoC2gK4YpaHR0cDovL29iLnRydXN0aXMuY29tL29iX3BwX2lzc3VpbmdjYS5jcmwwHwYDVR0jBBgwFoAUUHORxiFy03f0/gASBoFceXluP1AwHQYDVR0OBBYEFHDTJlbYQ4XGq7ipGI9RAqjcBsw4MA0GCSqGSIb3DQEBCwUAA4IBAQB7+bZmt8tLbvFQ6Pl1Lx0R4pJCf3jHAtphrO+aoHeBkFD/R1f9kGmDZOvoI+CNStf4IR15p6mLQFS0pAJ2YuQb7fI0L/Mue7EFXb0oeQ/x0KWqv2b1WB+H0YexVzymgdCmxq7oVUY2ACCimtF0c2jULdx7J6Gsb0bnTaKIWJhYi3451vn0YtYOTPp2nzmie9GHR7ujUaXClBEEWoyhNdFJJ4rom4BhWXwanvU+leHX+sL1PBmuiEs7du/KbdUjQ6b2BXlSntSE7JNexjODdxbgSid72dv4ae+6dcwjE429kvULdMfuI7WtsvyCO2zwGqEV/0SsuXaOpioSKNNfRLw+\" ],\n"
+            + "    \"x5t\" : \"qI56my8dy8V8M_ExGs2nMlD9G48=\",\n"
+            + "    \"x5u\" : \"https://keystore.abc.org.lk/0015800001HQQrZAAX/CzUe1ecMKykHLhQAATzFBudOj0Y.pem\",\n"
+            + "    \"x5t#S256\" : \"fMSq7nleARP8LlJGKDmYII1EjhGwBpW8BZapcCZNKSo=\"\n" + "  } ]\n" + "}";
 
     @DataProvider(name = "testAuthenticateClientWhenJWKSEndPointGiven")
     public Object[][] testAuthenticateClientWhenJWKSEndPointGiven() {
@@ -190,6 +206,10 @@ public class MutualTLSClientAuthenticatorTest extends PowerMockTestCase {
                 {
                         getCertificate(CERTIFICATE_CONTENT), bodyParamsWithClientId,
                         buildOAuthClientAuthnContext(CLIENT_ID), false, TEST_JSON
+                },
+                {
+                        getCertificate(CERTIFICATE_CONTENT), bodyParamsWithClientId,
+                        buildOAuthClientAuthnContext(CLIENT_ID), true, TEST_JSON_X5T_XCT
                 },
                 };
 
@@ -222,9 +242,10 @@ public class MutualTLSClientAuthenticatorTest extends PowerMockTestCase {
             Exception {
 
         PowerMockito.mockStatic(OAuth2Util.class);
+        PowerMockito.mockStatic(MutualTLSUtil.class);
         OAuthClientAuthnContext oAuthClientAuthnContext = (OAuthClientAuthnContext) oAuthClientAuthnContextObj;
         HttpServletRequest httpServletRequest = PowerMockito.mock(HttpServletRequest.class);
-
+        PowerMockito.when(MutualTLSUtil.isJwksUriConfigured(any(),any())).thenReturn(false);
         PowerMockito.when(OAuth2Util.getTenantDomainOfOauthApp(Matchers.anyString())).thenReturn("carbon.super");
         PowerMockito.when(OAuth2Util.getX509CertOfOAuthApp(oAuthClientAuthnContext.getClientId(), "carbon.super")).thenReturn
                 (getCertificate(CERTIFICATE_CONTENT));
@@ -323,20 +344,18 @@ public class MutualTLSClientAuthenticatorTest extends PowerMockTestCase {
 
     @Test(dataProvider = "testAuthenticateClientWhenJWKSEndPointGiven")
     public void testAuthenticateClientWhenJWKSEndPointGiven(Object certificate, HashMap<String, List> bodyContent,
-            Object oAuthClientAuthnContextObj, boolean authenticationResult, String TEST_JSON)
-            throws Exception {
+            Object oAuthClientAuthnContextObj, boolean authenticationResult, String TEST_JSON) throws Exception {
 
         PowerMockito.mockStatic(OAuth2Util.class);
         PowerMockito.mockStatic(MutualTLSUtil.class);
         OAuthClientAuthnContext oAuthClientAuthnContext = (OAuthClientAuthnContext) oAuthClientAuthnContextObj;
         HttpServletRequest httpServletRequest = PowerMockito.mock(HttpServletRequest.class);
-
-        PowerMockito.when(OAuth2Util.getTenantDomainOfOauthApp(Matchers.anyString())).thenReturn("carbon.super");
-        PowerMockito.when(OAuth2Util.getX509CertOfOAuthApp(oAuthClientAuthnContext.getClientId(), "carbon.super"))
+        PowerMockito.when(MutualTLSUtil.isJwksUriConfigured(any(), any())).thenReturn(true);
+        PowerMockito.when(OAuth2Util.getTenantDomainOfOauthApp(Matchers.anyString()))
+                .thenReturn(SUPER_TENANT_DOMAIN_NAME);
+        PowerMockito
+                .when(OAuth2Util.getX509CertOfOAuthApp(oAuthClientAuthnContext.getClientId(), SUPER_TENANT_DOMAIN_NAME))
                 .thenReturn(null);
-        PowerMockito.when(MutualTLSUtil.getJWKSEndpoint(any()))
-                .thenReturn(new URL("https://buddhima.auth0.com/.well-known/jwks.json"));
-        PowerMockito.when(MutualTLSUtil.getResourceContent(any())).thenReturn(TEST_JSON);
         PowerMockito.when(MutualTLSUtil.getJsonArray(any())).thenReturn(getJsonArray(TEST_JSON));
         PowerMockito.when(MutualTLSUtil.getThumbPrint(any())).thenReturn("da39a3ee5e6b4b0d3255bfef95601890afd80709");
         PowerMockito.when(httpServletRequest.getAttribute(JAVAX_SERVLET_REQUEST_CERTIFICATE)).thenReturn(certificate);
@@ -354,3 +373,4 @@ public class MutualTLSClientAuthenticatorTest extends PowerMockTestCase {
         return rootobj.get("keys").getAsJsonArray();
     }
 }
+

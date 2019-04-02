@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2019, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -24,8 +24,8 @@ import org.testng.annotations.Test;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.cache.JWKSCache;
 
 import static org.testng.Assert.assertNotNull;
-
 public class JWKSCacheTest {
+
 
     @ObjectFactory
     public IObjectFactory getObjectFactory() {
