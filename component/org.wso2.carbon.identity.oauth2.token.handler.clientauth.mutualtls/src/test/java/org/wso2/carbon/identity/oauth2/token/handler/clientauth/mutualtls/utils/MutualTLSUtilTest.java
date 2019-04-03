@@ -54,26 +54,6 @@ public class MutualTLSUtilTest extends PowerMockTestCase {
         assertEquals(MutualTLSUtil.getPropertyValue(serviceProviderProperties, "a"), "b");
     }
 
-    @Test
-    public void testGetJsonArray() {
-
-        String testJson = "{\n" + "  \"keys\" : [ {\n" + "    \"e\" : \"AQAB\",\n"
-                + "    \"kid\" : \"dn/viC56rPBozVX4DxPaHIzxocfK\",\n" + "    \"kty\" : \"RSA\",\n"
-                + "    \"n\" : \"x_AfraZx04boy3Xti7oPXMEi16ZiXWIiFy6ciFHjFZBDLEpUHJV5UaGIVl60iEHUAupKqq4hnjE4APFj1pLr"
-                + "s55QGDoTgSuTRw2xIzMSVjcUREM-UZFBlOXduL2B1SiYQdT8ctprJRZPvOkYZyUoYLPg9n1pEp_CVYeYhV71gLUmCmrUe52LP-T"
-                + "ERvjk7gF16c8UCVT7G4xtzWw1hJtc1eDB5v6NsxpWRr5j2F6VdRvN__wuRRglmN1Gdw039ZvEGdCt-SEnVn4dpVuQ\",\n"
-                + "    \"use\" : \"tls\",\n"
-                + "    \"x5u\" : \"https://keystore.abc.org.lk/RjM3REY1MEVFMUTI5MjNCQ0YyMkM2MkU1MQ.pem\",\n"
-                + "    \"x5t#S256\" : \"dn/viC56rPBozVX4DxPaHIzxocfK\"\n" + "  }, {\n" + "    \"e\" : \"AQAB\",\n"
-                + "    \"kid\" : \"dn/viC56rPBozVX4DxPaHIzxocfK\",\n" + "    \"kty\" : \"RSA\",\n"
-                + "    \"n\" : \"PO5ED5fWt8_-g1hFttbORNAH9dJF0fbwdeJclG3rKuJDzLF80rIV88cFY1Iug_kRerjlSD5yQ5bJfNeP-V7XKI"
-                + "Lo570RR7GThgLwmWNWAWK6dPQ57euwhMS8TWpuo27CHUirKAoBzPywcssPcpfRaT0dNv_83AkxRtsOUMizAWVh8MGhUUe2bHpQdR"
-                + "xKD_0X7U_5V3Y0aPFUikICTW2_Je8jbQ\",\n" + "    \"use\" : \"sig\",\n"
-                + "    \"x5u\" : \"https://keystore.abc.org.lk/RjM3REY1MEVFMUQ2TZDNzIyMjNCQ0YyMkM2MkU1MQ.pem\",\n"
-                + "    \"x5t#S256\" : \"dn/viC56rPBozVX4DxPaHIzxocfK\"\n" + "  } ]\n" + "}";
-        JsonArray jsonArray = MutualTLSUtil.getJsonArray(testJson);
-        assertTrue(StringUtils.isNotBlank(jsonArray.get(0).toString()));
-    }
 
     @Test
     public void testGetThumbPrint() throws Exception {

@@ -18,10 +18,6 @@
 
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -31,13 +27,9 @@ import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.Charsets;
 
-import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateEncodingException;
@@ -92,25 +84,6 @@ public class MutualTLSUtil {
         return builder.toString();
     }
 
-    /**
-     * Convert resource to a JsonArray.
-     *
-     * @param resource Resource Content received from JWKS endpoint
-     */
-    public static JsonArray getJsonArray(String resource) {
-        JsonParser jp = new JsonParser();
-        InputStream inputStream = new ByteArrayInputStream(resource.getBytes(StandardCharsets.UTF_8));
-        JsonElement root = jp.parse(new InputStreamReader(inputStream));
-        JsonObject rootobj = root.getAsJsonObject();
-        JsonElement keys = rootobj.get(KEYS);
-        if (keys != null) {
-            JsonArray jsonArray = keys.getAsJsonArray();
-            return jsonArray;
-        } else {
-            return null;
-        }
-
-    }
 
     /**
      * Read HTTP connection configurations from identity.xml file.
