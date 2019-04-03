@@ -32,29 +32,32 @@ import org.powermock.modules.testng.PowerMockTestCase;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
-import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.common.testng.WithCarbonHome;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth2.bean.OAuthClientAuthnContext;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils.MutualTLSUtil;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
-import org.wso2.carbon.identity.testutil.powermock.PowerMockIdentityBaseTest;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.xml.bind.DatatypeConverter;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.junit.Assert.assertFalse;
 import static org.mockito.Matchers.any;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils.MutualTLSUtil.JAVAX_SERVLET_REQUEST_CERTIFICATE;
 import static org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
 
@@ -85,7 +88,27 @@ public class MutualTLSClientAuthenticatorTest extends PowerMockTestCase {
             "TY75aViCAD6QDmBxe/opQYExBdgNOCQ6HdP5WWBT6EEggBe/mqOM/dchj57rpPtw\n" +
             "IOQjy9UCaY7tq4SmhAJyab0mxjcFoRBpzOJIDh+N8ozSDK+MepyFSwtW5zVacOiG\n" +
             "OQUrBTGXQFZOGKje8sbS";
-
+    private static String  CERTIFICATE_CONTENT_2 =
+            "MIIDpjCCAo4CCQDKBQ7NfoPWojANBgkqhkiG9w0BAQsFADCBlDELMAkGA1UEBhMC\n"
+            + "U0wxEDAOBgNVBAgMB1dlc3Rlcm4xEDAOBgNVBAcMB0NvbG9tYm8xDTALBgNVBAoM\n"
+            + "BFdTTzIxCzAJBgNVBAsMAldBMRcwFQYDVQQDDA53c28yaXNAYWJjLmNvbTEsMCoG\n"
+            + "CSqGSIb3DQEJARYdYnVkZGhpbWF1ZGFyYW5nYTEyM0BnbWFpbC5jb20wHhcNMTkw\n"
+            + "NDAzMDYzMjAyWhcNMjAwNDAyMDYzMjAyWjCBlDELMAkGA1UEBhMCU0wxEDAOBgNV\n"
+            + "BAgMB1dlc3Rlcm4xEDAOBgNVBAcMB0NvbG9tYm8xDTALBgNVBAoMBFdTTzIxCzAJ\n"
+            + "BgNVBAsMAldBMRcwFQYDVQQDDA53c28yaXNAYWJjLmNvbTEsMCoGCSqGSIb3DQEJ\n"
+            + "ARYdYnVkZGhpbWF1ZGFyYW5nYTEyM0BnbWFpbC5jb20wggEiMA0GCSqGSIb3DQEB\n"
+            + "AQUAA4IBDwAwggEKAoIBAQDbvyzlB2FbWrs6utsPPfUAkX478lFnvJ4Dkw0wQY+Y\n"
+            + "ucf2VV7nlfNZkRPssvczuRTo9Xf7DrSdCy8Lwk/hFndQnl6ugHBuijF/lnCUXcMz\n"
+            + "EamobmNOM4PNaNp4juah7Gn89Kvw7AkXWem41QfVr0HkbUO9iLamE3r2jUf42CLS\n"
+            + "F+NWVJv5FKRmM5oHf/oiiB4MfF6AgH0Reh4ptwMri0auUR8DoS7WR7KHuBIIZ/ZH\n"
+            + "YliBQ6lZyCL+V854rB2SmwTiT2ee3j2BeUHJwdZTznkass4YOhUzu3eartLH8hqb\n"
+            + "/W+hI7++Muv6JWt6JggOfpRABgljgh5SKGH/lJOvl1qNAgMBAAEwDQYJKoZIhvcN\n"
+            + "AQELBQADggEBAE+iUq6/mHzwBMtmF5JHTLpXkunyAlbl4RRLQ1vg91Ei34T0TPus\n"
+            + "zw/jB1ta5ShtchJzmaSEkVEHA1ZwaG8mqZ+JohsY1Z9vb2hevbC/V3H7sLqpCPZK\n"
+            + "KCkaTp3buoHPPV3vAGLIsQrhRqVkulNiKJPGyz85R8bfrB36yk7PxSe0U9xy7Knr\n"
+            + "vmO/dYUXGrprjfL7BaCq1eLw9Mx68anuhFYRspmdxoRGidJ6sm/I1ZD5oQEKa1tS\n"
+            + "O6eaZWIa6CJF2/e4TMtEPeVEgWqtpLxYzhX2kEgzEXapxMkPwXPfym4I0b2Y0Ag/\n"
+            + "7Kun3EsBCgp4r4S9zWAyLA1aJIo63OPDb9Q=";
     private static String TEST_JSON_WITH_X5T ="{\n" +
             "  \"keys\" : [ {\n" +
             "    \"e\" : \"AQAB\",\n" +
@@ -249,7 +272,7 @@ public class MutualTLSClientAuthenticatorTest extends PowerMockTestCase {
         PowerMockito.mockStatic(MutualTLSUtil.class);
         OAuthClientAuthnContext oAuthClientAuthnContext = (OAuthClientAuthnContext) oAuthClientAuthnContextObj;
         HttpServletRequest httpServletRequest = PowerMockito.mock(HttpServletRequest.class);
-        PowerMockito.when(MutualTLSUtil.isJwksUriConfigured(any(),any())).thenReturn(false);
+        PowerMockito.when(MutualTLSUtil.isJwksUriConfigured(any())).thenReturn(false);
         PowerMockito.when(OAuth2Util.getTenantDomainOfOauthApp(Matchers.anyString())).thenReturn("carbon.super");
         PowerMockito.when(OAuth2Util.getX509CertOfOAuthApp(oAuthClientAuthnContext.getClientId(), "carbon.super")).thenReturn
                 (getCertificate(CERTIFICATE_CONTENT));
@@ -348,28 +371,27 @@ public class MutualTLSClientAuthenticatorTest extends PowerMockTestCase {
 
     @Test(dataProvider = "testAuthenticateClientWhenJWKSEndPointGiven")
     public void testAuthenticateClientWhenJWKSEndPointGiven(Object certificate, HashMap<String, List> bodyContent,
-            Object oAuthClientAuthnContextObj, boolean authenticationResult, String TEST_JSON) throws Exception {
+            Object oAuthClientAuthnContextObj, boolean authenticationResult, String testJson) throws Exception {
 
         PowerMockito.mockStatic(OAuth2Util.class);
         PowerMockito.mockStatic(MutualTLSUtil.class);
-        PowerMockito.mockStatic(OAuth2Util.class);
         MutualTLSClientAuthenticator mutualTLSClientAuthenticator1 = Mockito.spy(mutualTLSClientAuthenticator);
         OAuthClientAuthnContext oAuthClientAuthnContext = (OAuthClientAuthnContext) oAuthClientAuthnContextObj;
         HttpServletRequest httpServletRequest = PowerMockito.mock(HttpServletRequest.class);
-        PowerMockito.when(MutualTLSUtil.isJwksUriConfigured(any(), any())).thenReturn(true);
+        PowerMockito.when(MutualTLSUtil.isJwksUriConfigured(any())).thenReturn(true);
         PowerMockito.when(OAuth2Util.getTenantDomainOfOauthApp(Matchers.anyString()))
                 .thenReturn(SUPER_TENANT_DOMAIN_NAME);
         PowerMockito
                 .when(OAuth2Util.getX509CertOfOAuthApp(oAuthClientAuthnContext.getClientId(), SUPER_TENANT_DOMAIN_NAME))
                 .thenReturn(null);
-        PowerMockito.doReturn(getJsonArray(TEST_JSON)).when(mutualTLSClientAuthenticator1).getResourceContent(any());
-        PowerMockito.doReturn(new URL("https://buddhima.auth0.com/.well-known/jwks.json"))
-                .when(mutualTLSClientAuthenticator1).getJWKSEndpointOfSP(any());
+        PowerMockito.doReturn(getJsonArray(testJson)).when(mutualTLSClientAuthenticator1).getResourceContent(any());
+        PowerMockito.doReturn(new URL("https://wso2is.com/.well-known/jwks.json"))
+                .when(mutualTLSClientAuthenticator1).getJWKSEndpointOfSP(any(),any());
         PowerMockito.when(MutualTLSUtil.getThumbPrint(any())).thenReturn("da39a3ee5e6b4b0d3255bfef95601890afd80709");
         PowerMockito.when(httpServletRequest.getAttribute(JAVAX_SERVLET_REQUEST_CERTIFICATE)).thenReturn(certificate);
         assertEquals(mutualTLSClientAuthenticator1
                         .authenticateClient(httpServletRequest, bodyContent, oAuthClientAuthnContext), authenticationResult,
-                "Expected client authentication result was not " + "received");
+                "Expected client authentication result was not received");
     }
 
     public static JsonArray getJsonArray(String resource) {
@@ -379,6 +401,36 @@ public class MutualTLSClientAuthenticatorTest extends PowerMockTestCase {
         JsonElement root = jp.parse(new InputStreamReader(inputStream));
         JsonObject rootobj = root.getAsJsonObject();
         return rootobj.get("keys").getAsJsonArray();
+    }
+
+    @Test
+    public void testGetJWKSEndpointOfSP() throws Exception{
+        ServiceProvider serviceProvider = new ServiceProvider();
+        PowerMockito.mockStatic(MutualTLSUtil.class);
+        PowerMockito.when(MutualTLSUtil.getPropertyValue(any(),any())).thenReturn("https://wso2is.com/"
+                + ".well-known/jwks.json");
+        assertNotNull(mutualTLSClientAuthenticator.getJWKSEndpointOfSP(serviceProvider,"someClientID"));
+
+    }
+
+    @Test
+    public void testAuthenticate() throws Exception{
+        CertificateFactory factory = CertificateFactory.getInstance("X.509");
+        X509Certificate Cert = (X509Certificate) factory.generateCertificate(
+                new ByteArrayInputStream(DatatypeConverter.parseBase64Binary(CERTIFICATE_CONTENT)));
+        assertTrue(mutualTLSClientAuthenticator.authenticate(Cert,Cert));
+
+    }
+
+    @Test
+    public void testAuthenticateWhenDifferentCertificates() throws Exception{
+        CertificateFactory factory = CertificateFactory.getInstance("X.509");
+        X509Certificate Cert = (X509Certificate) factory.generateCertificate(
+                new ByteArrayInputStream(DatatypeConverter.parseBase64Binary(CERTIFICATE_CONTENT)));
+        X509Certificate anotherCert = (X509Certificate) factory.generateCertificate(
+                new ByteArrayInputStream(DatatypeConverter.parseBase64Binary(CERTIFICATE_CONTENT_2)));
+        assertFalse(mutualTLSClientAuthenticator.authenticate(Cert,anotherCert));
+
     }
 }
 

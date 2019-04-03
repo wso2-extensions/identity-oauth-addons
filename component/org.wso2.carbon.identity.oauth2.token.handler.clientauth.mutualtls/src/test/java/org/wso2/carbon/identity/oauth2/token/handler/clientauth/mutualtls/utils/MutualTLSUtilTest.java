@@ -18,8 +18,6 @@
  */
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils;
 
-import com.google.gson.JsonArray;
-import org.apache.commons.lang.StringUtils;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.testng.PowerMockTestCase;
@@ -51,7 +49,9 @@ public class MutualTLSUtilTest extends PowerMockTestCase {
         serviceProviderProperty.setValue("b");
         ServiceProviderProperty[] serviceProviderProperties = new ServiceProviderProperty[1];
         serviceProviderProperties[0] = serviceProviderProperty;
-        assertEquals(MutualTLSUtil.getPropertyValue(serviceProviderProperties, "a"), "b");
+        ServiceProvider serviceProvider = new ServiceProvider();
+        serviceProvider.setSpProperties(serviceProviderProperties);
+        assertEquals(MutualTLSUtil.getPropertyValue(serviceProvider, "a"), "b");
     }
 
 
@@ -99,6 +99,6 @@ public class MutualTLSUtilTest extends PowerMockTestCase {
         PowerMockito.mockStatic(OAuth2Util.class);
         PowerMockito.when(OAuth2Util.getServiceProvider(clientID, SUPER_TENANT_DOMAIN_NAME))
                 .thenReturn(serviceProvider);
-        assertTrue(MutualTLSUtil.isJwksUriConfigured(clientID, SUPER_TENANT_DOMAIN_NAME));
+        assertTrue(MutualTLSUtil.isJwksUriConfigured(serviceProvider));
     }
 }

@@ -24,30 +24,23 @@ import org.wso2.carbon.utils.CarbonUtils;
 /**
  * JWKS cache enables caching responses from JWK URIs
  */
-public class JWKSCache extends BaseCache<JWKSCacheKey, JWKSCacheEntry> {
+public class MutualTLSJWKSCache extends BaseCache<MutualTLSJWKSCacheKey, MutualTLSJWKSCacheEntry> {
 
-    private static final String JWKS_CACHE_NAME = "JWKSCache";
+    private static final String JWKS_CACHE_NAME = "MutualTLSJWKSCache";
 
-    private static volatile JWKSCache instance;
+    private static volatile MutualTLSJWKSCache instance = new MutualTLSJWKSCache();
 
-    private JWKSCache() {
+    private MutualTLSJWKSCache() {
         super(JWKS_CACHE_NAME);
     }
 
     /**
-     * Returns JWKSCache instance
+     * Returns MutualTLSJWKSCache instance
      *
-     * @return instance of JWKSCache
+     * @return instance of MutualTLSJWKSCache
      */
-    public static JWKSCache getInstance() {
+    public static MutualTLSJWKSCache getInstance() {
         CarbonUtils.checkSecurity();
-        if (instance == null) {
-            synchronized (JWKSCache.class) {
-                if (instance == null) {
-                    instance = new JWKSCache();
-                }
-            }
-        }
         return instance;
     }
 }

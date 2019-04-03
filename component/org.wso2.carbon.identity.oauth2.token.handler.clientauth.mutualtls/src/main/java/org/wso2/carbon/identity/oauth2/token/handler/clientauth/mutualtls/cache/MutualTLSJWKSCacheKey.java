@@ -18,20 +18,34 @@
 
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.cache;
 
-import com.nimbusds.jose.util.Resource;
+import java.io.Serializable;
 
 /**
- * JWKSCacheEntry wraps Resource cache value to make them serializable. This will be used with JWKSCache.
+ * Key attribute of MutualTLSJWKSCache is jwksUri. JWKS cache is stored against this key.
  */
-public class JWKSCacheEntry extends org.wso2.carbon.identity.application.common.cache.CacheEntry {
+public class MutualTLSJWKSCacheKey implements Serializable {
 
-    private transient Resource resource;
+    private static final long serialVersionUID = 5023478840178742769L;
+    private String jwksUri;
 
-    public JWKSCacheEntry(Resource resource) {
-        this.resource = resource;
+    public MutualTLSJWKSCacheKey(String jwksUri) {
+        this.jwksUri = jwksUri;
     }
 
-    public Resource getValue() {
-        return resource;
+    public String getJWKSCacheKey() {
+        return jwksUri;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof MutualTLSJWKSCacheKey)) {
+            return false;
+        }
+        return this.jwksUri.equals(((MutualTLSJWKSCacheKey) o).getJWKSCacheKey());
+    }
+
+    @Override
+    public int hashCode() {
+        return jwksUri.hashCode();
     }
 }

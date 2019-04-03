@@ -20,16 +20,16 @@ package org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls;
 
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.cache.JWKSCacheKey;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.cache.MutualTLSJWKSCacheKey;
 
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.assertEquals;
 
 /**
- * Test class for JWKSCacheKey class.
+ * Test class for MutualTLSJWKSCacheKey class.
  */
-public class JWKSCacheKeyTest {
+public class MutualTLSJWKSCacheKeyTest {
 
     String cacheKeyString = "cacheKey1";
     Integer cacheKeyStringHashCode = cacheKeyString.hashCode();
@@ -37,34 +37,32 @@ public class JWKSCacheKeyTest {
     @Test
     public void testGetCacheKeyString() throws Exception {
 
-        JWKSCacheKey jwksCacheKey = new JWKSCacheKey(cacheKeyString);
-        assertEquals(jwksCacheKey.getJWKSCacheKey(), cacheKeyString, "Get JWKSCacheKey failed");
+        MutualTLSJWKSCacheKey mutualTLSJWKSCacheKey = new MutualTLSJWKSCacheKey(cacheKeyString);
+        assertEquals(mutualTLSJWKSCacheKey.getJWKSCacheKey(), cacheKeyString, "Get MutualTLSJWKSCacheKey failed");
     }
 
-    @DataProvider(name = "TestEqualsJWKSCache")
-    public Object[][] testequals() {
-        return new Object[][] {
-                { true }, { false }
-        };
+
+    @Test
+    public void testEqualsWhenCacheKeyEqual() throws Exception {
+
+        MutualTLSJWKSCacheKey mutualTLSJWKSCacheKey = new MutualTLSJWKSCacheKey(cacheKeyString);
+        MutualTLSJWKSCacheKey mutualTLSJWKSCacheKeySample = new MutualTLSJWKSCacheKey(cacheKeyString);
+        assertTrue(mutualTLSJWKSCacheKey.equals(mutualTLSJWKSCacheKeySample));
     }
 
-    @Test(dataProvider = "TestEqualsJWKSCache")
-    public void testEquals(boolean istrue) throws Exception {
+    @Test
+    public void testNotEquals() throws Exception {
 
         Object object = new Object();
-        JWKSCacheKey jwksCacheKey = new JWKSCacheKey(cacheKeyString);
-        JWKSCacheKey jwksCacheKeySample = new JWKSCacheKey(cacheKeyString);
-        if (istrue) {
-            assertTrue(jwksCacheKey.equals(jwksCacheKeySample));
-        }
-        assertFalse(jwksCacheKey.equals(object));
+        MutualTLSJWKSCacheKey mutualTLSJWKSCacheKey = new MutualTLSJWKSCacheKey(cacheKeyString);
+        assertFalse(mutualTLSJWKSCacheKey.equals(object));
     }
 
     @Test
     public void testHashCode() throws Exception {
 
-        JWKSCacheKey jwksCacheKey = new JWKSCacheKey(cacheKeyString);
-        Integer jwksCacheIdHashCodeSample = jwksCacheKey.hashCode();
+        MutualTLSJWKSCacheKey mutualTLSJWKSCacheKey = new MutualTLSJWKSCacheKey(cacheKeyString);
+        Integer jwksCacheIdHashCodeSample = mutualTLSJWKSCacheKey.hashCode();
         assertEquals(jwksCacheIdHashCodeSample, cacheKeyStringHashCode, "Get cache key Hashcode failed.");
     }
 }

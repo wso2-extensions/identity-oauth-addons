@@ -29,16 +29,15 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.oltu.oauth2.common.OAuth;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
-import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.oauth.common.OAuth2ErrorCodes;
 import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.bean.OAuthClientAuthnContext;
 import org.wso2.carbon.identity.oauth2.client.authentication.AbstractOAuthClientAuthenticator;
 import org.wso2.carbon.identity.oauth2.client.authentication.OAuthClientAuthnException;
-import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.cache.JWKSCache;
-import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.cache.JWKSCacheEntry;
-import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.cache.JWKSCacheKey;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.cache.MutualTLSJWKSCache;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.cache.MutualTLSJWKSCacheEntry;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.cache.MutualTLSJWKSCacheKey;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils.MutualTLSUtil;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 
@@ -61,6 +60,7 @@ import java.util.Map;
 
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils.MutualTLSUtil.JAVAX_SERVLET_REQUEST_CERTIFICATE;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils.MutualTLSUtil.isJwksUriConfigured;
+import static org.wso2.carbon.identity.oauth2.util.OAuth2Util.getServiceProvider;
 
 /**
  * This class is responsible for authenticating OAuth clients with Mutual TLS. The client will present
@@ -93,8 +93,8 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
                                       OAuthClientAuthnContext oAuthClientAuthnContext)
             throws OAuthClientAuthnException {
 
-        X509Certificate registeredCert = null;
-        URL jwksUri = null;
+        X509Certificate registeredCert;
+        URL jwksUri;
 
         // In case if the client ID is not set from canAuthenticate method.
         if (StringUtils.isEmpty(oAuthClientAuthnContext.getClientId())) {
@@ -132,13 +132,14 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
             }
 
             String tenantDomain = OAuth2Util.getTenantDomainOfOauthApp(oAuthClientAuthnContext.getClientId());
-            if (isJwksUriConfigured(oAuthClientAuthnContext.getClientId(), tenantDomain)) {
+            ServiceProvider serviceProvider = getServiceProvider(oAuthClientAuthnContext.getClientId(), tenantDomain );
+            if (isJwksUriConfigured(serviceProvider)) {
                 if (log.isDebugEnabled()) {
                     log.debug("Public certificate not configured for Service Provider with client_id: "
                             + oAuthClientAuthnContext.getClientId() + " of tenantDomain: " + tenantDomain + ". "
                             + "Fetching the jwks endpoint for validating request certificate");
                 }
-                jwksUri = getJWKSEndpointOfSP(oAuthClientAuthnContext.getClientId());
+                jwksUri = getJWKSEndpointOfSP(serviceProvider, oAuthClientAuthnContext.getClientId());
                 return authenticate(jwksUri, requestCert);
             } else {
                 if (log.isDebugEnabled()) {
@@ -270,17 +271,14 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
 
         } catch (IOException e) {
             throw new OAuthClientAuthnException(OAuth2ErrorCodes.SERVER_ERROR,
-                    "Error occurred while opening HTTP " + "connection for the JWKS URL : " + jwksUri, e);
+                    "Error occurred while opening HTTP connection for the JWKS URL : " + jwksUri, e);
         } catch (NoSuchAlgorithmException e) {
             throw new OAuthClientAuthnException(OAuth2ErrorCodes.SERVER_ERROR,
-                    "Error occurred while generating " + "thumbprint for registered certificate ", e);
-
+                    "Error occurred while generating thumbprint for registered certificate ", e);
         } catch (CertificateException e) {
             throw new OAuthClientAuthnException(OAuth2ErrorCodes.SERVER_ERROR,
-                    "Error occurred while parsing " + "certificate retrieved from JWKS endpoint ", e);
-
+                    "Error occurred while parsing certificate retrieved from JWKS endpoint ", e);
         }
-
     }
 
     /**
@@ -298,7 +296,7 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
             if (attributeValue != null) {
                 if (attributeValue.getAsString().equals(MutualTLSUtil.getThumbPrint(requestCert))) {
                     if (log.isDebugEnabled()) {
-                        log.debug("Client authentication successful  using the attribute: " + X5T);
+                        log.debug("Client authentication successful using the attribute: " + X5T);
                     }
                     return true;
                 }
@@ -330,13 +328,14 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
         if (jwksUri != null) {
 
             Resource resource = null;
-            JWKSCacheKey jwksCacheKey = new JWKSCacheKey(jwksUri.toString());
-            JWKSCacheEntry jwksCacheEntry = JWKSCache.getInstance().getValueFromCache(jwksCacheKey);
-            if (jwksCacheEntry != null) {
+            MutualTLSJWKSCacheKey mutualTLSJWKSCacheKey = new MutualTLSJWKSCacheKey(jwksUri.toString());
+            MutualTLSJWKSCacheEntry mutualTLSJWKSCacheEntry = MutualTLSJWKSCache.getInstance()
+                    .getValueFromCache(mutualTLSJWKSCacheKey);
+            if (mutualTLSJWKSCacheEntry != null) {
                 if (log.isDebugEnabled()) {
                     log.debug("Retrieving JWKS for " + jwksUri.toString() + " from cache.");
                 }
-                resource = jwksCacheEntry.getValue();
+                resource = mutualTLSJWKSCacheEntry.getValue();
                 if (log.isDebugEnabled() && resource != null) {
                     log.debug("Cache hit for " + jwksUri.toString());
                 }
@@ -348,23 +347,27 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
                         MutualTLSUtil.readHTTPConnectionConfigValue(HTTP_CONNECTION_TIMEOUT_XPATH),
                         MutualTLSUtil.readHTTPConnectionConfigValue(HTTP_READ_TIMEOUT_XPATH));
                 if (log.isDebugEnabled()) {
-                    log.debug("Fetching JWKS from remote endpoint.");
+                    log.debug("Fetching JWKS from remote endpoint. JWKS URI: " + jwksUri);
                 }
                 resource = defaultResourceRetriever.retrieveResource(jwksUri);
-                JWKSCache.getInstance().addToCache(jwksCacheKey, new JWKSCacheEntry(resource));
+                MutualTLSJWKSCache.getInstance()
+                        .addToCache(mutualTLSJWKSCacheKey, new MutualTLSJWKSCacheEntry(resource));
             }
             if (resource != null) {
                 JsonParser jp = new JsonParser();
-                InputStream inputStream = new ByteArrayInputStream(
+                try (InputStream inputStream = new ByteArrayInputStream(
                         resource.getContent().getBytes(StandardCharsets.UTF_8));
-                JsonElement root = jp.parse(new InputStreamReader(inputStream));
-                JsonObject rootObj = root.getAsJsonObject();
-                JsonElement keys = rootObj.get(KEYS);
-                if (keys != null) {
-                    return keys.getAsJsonArray();
-                } else {
-                    return null;
+                        InputStreamReader inputStreamReader = new InputStreamReader(inputStream)) {
+                    JsonElement root = jp.parse(inputStreamReader);
+                    JsonObject rootObj = root.getAsJsonObject();
+                    JsonElement keys = rootObj.get(KEYS);
+                    if (keys != null) {
+                        return keys.getAsJsonArray();
+                    } else {
+                        return null;
+                    }
                 }
+
             } else {
                 return null;
             }
@@ -376,26 +379,18 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
     /**
      * Fetch JWKS endpoint using client ID.
      *
-     * @param clientID client ID
+     * @param serviceProvider Service Provider
      */
-    public URL getJWKSEndpointOfSP(String clientID) throws OAuthClientAuthnException {
+    public URL getJWKSEndpointOfSP(ServiceProvider serviceProvider, String clientID) throws OAuthClientAuthnException {
 
-        String jwksUri = StringUtils.EMPTY;
-        ServiceProviderProperty[] spProperties;
-        try {
-            ServiceProvider serviceProvider = OAuth2Util.getServiceProvider(clientID);
-            spProperties = serviceProvider.getSpProperties();
-        } catch (IdentityOAuth2Exception e) {
-            throw new OAuthClientAuthnException("Error while getting the service provider for client ID " + clientID,
-                    OAuth2ErrorCodes.SERVER_ERROR, e);
-        }
-        jwksUri = MutualTLSUtil.getPropertyValue(spProperties, JWKS_URI);
+        String jwksUri;
+        jwksUri = MutualTLSUtil.getPropertyValue(serviceProvider, JWKS_URI);
         if (jwksUri != null) {
             URL url;
             try {
                 url = new URL(jwksUri);
                 if (log.isDebugEnabled()) {
-                    log.debug("Configured JWKS URI found " + jwksUri);
+                    log.debug("Configured JWKS URI found: " + jwksUri);
                 }
             } catch (MalformedURLException e) {
                 throw new OAuthClientAuthnException("URL might be malformed " + clientID, OAuth2ErrorCodes.SERVER_ERROR,

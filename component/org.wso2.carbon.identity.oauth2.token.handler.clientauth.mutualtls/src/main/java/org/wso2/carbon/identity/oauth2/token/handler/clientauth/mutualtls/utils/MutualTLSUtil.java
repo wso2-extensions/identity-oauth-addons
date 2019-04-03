@@ -22,10 +22,9 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
-import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
-import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.Charsets;
@@ -109,13 +108,11 @@ public class MutualTLSUtil {
     /**
      * Checking Whether JWKS URI configured in the UI or not.
      *
-     * @param clientID     client id of the service provider.
-     * @param tenantDomain tenant domain.
+     * @param serviceProvider service provider.
      * @return true if jwks uri configured.
      */
-    public static boolean isJwksUriConfigured(String clientID, String tenantDomain) throws IdentityOAuth2Exception {
-        ServiceProviderProperty[] serviceProviderProperties = OAuth2Util.getServiceProvider(clientID, tenantDomain)
-                .getSpProperties();
+    public static boolean isJwksUriConfigured(ServiceProvider serviceProvider) {
+        ServiceProviderProperty[] serviceProviderProperties = serviceProvider.getSpProperties();
         for (ServiceProviderProperty sp : serviceProviderProperties) {
             if (sp.getName().equals(JWKS_URI) && StringUtils.isNotBlank(sp.getValue())) {
                 return true;
@@ -127,12 +124,13 @@ public class MutualTLSUtil {
     /**
      * Obtaining Property value from a service provider property array
      *
-     * @param properties   Service provider property array.
-     * @param propertyName property name.
+     * @param serviceProvider Service provider.
+     * @param propertyName    property name.
      * @return property value
      */
-    public static String getPropertyValue(ServiceProviderProperty[] properties, String propertyName) {
+    public static String getPropertyValue(ServiceProvider serviceProvider, String propertyName) {
 
+        ServiceProviderProperty[] properties = serviceProvider.getSpProperties();
         if (ArrayUtils.isEmpty(properties) || StringUtils.isBlank(propertyName)) {
             return null;
         }
