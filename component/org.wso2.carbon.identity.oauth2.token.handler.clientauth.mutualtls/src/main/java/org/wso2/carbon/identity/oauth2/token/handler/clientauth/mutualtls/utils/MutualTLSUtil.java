@@ -112,6 +112,7 @@ public class MutualTLSUtil {
      * @return true if jwks uri configured.
      */
     public static boolean isJwksUriConfigured(ServiceProvider serviceProvider) {
+
         ServiceProviderProperty[] serviceProviderProperties = serviceProvider.getSpProperties();
         for (ServiceProviderProperty sp : serviceProviderProperties) {
             if (sp.getName().equals(JWKS_URI) && StringUtils.isNotBlank(sp.getValue())) {
@@ -135,14 +136,9 @@ public class MutualTLSUtil {
             return null;
         }
         for (ServiceProviderProperty property : properties) {
-            if (property == null) {
-                continue;
-            }
             if (propertyName.equals(property.getName())) {
-                if (property != null) {
-                    if (StringUtils.isNotBlank(property.getValue())) {
-                        return property.getValue();
-                    }
+                if (StringUtils.isNotBlank(property.getValue())) {
+                    return property.getValue();
                 }
             }
         }

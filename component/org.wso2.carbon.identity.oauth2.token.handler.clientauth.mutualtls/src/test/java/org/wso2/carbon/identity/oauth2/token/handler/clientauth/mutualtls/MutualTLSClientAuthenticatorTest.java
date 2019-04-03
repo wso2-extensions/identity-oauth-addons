@@ -391,7 +391,7 @@ public class MutualTLSClientAuthenticatorTest extends PowerMockTestCase {
         PowerMockito.when(httpServletRequest.getAttribute(JAVAX_SERVLET_REQUEST_CERTIFICATE)).thenReturn(certificate);
         assertEquals(mutualTLSClientAuthenticator1
                         .authenticateClient(httpServletRequest, bodyContent, oAuthClientAuthnContext), authenticationResult,
-                "Expected client authentication result was not received");
+                "Expected client authentication with JWKS expected result was not received");
     }
 
     public static JsonArray getJsonArray(String resource) {

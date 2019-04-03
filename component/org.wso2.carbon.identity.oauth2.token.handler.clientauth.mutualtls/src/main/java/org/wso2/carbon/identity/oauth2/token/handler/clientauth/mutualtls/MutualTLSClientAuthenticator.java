@@ -266,6 +266,7 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
      * @return Whether the client was successfully authenticated or not.
      */
     private boolean authenticate(URL jwksUri, X509Certificate requestCert) throws OAuthClientAuthnException {
+
         try {
             return isAuthenticated(getResourceContent(jwksUri), requestCert);
 
@@ -312,7 +313,6 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
                     }
                     return true;
                 }
-
             }
         }
         return false;
@@ -367,13 +367,10 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
                         return null;
                     }
                 }
-
-            } else {
-                return null;
             }
-        } else {
-            return null;
         }
+
+        return null;
     }
 
     /**
@@ -397,12 +394,10 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
                         e);
             }
             return url;
-
         } else {
             throw new OAuthClientAuthnException(
-                    "jwks endpoint not configured for the service provider for client ID" + clientID,
+                    "jwks endpoint not configured for the service provider for client ID: " + clientID,
                     OAuth2ErrorCodes.SERVER_ERROR);
-
         }
 
     }
