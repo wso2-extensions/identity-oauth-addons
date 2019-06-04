@@ -426,7 +426,7 @@
     <properties>
 
         <carbon.identity.version>5.11.16</carbon.identity.version>
-        <identity.inbound.auth.oauth.version>6.0.0</identity.inbound.auth.oauth.version>
+        <identity.inbound.auth.oauth.version>6.0.53</identity.inbound.auth.oauth.version>
         <identity.inbound.auth.oauth.imp.pkg.version>[6.0.0,7.0.0)</identity.inbound.auth.oauth.imp.pkg.version>
         <carbon.kernel.version>4.4.7</carbon.kernel.version>
         <org.apache.oltu.oauth2.client.version>1.0.0</org.apache.oltu.oauth2.client.version>

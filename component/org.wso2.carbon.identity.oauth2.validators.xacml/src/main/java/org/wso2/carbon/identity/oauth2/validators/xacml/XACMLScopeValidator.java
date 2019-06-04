@@ -22,12 +22,14 @@ package org.wso2.carbon.identity.oauth2.validators.xacml;
 import org.apache.axiom.om.OMElement;
 import org.apache.axiom.om.impl.builder.StAXOMBuilder;
 import org.apache.axiom.om.xpath.AXIOMXPath;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jaxen.JaxenException;
 import org.wso2.balana.utils.exception.PolicyBuilderException;
 import org.wso2.balana.utils.policy.PolicyBuilder;
 import org.wso2.balana.utils.policy.dto.RequestElementDTO;
+import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
 import org.wso2.carbon.identity.entitlement.EntitlementException;
 import org.wso2.carbon.identity.entitlement.PDPConstants;
@@ -38,7 +40,9 @@ import org.wso2.carbon.identity.entitlement.common.util.PolicyCreatorUtil;
 import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
 import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
+import org.wso2.carbon.identity.oauth2.authz.OAuthAuthzReqMessageContext;
 import org.wso2.carbon.identity.oauth2.model.AccessTokenDO;
+import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 import org.wso2.carbon.identity.oauth2.validators.OAuth2ScopeValidator;
 import org.wso2.carbon.identity.oauth2.validators.xacml.constants.XACMLScopeValidatorConstants;
@@ -64,80 +68,84 @@ public class XACMLScopeValidator extends OAuth2ScopeValidator {
         if (isUnauthorizedToken(accessTokenDO)) {
             return false;
         }
-        String authzUser = accessTokenDO.getAuthzUser().getUserName();
-        boolean isValidated = false;
-        try {
-            FrameworkUtils.startTenantFlow(accessTokenDO.getAuthzUser().getTenantDomain());
-            String consumerKey = accessTokenDO.getConsumerKey();
-            OAuthAppDO authApp = OAuth2Util.getAppInformationByClientId(consumerKey);
+        String consumerKey = accessTokenDO.getConsumerKey();
+        return validateScope(accessTokenDO.getScope(), accessTokenDO.getAuthzUser(), consumerKey,
+                XACMLScopeValidatorConstants.ACTION_VALIDATE, resource);
+    }
+    @Override
+    public boolean validateScope(OAuthTokenReqMessageContext tokReqMsgCtx) throws
+            IdentityOAuth2Exception {
 
-            if (log.isDebugEnabled()) {
-                log.debug(String.format("Inside XACML based scope validation flow for access token of consumer key :" +
-                        " %s of user %s.", accessTokenDO.getConsumerKey(), authzUser));
-            }
+        String consumerKey = tokReqMsgCtx.getOauth2AccessTokenReqDTO().getClientId();
+        return validateScope(tokReqMsgCtx.getOauth2AccessTokenReqDTO().getScope(), tokReqMsgCtx.getAuthorizedUser(),
+                consumerKey, XACMLScopeValidatorConstants.ACTION_SCOPE_VALIDATE, null);
 
-            RequestDTO requestDTO = createRequestDTO(accessTokenDO, authApp, resource);
-            RequestElementDTO requestElementDTO = PolicyCreatorUtil.createRequestElementDTO(requestDTO);
-            String requestString = PolicyBuilder.getInstance().buildRequest(requestElementDTO);
+    }
 
-            if (log.isDebugEnabled()) {
-                log.debug("XACML scope validation request :\n" + requestString);
-            }
-            String responseString = OAuthScopeValidatorDataHolder.getInstance().getEntitlementService().getDecision
-                    (requestString);
-            if (log.isDebugEnabled()) {
-                log.debug("XACML scope validation response :\n" + responseString);
-            }
-            String validationResponse = extractDecisionFromXACMLResponse(responseString);
-            if (isResponseNotApplicable(validationResponse)) {
-                log.warn(String.format(
-                        "No applicable rule for service provider '%s@%s'. Add an validating policy (or unset Scope " +
-                                "Validation using XACMLScopeValidator) to fix this warning.",
-                        authApp.getApplicationName(), OAuth2Util.getTenantDomainOfOauthApp(authApp)));
-                isValidated = true;
-            } else if (isResponsePermit(validationResponse)) {
-                isValidated = true;
-            }
-        } catch (InvalidOAuthClientException e) {
-            throw new IdentityOAuth2Exception(String.format("Exception occurred when getting app information for " +
-                    "client id %s of user %s. Error occurred when retrieving corresponding app for this specific" +
-                    " client id.", accessTokenDO.getConsumerKey(), authzUser), e);
-        } catch (PolicyBuilderException e) {
-            throw new IdentityOAuth2Exception(String.format("Exception occurred when building  XACML request for " +
-                    "token with id  %s of user %s.", accessTokenDO.getTokenId(), authzUser), e);
-        } catch (XMLStreamException | JaxenException e) {
-            throw new IdentityOAuth2Exception(String.format("Exception occurred when reading XACML response for token" +
-                    " with id %s of user %s.", accessTokenDO.getTokenId(), authzUser), e);
-        } catch (EntitlementException e) {
-            throw new IdentityOAuth2Exception(String.format("Exception occurred when evaluating XACML request for " +
-                    "token with id %s of user %s.", accessTokenDO.getTokenId(), authzUser), e);
-        } finally {
-            FrameworkUtils.endTenantFlow();
-        }
-        return isValidated;
+    @Override
+    public boolean validateScope(OAuthAuthzReqMessageContext oauthAuthzMsgCtx) throws
+            IdentityOAuth2Exception {
+
+        String consumerKey = oauthAuthzMsgCtx.getAuthorizationReqDTO().getConsumerKey();
+        return validateScope(oauthAuthzMsgCtx.getAuthorizationReqDTO().getScopes(),
+                oauthAuthzMsgCtx.getAuthorizationReqDTO().getUser(), consumerKey,
+                XACMLScopeValidatorConstants.ACTION_SCOPE_VALIDATE, null);
     }
 
     /**
-     * Creates RequestDTO object for XACML request with the parameters retrieved from the access token
-     *
-     * @param accessTokenDO access token
-     * @param authApp       OAuth app
-     * @param resource      resource
-     * @return RequestDTO
+     * Validates the given set of scope against the XACML policy published.
+     * @param scopes Set of scopes.
+     * @param authenticatedUser Authenticated user.
+     * @param consumerKey ClientId of service provider.
+     * @param action ActionId
+     * @param resource Resource
+     * @return True is all scopes are valid. False otherwise.
+     * @throws IdentityOAuth2Exception by an Underline method.
      */
-    private RequestDTO createRequestDTO(AccessTokenDO accessTokenDO, OAuthAppDO authApp, String resource) {
+    private boolean validateScope(String[] scopes, AuthenticatedUser authenticatedUser, String consumerKey,
+                                  String action, String resource) throws IdentityOAuth2Exception {
+
+        boolean isValid = false;
+        FrameworkUtils.startTenantFlow(authenticatedUser.getTenantDomain());
+        if (StringUtils.isNotEmpty(consumerKey)) {
+            try {
+
+                OAuthAppDO oAuthAppDO = getOAuthAppDO(consumerKey);
+                String request = createRequest(scopes, authenticatedUser, oAuthAppDO, action, resource);
+                isValid = isRequestPermit(request, oAuthAppDO, authenticatedUser.toFullQualifiedUsername());
+
+            } catch (InvalidOAuthClientException e) {
+                throw new IdentityOAuth2Exception(String.format("Exception occurred when getting app information for " +
+                        "client id %s of user %s. Error occurred when retrieving corresponding app for this specific" +
+                        " client id.", consumerKey, authenticatedUser.toFullQualifiedUsername()), e);
+
+            } finally {
+                FrameworkUtils.endTenantFlow();
+            }
+        }
+        return isValid;
+    }
+
+    /**
+     *  Creates XACML Request string with the parameters retrieved from the request.
+     * @param scopes Set of scopes.
+     * @param authenticatedUser Authenticated user.
+     * @param oAuthAppDO OAuth application.
+     * @return XACML Request string.
+     */
+    private String createRequest(String[] scopes, AuthenticatedUser authenticatedUser,
+                                        OAuthAppDO oAuthAppDO, String action, String resource) throws IdentityOAuth2Exception {
 
         List<RowDTO> rowDTOs = new ArrayList<>();
-        RowDTO actionDTO = createRowDTO(XACMLScopeValidatorConstants.ACTION_VALIDATE, XACMLScopeValidatorConstants
-                .AUTH_ACTION_ID, XACMLScopeValidatorConstants.ACTION_CATEGORY);
-        RowDTO spNameDTO = createRowDTO(authApp.getApplicationName(), XACMLScopeValidatorConstants.SP_NAME_ID,
+        RowDTO actionDTO = createRowDTO(action, XACMLScopeValidatorConstants.AUTH_ACTION_ID,
+                XACMLScopeValidatorConstants.ACTION_CATEGORY);
+        RowDTO spNameDTO = createRowDTO(oAuthAppDO.getApplicationName(), XACMLScopeValidatorConstants.SP_NAME_ID,
                 XACMLScopeValidatorConstants.SP_CATEGORY);
-        RowDTO usernameDTO = createRowDTO(accessTokenDO.getAuthzUser().getUserName(), XACMLScopeValidatorConstants
-                .USERNAME_ID, XACMLScopeValidatorConstants.USER_CATEGORY);
-        RowDTO userStoreDomainDTO = createRowDTO(accessTokenDO.getAuthzUser().getUserStoreDomain(),
-                XACMLScopeValidatorConstants.USER_STORE_ID,
+        RowDTO usernameDTO = createRowDTO(authenticatedUser.getUserName(), XACMLScopeValidatorConstants.USERNAME_ID,
                 XACMLScopeValidatorConstants.USER_CATEGORY);
-        RowDTO userTenantDomainDTO = createRowDTO(accessTokenDO.getAuthzUser().getTenantDomain(),
+        RowDTO userStoreDomainDTO = createRowDTO(authenticatedUser.getUserStoreDomain(),
+                XACMLScopeValidatorConstants.USER_STORE_ID, XACMLScopeValidatorConstants.USER_CATEGORY);
+        RowDTO userTenantDomainDTO = createRowDTO(authenticatedUser.getTenantDomain(),
                 XACMLScopeValidatorConstants.USER_TENANT_DOMAIN_ID, XACMLScopeValidatorConstants.USER_CATEGORY);
         RowDTO resourceDTO = createRowDTO(resource, EntitlementPolicyConstants.RESOURCE_ID, PDPConstants
                 .RESOURCE_CATEGORY_URI);
@@ -149,14 +157,71 @@ public class XACMLScopeValidator extends OAuth2ScopeValidator {
         rowDTOs.add(userTenantDomainDTO);
         rowDTOs.add(resourceDTO);
 
-        for (String scope : accessTokenDO.getScope()) {
+        for (String scope : scopes) {
             RowDTO scopeNameDTO = createRowDTO(scope, XACMLScopeValidatorConstants.SCOPE_ID,
                     XACMLScopeValidatorConstants.SCOPE_CATEGORY);
             rowDTOs.add(scopeNameDTO);
         }
         RequestDTO requestDTO = new RequestDTO();
         requestDTO.setRowDTOs(rowDTOs);
-        return requestDTO;
+
+        RequestElementDTO requestElementDTO = PolicyCreatorUtil.createRequestElementDTO(requestDTO);
+        String request = null;
+        try {
+            request = PolicyBuilder.getInstance().buildRequest(requestElementDTO);
+        } catch (PolicyBuilderException e) {
+            throw new IdentityOAuth2Exception(String.format("Exception occurred when building  XACML request of user " +
+                    "%s.", authenticatedUser.toFullQualifiedUsername()), e);
+        }
+
+        if (log.isDebugEnabled()) {
+            log.debug("XACML scope validation request :\n" + request);
+        }
+        return request;
+    }
+
+    /**
+     * Validates the XACML request using XACML engine with the parameters authApp and authzUser, and returns whether
+     * to permit or not.
+     * @param request XACML request.
+     * @param oAuthAppDO Application.
+     * @param authzUser Fully qualified name of the user.
+     * @return Returns true if the XACML response is permit or NotApplicable. Else returns false.
+     * @throws IdentityOAuth2Exception Exception
+     */
+    private boolean isRequestPermit(String request, OAuthAppDO oAuthAppDO, String authzUser) throws IdentityOAuth2Exception {
+
+        boolean permit = false;
+        try {
+            String responseString = OAuthScopeValidatorDataHolder.getInstance().getEntitlementService().getDecision
+                    (request);
+            if (log.isDebugEnabled()) {
+                log.debug("XACML scope validation response :\n" + responseString);
+            }
+            String response = extractDecisionFromXACMLResponse(responseString);
+            if (isResponseNotApplicable(response)) {
+                log.warn(String.format(
+                        "No applicable rule for service provider '%s@%s'. Add an validating policy (or unset Scope " +
+                                "Validation using XACMLScopeValidator) to fix this warning.",
+                        oAuthAppDO.getApplicationName(), OAuth2Util.getTenantDomainOfOauthApp(oAuthAppDO)));
+                permit = true;
+            } else if (isResponsePermit(response)) {
+                permit = true;
+            }
+
+        } catch (XMLStreamException | JaxenException e) {
+            throw new IdentityOAuth2Exception(String.format("Exception occurred when reading XACML response of " +
+                    "user %s.", authzUser), e);
+        } catch (EntitlementException e) {
+            throw new IdentityOAuth2Exception(String.format("Exception occurred when evaluating XACML request of user" +
+                    " %s.", authzUser), e);
+        }
+        return permit;
+    }
+
+    private OAuthAppDO getOAuthAppDO(String consumerKey) throws IdentityOAuth2Exception, InvalidOAuthClientException {
+
+        return OAuth2Util.getAppInformationByClientId(consumerKey);
     }
 
     /**
