@@ -72,6 +72,7 @@ public class XACMLScopeValidator extends OAuth2ScopeValidator {
         return validateScope(accessTokenDO.getScope(), accessTokenDO.getAuthzUser(), consumerKey,
                 XACMLScopeValidatorConstants.ACTION_VALIDATE, resource);
     }
+
     @Override
     public boolean validateScope(OAuthTokenReqMessageContext tokReqMsgCtx) throws
             IdentityOAuth2Exception {
@@ -115,8 +116,7 @@ public class XACMLScopeValidator extends OAuth2ScopeValidator {
                 isValid = isRequestPermit(request, oAuthAppDO, authenticatedUser.toFullQualifiedUsername());
 
             } catch (InvalidOAuthClientException e) {
-                throw new IdentityOAuth2Exception(String.format("Exception occurred when getting app information for " +
-                        "client id %s of user %s. Error occurred when retrieving corresponding app for this specific" +
+                throw new IdentityOAuth2Exception(String.format("Error occurred when retrieving corresponding app for this specific" +
                         " client id.", consumerKey, authenticatedUser.toFullQualifiedUsername()), e);
 
             } finally {
@@ -127,10 +127,11 @@ public class XACMLScopeValidator extends OAuth2ScopeValidator {
     }
 
     /**
-     *  Creates XACML Request string with the parameters retrieved from the request.
-     * @param scopes Set of scopes.
+     * Creates XACML Request string with the parameters retrieved from the request.
+     *
+     * @param scopes            Set of scopes.
      * @param authenticatedUser Authenticated user.
-     * @param oAuthAppDO OAuth application.
+     * @param oAuthAppDO        OAuth application.
      * @return XACML Request string.
      */
     private String createRequest(String[] scopes, AuthenticatedUser authenticatedUser,
@@ -189,20 +190,20 @@ public class XACMLScopeValidator extends OAuth2ScopeValidator {
      * @return Returns true if the XACML response is permit or NotApplicable. Else returns false.
      * @throws IdentityOAuth2Exception Exception
      */
-    private boolean isRequestPermit(String request, OAuthAppDO oAuthAppDO, String authzUser) throws IdentityOAuth2Exception {
+    private boolean isRequestPermit(String request, OAuthAppDO oAuthAppDO, String authzUser)
+            throws IdentityOAuth2Exception {
 
         boolean permit = false;
         try {
-            String responseString = OAuthScopeValidatorDataHolder.getInstance().getEntitlementService().getDecision
-                    (request);
+            String responseString = OAuthScopeValidatorDataHolder.getInstance().getEntitlementService()
+                    .getDecision(request);
             if (log.isDebugEnabled()) {
                 log.debug("XACML scope validation response :\n" + responseString);
             }
             String response = extractDecisionFromXACMLResponse(responseString);
             if (isResponseNotApplicable(response)) {
-                log.warn(String.format(
-                        "No applicable rule for service provider '%s@%s'. Add an validating policy (or unset Scope " +
-                                "Validation using XACMLScopeValidator) to fix this warning.",
+                log.warn(String.format("No applicable rule for service provider '%s@%s'. Add an validating policy "
+                                + "(or unset Scope Validation using XACMLScopeValidator) to fix this warning.",
                         oAuthAppDO.getApplicationName(), OAuth2Util.getTenantDomainOfOauthApp(oAuthAppDO)));
                 permit = true;
             } else if (isResponsePermit(response)) {
