@@ -425,10 +425,10 @@
 
     <properties>
 
-        <carbon.identity.version>5.11.16</carbon.identity.version>
+        <carbon.identity.version>5.13.4</carbon.identity.version>
         <identity.inbound.auth.oauth.version>6.1.1</identity.inbound.auth.oauth.version>
-        <identity.inbound.auth.oauth.imp.pkg.version>[6.0.0,7.0.0)</identity.inbound.auth.oauth.imp.pkg.version>
-        <carbon.kernel.version>4.4.7</carbon.kernel.version>
+        <identity.inbound.auth.oauth.imp.pkg.version>[6.1.0,7.0.0)</identity.inbound.auth.oauth.imp.pkg.version>
+        <carbon.kernel.version>4.5.0-m1</carbon.kernel.version>
         <org.apache.oltu.oauth2.client.version>1.0.0</org.apache.oltu.oauth2.client.version>
         <org.apache.oltu.oauth2.common.version>1.0.1</org.apache.oltu.oauth2.common.version>
         <oltu.package.import.version.range>[1.0.0, 2.0.0)</oltu.package.import.version.range>
@@ -437,7 +437,7 @@
         <javax.servelet.jstl.version>1.2</javax.servelet.jstl.version>
         <balana.version>1.1.2</balana.version>
 
-        <axiom.version>1.2.11-wso2v6</axiom.version>
+        <axiom.version>1.2.11-wso2v16</axiom.version>
         <org.wso2.securevault.version>1.0.0-wso2v2</org.wso2.securevault.version>
         <encoder.wso2.version>1.2.0.wso2v1</encoder.wso2.version>
         <nimbusds.version>7.3.0.wso2v1</nimbusds.version>
@@ -446,13 +446,13 @@
         <apache.felix.scr.ds.annotations.version>1.2.4</apache.felix.scr.ds.annotations.version>
         <equinox.osgi.services.version>3.5.100.v20160504-1419</equinox.osgi.services.version>
 
-        <carbon.identity.package.import.version.range>[5.0.0, 6.0.0)</carbon.identity.package.import.version.range>
+        <carbon.identity.package.import.version.range>[5.13.0, 6.0.0)</carbon.identity.package.import.version.range>
         <org.apache.commons.codec.package.import.version.range>[1.10.0,2
             )</org.apache.commons.codec.package.import.version.range>
         <org.apache.commons.io.package.import.version.range>[2.4.0,3
             )</org.apache.commons.io.package.import.version.range>
         <com.google.code.gson.osgi.version.range>[2.3.1,3.0.0)</com.google.code.gson.osgi.version.range>
-        <carbon.kernel.package.import.version.range>[4.4.0, 5.0.0)</carbon.kernel.package.import.version.range>
+        <carbon.kernel.package.import.version.range>[4.5.0, 5.0.0)</carbon.kernel.package.import.version.range>
         <nimbusds.osgi.version.range>[7.3.0,8.0.0)</nimbusds.osgi.version.range>
         <net.minidev.json.imp.pkg.version.range>[1.3.0, 2.0.0)</net.minidev.json.imp.pkg.version.range>
         <javax.servlet.http.package.import.version.range>[2.6,3)</javax.servlet.http.package.import.version.range>
