@@ -117,7 +117,7 @@ public class XACMLScopeValidator extends OAuth2ScopeValidator {
 
             } catch (InvalidOAuthClientException e) {
                 throw new IdentityOAuth2Exception(String.format("Error occurred when retrieving corresponding app for this specific" +
-                        " client id.", consumerKey, authenticatedUser.toFullQualifiedUsername()), e);
+                        " client id. %s of user %s ", consumerKey, authenticatedUser.toFullQualifiedUsername()), e);
 
             } finally {
                 FrameworkUtils.endTenantFlow();
@@ -202,14 +202,13 @@ public class XACMLScopeValidator extends OAuth2ScopeValidator {
             }
             String response = extractDecisionFromXACMLResponse(responseString);
             if (isResponseNotApplicable(response)) {
-                log.warn(String.format("No applicable rule for service provider '%s@%s'. Add an validating policy "
+                log.warn(String.format("No applicable rule for service provider '%s@%s'. Add a validating policy "
                                 + "(or unset Scope Validation using XACMLScopeValidator) to fix this warning.",
                         oAuthAppDO.getApplicationName(), OAuth2Util.getTenantDomainOfOauthApp(oAuthAppDO)));
                 permit = true;
             } else if (isResponsePermit(response)) {
                 permit = true;
             }
-
         } catch (XMLStreamException | JaxenException e) {
             throw new IdentityOAuth2Exception(String.format("Exception occurred when reading XACML response of " +
                     "user %s.", authzUser), e);
