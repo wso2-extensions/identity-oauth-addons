@@ -24,13 +24,13 @@
     <parent>
         <groupId>org.wso2.carbon.extension.identity.oauth.addons</groupId>
         <artifactId>identity-oauth2-extenstions</artifactId>
-        <version>1.0.10-SNAPSHOT</version>
+        <version>2.0.9-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <artifactId>org.wso2.carbon.identity.oauth2.validators.xacml</artifactId>
     <packaging>bundle</packaging>
-    <version>1.0.10-SNAPSHOT</version>
+    <version>2.0.9-SNAPSHOT</version>
     <name>Identity Component - XACML based scope validator for OAuth access token</name>
     <description>XACML based scope validator for OAuth access token</description>
     <url>http://wso2.org</url>
@@ -134,6 +134,9 @@
                             org.wso2.carbon.identity.oauth2.model;version="${identity.inbound.auth.oauth.imp.pkg.version}",
                             org.wso2.carbon.identity.oauth2.util;version="${identity.inbound.auth.oauth.imp.pkg.version}",
                             org.wso2.carbon.identity.oauth2.validators;version="${identity.inbound.auth.oauth.imp.pkg.version}",
+                            org.wso2.carbon.identity.oauth2.token;version="${identity.inbound.auth.oauth.imp.pkg.version}",
+                            org.wso2.carbon.identity.oauth2.dto;version="${identity.inbound.auth.oauth.imp.pkg.version}",
+                            org.wso2.carbon.identity.oauth2.authz;version="${identity.inbound.auth.oauth.imp.pkg.version}",
                             org.jaxen; version="${axiom.org.jaxen.imp.pkg.version.range}"
                         </Import-Package>
                         <Export-Package>

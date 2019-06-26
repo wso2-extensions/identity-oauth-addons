@@ -18,27 +18,49 @@
 
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.nimbusds.jose.util.DefaultResourceRetriever;
+import com.nimbusds.jose.util.Resource;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.oltu.oauth2.common.OAuth;
+import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.oauth.common.OAuth2ErrorCodes;
 import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.bean.OAuthClientAuthnContext;
 import org.wso2.carbon.identity.oauth2.client.authentication.AbstractOAuthClientAuthenticator;
 import org.wso2.carbon.identity.oauth2.client.authentication.OAuthClientAuthnException;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.cache.MutualTLSJWKSCache;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.cache.MutualTLSJWKSCacheEntry;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.cache.MutualTLSJWKSCacheKey;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils.MutualTLSUtil;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.xml.bind.DatatypeConverter;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateEncodingException;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Map;
 
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils.MutualTLSUtil.JAVAX_SERVLET_REQUEST_CERTIFICATE;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils.MutualTLSUtil.isJwksUriConfigured;
+import static org.wso2.carbon.identity.oauth2.util.OAuth2Util.getServiceProvider;
 
 /**
  * This class is responsible for authenticating OAuth clients with Mutual TLS. The client will present
@@ -50,6 +72,14 @@ import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls
 public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticator {
 
     private static Log log = LogFactory.getLog(MutualTLSClientAuthenticator.class);
+    private static final String X5T = "x5t";
+    private static final String X5C = "x5c";
+    private static final String HTTP_CONNECTION_TIMEOUT_XPATH = "JWTValidatorConfigs.JWKSEndpoint" +
+            ".HTTPConnectionTimeout";
+    private static final String HTTP_READ_TIMEOUT_XPATH = "JWTValidatorConfigs.JWKSEndpoint" +
+            ".HTTPReadTimeout";
+    private static final String KEYS = "keys";
+    private static final String JWKS_URI = "jwksURI";
 
     /**
      * @param request                 HttpServletRequest which is the incoming request.
@@ -63,6 +93,9 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
                                       OAuthClientAuthnContext oAuthClientAuthnContext)
             throws OAuthClientAuthnException {
 
+        X509Certificate registeredCert;
+        URL jwksUri;
+
         // In case if the client ID is not set from canAuthenticate method.
         if (StringUtils.isEmpty(oAuthClientAuthnContext.getClientId())) {
 
@@ -72,7 +105,7 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
             } else {
                 if (log.isDebugEnabled()) {
                     log.debug("Mutual TLS authenticator cannot handle this request. Client id is not available in body " +
-                                    "params or valid certificate not found in request attributes.");
+                                       "params or valid certificate not found in request attributes.");
                 }
                 return false;
             }
@@ -83,7 +116,6 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
                 log.debug("Authenticating client : " + oAuthClientAuthnContext.getClientId() + " with public " +
                         "certificate.");
             }
-
             X509Certificate requestCert;
             Object certObject = request.getAttribute(JAVAX_SERVLET_REQUEST_CERTIFICATE);
             if (certObject instanceof X509Certificate[]) {
@@ -100,10 +132,25 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
             }
 
             String tenantDomain = OAuth2Util.getTenantDomainOfOauthApp(oAuthClientAuthnContext.getClientId());
-            X509Certificate registeredCert = (X509Certificate) OAuth2Util
-                    .getX509CertOfOAuthApp(oAuthClientAuthnContext.getClientId(), tenantDomain);
-            return authenticate(registeredCert, requestCert);
-
+            ServiceProvider serviceProvider = getServiceProvider(oAuthClientAuthnContext.getClientId(), tenantDomain );
+            if (isJwksUriConfigured(serviceProvider)) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Public certificate not configured for Service Provider with client_id: "
+                            + oAuthClientAuthnContext.getClientId() + " of tenantDomain: " + tenantDomain + ". "
+                            + "Fetching the jwks endpoint for validating request certificate");
+                }
+                jwksUri = getJWKSEndpointOfSP(serviceProvider, oAuthClientAuthnContext.getClientId());
+                return authenticate(jwksUri, requestCert);
+            } else {
+                if (log.isDebugEnabled()) {
+                    log.debug("Public certificate configured for Service Provider with client_id: "
+                            + oAuthClientAuthnContext.getClientId() + " of tenantDomain: " + tenantDomain
+                            + ". Using public certificate  for validating request certificate");
+                }
+                registeredCert = (X509Certificate) OAuth2Util
+                        .getX509CertOfOAuthApp(oAuthClientAuthnContext.getClientId(), tenantDomain);
+                return authenticate(registeredCert, requestCert);
+            }
         } catch (IdentityOAuth2Exception e) {
             throw new OAuthClientAuthnException(OAuth2ErrorCodes.SERVER_ERROR, "Error occurred while retrieving " +
                     "public certificate of client ID: " + oAuthClientAuthnContext.getClientId(), e);
@@ -111,6 +158,7 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
             throw new OAuthClientAuthnException(OAuth2ErrorCodes.INVALID_CLIENT, "Error occurred while retrieving " +
                     "tenant domain for the client ID: " + oAuthClientAuthnContext.getClientId(), e);
         }
+
     }
 
     /**
@@ -209,9 +257,155 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
         return trustedCert;
     }
 
+    /**
+     * Authenticate the client by comparing the attributes retrieved from the JWKS endpoint of the registered public
+     * certificate against the public key of the certificate presented at TLS hand shake for authentication.
+     *
+     * @param jwksUri     JWKS URI registered at service provider configuration.
+     * @param requestCert X.509 certificate presented to server during TLS hand shake.
+     * @return Whether the client was successfully authenticated or not.
+     */
+    private boolean authenticate(URL jwksUri, X509Certificate requestCert) throws OAuthClientAuthnException {
+
+        try {
+            return isAuthenticated(getResourceContent(jwksUri), requestCert);
+
+        } catch (IOException e) {
+            throw new OAuthClientAuthnException(OAuth2ErrorCodes.SERVER_ERROR,
+                    "Error occurred while opening HTTP connection for the JWKS URL : " + jwksUri, e);
+        } catch (NoSuchAlgorithmException e) {
+            throw new OAuthClientAuthnException(OAuth2ErrorCodes.SERVER_ERROR,
+                    "Error occurred while generating thumbprint for registered certificate ", e);
+        } catch (CertificateException e) {
+            throw new OAuthClientAuthnException(OAuth2ErrorCodes.SERVER_ERROR,
+                    "Error occurred while parsing certificate retrieved from JWKS endpoint ", e);
+        }
+    }
+
+    /**
+     * Authenticate the client by iterating through the JSON Array and matching each attribute.
+     *
+     * @param resourceArray Json Array retrieved from JWKS endpoint
+     * @param requestCert   X.509 certificate presented to server during TLS hand shake.
+     * @return Whether the client was successfully authenticated or not.
+     */
+    private boolean isAuthenticated(JsonArray resourceArray, X509Certificate requestCert)
+            throws CertificateException, OAuthClientAuthnException, NoSuchAlgorithmException {
+
+        for (JsonElement jsonElement : resourceArray) {
+            JsonElement attributeValue = jsonElement.getAsJsonObject().get(X5T);
+            if (attributeValue != null) {
+                if (attributeValue.getAsString().equals(MutualTLSUtil.getThumbPrint(requestCert))) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Client authentication successful using the attribute: " + X5T);
+                    }
+                    return true;
+                }
+            }
+            attributeValue = jsonElement.getAsJsonObject().get(X5C);
+            if (attributeValue != null) {
+                CertificateFactory factory = CertificateFactory.getInstance("X.509");
+                X509Certificate cert = (X509Certificate) factory.generateCertificate(
+                        new ByteArrayInputStream(DatatypeConverter.parseBase64Binary(attributeValue.getAsString())));
+                if (authenticate(cert, requestCert)) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Client authentication successful using the attribute: " + X5C);
+                    }
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Fetch JWK Set as a String from JWKS endpoint.
+     *
+     * @param jwksUri JWKS Endpoint URL
+     */
+    public JsonArray getResourceContent(URL jwksUri) throws IOException {
+
+        if (jwksUri != null) {
+
+            Resource resource = null;
+            MutualTLSJWKSCacheKey mutualTLSJWKSCacheKey = new MutualTLSJWKSCacheKey(jwksUri.toString());
+            MutualTLSJWKSCacheEntry mutualTLSJWKSCacheEntry = MutualTLSJWKSCache.getInstance()
+                    .getValueFromCache(mutualTLSJWKSCacheKey);
+            if (mutualTLSJWKSCacheEntry != null) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Retrieving JWKS for " + jwksUri.toString() + " from cache.");
+                }
+                resource = mutualTLSJWKSCacheEntry.getValue();
+                if (log.isDebugEnabled() && resource != null) {
+                    log.debug("Cache hit for " + jwksUri.toString());
+                }
+            }
+            if (resource == null) {
+
+                DefaultResourceRetriever defaultResourceRetriever;
+                defaultResourceRetriever = new DefaultResourceRetriever(
+                        MutualTLSUtil.readHTTPConnectionConfigValue(HTTP_CONNECTION_TIMEOUT_XPATH),
+                        MutualTLSUtil.readHTTPConnectionConfigValue(HTTP_READ_TIMEOUT_XPATH));
+                if (log.isDebugEnabled()) {
+                    log.debug("Fetching JWKS from remote endpoint. JWKS URI: " + jwksUri);
+                }
+                resource = defaultResourceRetriever.retrieveResource(jwksUri);
+                MutualTLSJWKSCache.getInstance()
+                        .addToCache(mutualTLSJWKSCacheKey, new MutualTLSJWKSCacheEntry(resource));
+            }
+            if (resource != null) {
+                JsonParser jp = new JsonParser();
+                try (InputStream inputStream = new ByteArrayInputStream(
+                        resource.getContent().getBytes(StandardCharsets.UTF_8));
+                        InputStreamReader inputStreamReader = new InputStreamReader(inputStream)) {
+                    JsonElement root = jp.parse(inputStreamReader);
+                    JsonObject rootObj = root.getAsJsonObject();
+                    JsonElement keys = rootObj.get(KEYS);
+                    if (keys != null) {
+                        return keys.getAsJsonArray();
+                    } else {
+                        return null;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Fetch JWKS endpoint using client ID.
+     *
+     * @param serviceProvider Service Provider
+     */
+    public URL getJWKSEndpointOfSP(ServiceProvider serviceProvider, String clientID) throws OAuthClientAuthnException {
+
+        String jwksUri;
+        jwksUri = MutualTLSUtil.getPropertyValue(serviceProvider, JWKS_URI);
+        if (jwksUri != null) {
+            URL url;
+            try {
+                url = new URL(jwksUri);
+                if (log.isDebugEnabled()) {
+                    log.debug("Configured JWKS URI found: " + jwksUri);
+                }
+            } catch (MalformedURLException e) {
+                throw new OAuthClientAuthnException("URL might be malformed " + clientID, OAuth2ErrorCodes.SERVER_ERROR,
+                        e);
+            }
+            return url;
+        } else {
+            throw new OAuthClientAuthnException(
+                    "jwks endpoint not configured for the service provider for client ID: " + clientID,
+                    OAuth2ErrorCodes.SERVER_ERROR);
+        }
+
+    }
+
     @Override
     public String getName() {
 
         return this.getClass().getSimpleName();
     }
 }
+

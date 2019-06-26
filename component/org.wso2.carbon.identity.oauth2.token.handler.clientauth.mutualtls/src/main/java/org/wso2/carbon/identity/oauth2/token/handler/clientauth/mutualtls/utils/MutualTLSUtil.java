@@ -18,6 +18,17 @@
 
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils;
 
+import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.identity.application.common.model.ServiceProvider;
+import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
+
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.Charsets;
+
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateEncodingException;
@@ -27,6 +38,10 @@ import java.security.cert.X509Certificate;
  * Util class for OAuth 2.0 client authentication using Mutual TLS.
  */
 public class MutualTLSUtil {
+
+    private static Log log = LogFactory.getLog(MutualTLSUtil.class);
+    private static final String JWKS_URI = "jwksURI";
+    private static final String KEYS = "keys";
 
     /**
      * Attribute name for reading client certificate in the request.
@@ -47,7 +62,8 @@ public class MutualTLSUtil {
         MessageDigest md = MessageDigest.getInstance("SHA-1");
         byte[] certEncoded = cert.getEncoded();
         md.update(certEncoded);
-        return hexify(md.digest());
+        return new String(new Base64(0, null, true).encode(
+                hexify(md.digest()).getBytes(Charsets.UTF_8)), Charsets.UTF_8);
     }
 
     /**
@@ -66,4 +82,67 @@ public class MutualTLSUtil {
         }
         return builder.toString();
     }
+
+
+    /**
+     * Read HTTP connection configurations from identity.xml file.
+     *
+     * @param xPath xpath of the config property.
+     * @return Config property value.
+     */
+    public static int readHTTPConnectionConfigValue(String xPath) {
+
+        int configValue = 0;
+        String config = IdentityUtil.getProperty(xPath);
+        if (StringUtils.isNotBlank(config)) {
+            try {
+                configValue = Integer.parseInt(config);
+            } catch (NumberFormatException e) {
+                log.error("Provided HTTP connection config value in " + xPath + " should be an integer type. Value : "
+                        + config);
+            }
+        }
+        return configValue;
+    }
+
+    /**
+     * Checking Whether JWKS URI configured in the UI or not.
+     *
+     * @param serviceProvider service provider.
+     * @return true if jwks uri configured.
+     */
+    public static boolean isJwksUriConfigured(ServiceProvider serviceProvider) {
+
+        ServiceProviderProperty[] serviceProviderProperties = serviceProvider.getSpProperties();
+        for (ServiceProviderProperty sp : serviceProviderProperties) {
+            if (sp.getName().equals(JWKS_URI) && StringUtils.isNotBlank(sp.getValue())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Obtaining Property value from a service provider property array
+     *
+     * @param serviceProvider Service provider.
+     * @param propertyName    property name.
+     * @return property value
+     */
+    public static String getPropertyValue(ServiceProvider serviceProvider, String propertyName) {
+
+        ServiceProviderProperty[] properties = serviceProvider.getSpProperties();
+        if (ArrayUtils.isEmpty(properties) || StringUtils.isBlank(propertyName)) {
+            return null;
+        }
+        for (ServiceProviderProperty property : properties) {
+            if (propertyName.equals(property.getName())) {
+                if (StringUtils.isNotBlank(property.getValue())) {
+                    return property.getValue();
+                }
+            }
+        }
+        return null;
+    }
 }
+

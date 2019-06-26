@@ -25,6 +25,7 @@ import org.powermock.modules.testng.PowerMockObjectFactory;
 import org.powermock.reflect.internal.WhiteboxImpl;
 import org.testng.IObjectFactory;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.ObjectFactory;
 import org.testng.annotations.Test;
 import org.wso2.balana.utils.exception.PolicyBuilderException;
@@ -39,9 +40,14 @@ import org.wso2.carbon.identity.entitlement.common.dto.RequestDTO;
 import org.wso2.carbon.identity.entitlement.common.util.PolicyCreatorUtil;
 import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
+import org.wso2.carbon.identity.oauth2.authz.OAuthAuthzReqMessageContext;
+import org.wso2.carbon.identity.oauth2.dto.OAuth2AccessTokenReqDTO;
+import org.wso2.carbon.identity.oauth2.dto.OAuth2AuthorizeReqDTO;
 import org.wso2.carbon.identity.oauth2.model.AccessTokenDO;
+import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 import org.wso2.carbon.identity.oauth2.validators.xacml.XACMLScopeValidator;
+import org.wso2.carbon.identity.oauth2.validators.xacml.constants.XACMLScopeValidatorConstants;
 import org.wso2.carbon.identity.oauth2.validators.xacml.internal.OAuthScopeValidatorDataHolder;
 import org.wso2.carbon.identity.testutil.IdentityBaseTest;
 
@@ -69,17 +75,17 @@ public class XACMLScopeValidatorTest extends IdentityBaseTest {
     private static final String RULE_EFFECT_NOT_APPLICABLE = "NotApplicable";
     private static final String POLICY = "policy";
     private static final String ERROR = "error";
-    private static String xacmlResponse = "<ns:root xmlns:ns=\"urn:oasis:names:tc:xacml:3.0:core:schema:wd-17\">"
-            + "<ns:Result>"
-            + "<ns:Decision>"
-            + DECISION
-            + "</ns:Decision>"
-            + "</ns:Result>"
-            + "</ns:root>";
+
     private org.wso2.carbon.identity.oauth2.validators.xacml.XACMLScopeValidator xacmlScopeValidator = new XACMLScopeValidator();
     private AccessTokenDO accessTokenDO;
     private OAuthAppDO authApp;
     private final String RESOURCE = "resource";
+    private OAuthTokenReqMessageContext tokenReqMessageContext;
+    private OAuth2AccessTokenReqDTO oauth2AccessTokenReqDTO;
+    OAuthAuthzReqMessageContext oauthAuthzMsgCtx;
+    OAuth2AuthorizeReqDTO oAuth2AuthorizeReqDTO;
+    AuthenticatedUser authenticatedUser;
+
 
     @ObjectFactory
     public IObjectFactory getObjectFactory() {
@@ -91,7 +97,7 @@ public class XACMLScopeValidatorTest extends IdentityBaseTest {
     public void init() {
 
         String[] scopeArray = new String[]{"scope1", "scope2", "scope3"};
-        AuthenticatedUser authenticatedUser = new AuthenticatedUser();
+        authenticatedUser = new AuthenticatedUser();
         authenticatedUser.setUserName(ADMIN_USER);
         accessTokenDO = new AccessTokenDO();
         accessTokenDO.setConsumerKey("consumer-key");
@@ -99,20 +105,62 @@ public class XACMLScopeValidatorTest extends IdentityBaseTest {
         accessTokenDO.setScope(scopeArray);
         authApp = new OAuthAppDO();
         authApp.setApplicationName(APP_NAME);
+
+        oauth2AccessTokenReqDTO = new OAuth2AccessTokenReqDTO();
+        oauth2AccessTokenReqDTO.setClientId("consumer-key");
+        oauth2AccessTokenReqDTO.setScope(scopeArray);
+        tokenReqMessageContext = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO);
+        tokenReqMessageContext.setAuthorizedUser(authenticatedUser);
+
+        oAuth2AuthorizeReqDTO = new OAuth2AuthorizeReqDTO();
+        oAuth2AuthorizeReqDTO.setConsumerKey("consumer-key");
+        oAuth2AuthorizeReqDTO.setUser(authenticatedUser);
+        oAuth2AuthorizeReqDTO.setScopes(scopeArray);
+        oauthAuthzMsgCtx = new OAuthAuthzReqMessageContext(oAuth2AuthorizeReqDTO);
+
     }
 
-    @Test
-    public void testCreateRequestDTO() throws Exception {
+    @DataProvider(name = "createRequestObj")
+    public Object[][] createRequestObj() {
 
-        RequestDTO requestDTO = WhiteboxImpl.invokeMethod(xacmlScopeValidator,
-                "createRequestDTO", accessTokenDO, authApp, RESOURCE);
-        // Checking whether the created requestDTO have generated rows for all the attributes of the access token.
-        // If you add more attributed to access token, then you have to increment the count.
-        assertTrue(requestDTO.getRowDTOs().size() == 9);
+        return new Object[][]{
+                // Create XACML request string for token validation phase
+                {accessTokenDO.getScope(), XACMLScopeValidatorConstants.ACTION_VALIDATE
+                        , RESOURCE},
+
+                // Create XACML request string for token issuing phase
+                {tokenReqMessageContext.getOauth2AccessTokenReqDTO().getScope(),
+                        XACMLScopeValidatorConstants.ACTION_SCOPE_VALIDATE, null},
+
+                // Create XACML request string for code issuing phase
+                {oauthAuthzMsgCtx.getAuthorizationReqDTO().getScopes(),
+                        XACMLScopeValidatorConstants.ACTION_SCOPE_VALIDATE, null},
+        };
+    }
+
+    @Test(dataProvider = "createRequestObj")
+    public void testCreateRequestObj(String[] scopes, String action, String resource) throws Exception {
+
+        mockStatic(PolicyBuilder.class);
+        PolicyBuilder policyBuilder = mock(PolicyBuilder.class);
+        mockStatic(PolicyBuilder.class);
+        when(PolicyBuilder.getInstance()).thenReturn(policyBuilder);
+        when(policyBuilder.buildRequest(any(RequestElementDTO.class))).thenReturn(POLICY);
+        String request = WhiteboxImpl.invokeMethod(xacmlScopeValidator,
+                "createRequest", scopes, authenticatedUser, authApp, action, resource);
+        assertTrue(!request.isEmpty());
     }
 
     @Test
     public void testExtractXACMLResponse() throws Exception {
+
+        String xacmlResponse = "<ns:root xmlns:ns=\"urn:oasis:names:tc:xacml:3.0:core:schema:wd-17\">"
+                + "<ns:Result>"
+                + "<ns:Decision>"
+                + DECISION
+                + "</ns:Decision>"
+                + "</ns:Result>"
+                + "</ns:root>";
 
         String response = WhiteboxImpl.invokeMethod(xacmlScopeValidator,
                 "extractDecisionFromXACMLResponse", xacmlResponse);
@@ -120,12 +168,21 @@ public class XACMLScopeValidatorTest extends IdentityBaseTest {
     }
 
     /**
-     * Tests the validateScope method, by returning different mock XACML response for entitlementService.
+     * Tests the validateScope method when validating access tokens, by returning different mock XACML response for
+     * entitlementService.
      *
      * @throws Exception exception
      */
-    @Test (expectedExceptions = IdentityOAuth2Exception.class)
+    @Test(expectedExceptions = IdentityOAuth2Exception.class)
     public void testValidatedScope() throws Exception {
+
+        String xacmlResponse = "<ns:root xmlns:ns=\"urn:oasis:names:tc:xacml:3.0:core:schema:wd-17\">"
+                + "<ns:Result>"
+                + "<ns:Decision>"
+                + DECISION
+                + "</ns:Decision>"
+                + "</ns:Result>"
+                + "</ns:root>";
 
         mockStatic(FrameworkUtils.class);
 
@@ -158,5 +215,105 @@ public class XACMLScopeValidatorTest extends IdentityBaseTest {
 
         when(policyBuilder.buildRequest(any(RequestElementDTO.class))).thenThrow(new PolicyBuilderException(ERROR));
         xacmlScopeValidator.validateScope(accessTokenDO, RESOURCE);
+    }
+
+    /**
+     * Tests the validateScope method during access tokens issuing phase, by returning different mock XACML response
+     * for entitlement service.
+     *
+     * @throws Exception exception
+     */
+    @Test(expectedExceptions = IdentityOAuth2Exception.class)
+    public void testValidateTokenReq() throws Exception {
+
+        String xacmlResponse = "<ns:root xmlns:ns=\"urn:oasis:names:tc:xacml:3.0:core:schema:wd-17\">"
+                + "<ns:Result>"
+                + "<ns:Decision>"
+                + DECISION
+                + "</ns:Decision>"
+                + "</ns:Result>"
+                + "</ns:root>";
+
+        mockStatic(FrameworkUtils.class);
+
+        mockStatic(OAuth2Util.class);
+        when(OAuth2Util.getAppInformationByClientId(anyString())).thenReturn(authApp);
+
+        RequestElementDTO requestElementDTO = mock(RequestElementDTO.class);
+        mockStatic(PolicyCreatorUtil.class);
+        when(PolicyCreatorUtil.createRequestElementDTO(any(RequestDTO.class))).thenReturn(requestElementDTO);
+        PolicyBuilder policyBuilder = mock(PolicyBuilder.class);
+        mockStatic(PolicyBuilder.class);
+        when(PolicyBuilder.getInstance()).thenReturn(policyBuilder);
+        when(policyBuilder.buildRequest(any(RequestElementDTO.class))).thenReturn(POLICY);
+        EntitlementService entitlementService = mock(EntitlementService.class);
+        OAuthScopeValidatorDataHolder.getInstance().setEntitlementService(entitlementService);
+
+        when(entitlementService.getDecision(anyString())).thenReturn(xacmlResponse);
+        assertFalse(xacmlScopeValidator.validateScope(tokenReqMessageContext));
+
+        xacmlResponse = xacmlResponse.replace(DECISION, RULE_EFFECT_NOT_APPLICABLE);
+        when(entitlementService.getDecision(anyString())).thenReturn(xacmlResponse);
+        assertTrue(xacmlScopeValidator.validateScope(tokenReqMessageContext));
+
+        xacmlResponse = xacmlResponse.replace(RULE_EFFECT_NOT_APPLICABLE, RULE_EFFECT_PERMIT);
+        when(entitlementService.getDecision(anyString())).thenReturn(xacmlResponse);
+        assertTrue(xacmlScopeValidator.validateScope(tokenReqMessageContext));
+
+        when(entitlementService.getDecision(anyString())).thenThrow(new EntitlementException(ERROR));
+        xacmlScopeValidator.validateScope(tokenReqMessageContext);
+
+        when(policyBuilder.buildRequest(any(RequestElementDTO.class))).thenThrow(new PolicyBuilderException(ERROR));
+        xacmlScopeValidator.validateScope(tokenReqMessageContext);
+    }
+
+    /**
+     * Tests the validateScope method when sending authorization request, by returning different mock XACML response
+     * for entitlement service.
+     *
+     * @throws Exception exception
+     */
+    @Test(expectedExceptions = IdentityOAuth2Exception.class)
+    public void testValidateAuthorizeReq() throws Exception {
+
+        String xacmlResponse = "<ns:root xmlns:ns=\"urn:oasis:names:tc:xacml:3.0:core:schema:wd-17\">"
+                + "<ns:Result>"
+                + "<ns:Decision>"
+                + DECISION
+                + "</ns:Decision>"
+                + "</ns:Result>"
+                + "</ns:root>";
+
+        mockStatic(FrameworkUtils.class);
+
+        mockStatic(OAuth2Util.class);
+        when(OAuth2Util.getAppInformationByClientId(anyString())).thenReturn(authApp);
+
+        RequestElementDTO requestElementDTO = mock(RequestElementDTO.class);
+        mockStatic(PolicyCreatorUtil.class);
+        when(PolicyCreatorUtil.createRequestElementDTO(any(RequestDTO.class))).thenReturn(requestElementDTO);
+        PolicyBuilder policyBuilder = mock(PolicyBuilder.class);
+        mockStatic(PolicyBuilder.class);
+        when(PolicyBuilder.getInstance()).thenReturn(policyBuilder);
+        when(policyBuilder.buildRequest(any(RequestElementDTO.class))).thenReturn(POLICY);
+        EntitlementService entitlementService = mock(EntitlementService.class);
+        OAuthScopeValidatorDataHolder.getInstance().setEntitlementService(entitlementService);
+
+        when(entitlementService.getDecision(anyString())).thenReturn(xacmlResponse);
+        assertFalse(xacmlScopeValidator.validateScope(oauthAuthzMsgCtx));
+
+        xacmlResponse = xacmlResponse.replace(DECISION, RULE_EFFECT_NOT_APPLICABLE);
+        when(entitlementService.getDecision(anyString())).thenReturn(xacmlResponse);
+        assertTrue(xacmlScopeValidator.validateScope(oauthAuthzMsgCtx));
+
+        xacmlResponse = xacmlResponse.replace(RULE_EFFECT_NOT_APPLICABLE, RULE_EFFECT_PERMIT);
+        when(entitlementService.getDecision(anyString())).thenReturn(xacmlResponse);
+        assertTrue(xacmlScopeValidator.validateScope(oauthAuthzMsgCtx));
+
+        when(entitlementService.getDecision(anyString())).thenThrow(new EntitlementException(ERROR));
+        xacmlScopeValidator.validateScope(oauthAuthzMsgCtx);
+
+        when(policyBuilder.buildRequest(any(RequestElementDTO.class))).thenThrow(new PolicyBuilderException(ERROR));
+        xacmlScopeValidator.validateScope(oauthAuthzMsgCtx);
     }
 }
