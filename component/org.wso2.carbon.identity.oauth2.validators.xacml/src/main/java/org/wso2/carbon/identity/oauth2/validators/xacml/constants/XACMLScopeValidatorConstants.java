@@ -27,6 +27,7 @@ public class XACMLScopeValidatorConstants {
     public static final String DECISION_XPATH = "//ns:Result/ns:Decision/text()";
     public static final String XACML_NS_PREFIX = "ns";
     public static final String ACTION_VALIDATE = "token_validation";
+    public static final String ACTION_SCOPE_VALIDATE = "scope_validation";
     public static final String RULE_EFFECT_PERMIT = "Permit";
     public static final String RULE_EFFECT_NOT_APPLICABLE = "NotApplicable";
 

@@ -134,6 +134,9 @@
                             org.wso2.carbon.identity.oauth2.model;version="${identity.inbound.auth.oauth.imp.pkg.version}",
                             org.wso2.carbon.identity.oauth2.util;version="${identity.inbound.auth.oauth.imp.pkg.version}",
                             org.wso2.carbon.identity.oauth2.validators;version="${identity.inbound.auth.oauth.imp.pkg.version}",
+                            org.wso2.carbon.identity.oauth2.token;version="${identity.inbound.auth.oauth.imp.pkg.version}",
+                            org.wso2.carbon.identity.oauth2.dto;version="${identity.inbound.auth.oauth.imp.pkg.version}",
+                            org.wso2.carbon.identity.oauth2.authz;version="${identity.inbound.auth.oauth.imp.pkg.version}",
                             org.jaxen; version="${axiom.org.jaxen.imp.pkg.version.range}"
                         </Import-Package>
                         <Export-Package>
