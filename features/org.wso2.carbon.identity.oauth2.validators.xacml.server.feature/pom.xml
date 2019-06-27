@@ -121,6 +121,7 @@
                                     <directory>resources</directory>
                                     <includes>
                                         <include>scope_based_token_validation_policy_template.xml</include>
+                                        <include>scope_based_token_issuance_policy_template.xml</include>
                                         <include>p2.inf</include>
                                     </includes>
                                 </resource>
