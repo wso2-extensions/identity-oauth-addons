@@ -399,8 +399,9 @@ public class JWTValidator {
                     isValidSignature = new JWKSBasedJWTValidator().validateSignature(jwtString, jwksUri, alg, options);
                 }
             } catch (IdentityOAuth2Exception e) {
-                String errorMessage = "Error occurred while validating signature using jwks";
-                throw new OAuthClientAuthnException(errorMessage, OAuth2ErrorCodes.INVALID_REQUEST, e);
+                String errorMessage = "Error occurred while validating signature using jwks ";
+                log.error(errorMessage, e);
+                return false;
             }
         }
         // If certificate is not configured in service provider, it will throw an error.
@@ -415,7 +416,6 @@ public class JWTValidator {
                 String message = "Error while validating the signature";
                 throw new OAuthClientAuthnException(message, OAuth2ErrorCodes.INVALID_REQUEST, e);
             }
-
         }
         return isValidSignature;
     }
