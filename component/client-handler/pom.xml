@@ -172,6 +172,10 @@
             <artifactId>org.wso2.carbon.tomcat.ext</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.ops4j.pax.logging</groupId>
+            <artifactId>pax-logging-api</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <pluginManagement>
