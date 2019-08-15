@@ -39,7 +39,7 @@ import java.security.cert.X509Certificate;
  */
 public class MutualTLSUtil {
 
-    private static Log log = LogFactory.getLog(MutualTLSUtil.class);
+    private static final Log log = LogFactory.getLog(MutualTLSUtil.class);
     private static final String JWKS_URI = "jwksURI";
     private static final String KEYS = "keys";
 

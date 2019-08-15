@@ -71,7 +71,7 @@ import static org.wso2.carbon.identity.oauth2.util.OAuth2Util.getServiceProvider
  */
 public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticator {
 
-    private static Log log = LogFactory.getLog(MutualTLSClientAuthenticator.class);
+    private static final Log log = LogFactory.getLog(MutualTLSClientAuthenticator.class);
     private static final String X5T = "x5t";
     private static final String X5C = "x5c";
     private static final String HTTP_CONNECTION_TIMEOUT_XPATH = "JWTValidatorConfigs.JWKSEndpoint" +
