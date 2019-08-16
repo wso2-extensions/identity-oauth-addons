@@ -429,6 +429,7 @@
         <identity.inbound.auth.oauth.version>6.1.1</identity.inbound.auth.oauth.version>
         <identity.inbound.auth.oauth.imp.pkg.version>[6.1.0,7.0.0)</identity.inbound.auth.oauth.imp.pkg.version>
         <carbon.kernel.version>4.5.0-m1</carbon.kernel.version>
+        <carbon.kernel.feature.version>4.5.0</carbon.kernel.feature.version>
         <org.apache.oltu.oauth2.client.version>1.0.0</org.apache.oltu.oauth2.client.version>
         <org.apache.oltu.oauth2.common.version>1.0.1</org.apache.oltu.oauth2.common.version>
         <oltu.package.import.version.range>[1.0.0, 2.0.0)</oltu.package.import.version.range>
