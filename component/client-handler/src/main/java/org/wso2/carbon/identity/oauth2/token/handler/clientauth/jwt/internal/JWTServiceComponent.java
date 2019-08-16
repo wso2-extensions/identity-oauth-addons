@@ -40,7 +40,7 @@ import org.wso2.carbon.user.core.service.RealmService;
 )
 public class JWTServiceComponent {
 
-    private static Log log = LogFactory.getLog(JWTServiceComponent.class);
+    private static final Log log = LogFactory.getLog(JWTServiceComponent.class);
     private BundleContext bundleContext;
 
     public static RealmService getRealmService() {

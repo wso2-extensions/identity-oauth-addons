@@ -67,7 +67,7 @@ import javax.xml.stream.XMLStreamException;
 public class XACMLScopeValidator extends OAuth2ScopeValidator {
 
     private static final String SCOPE_VALIDATOR_NAME = "XACML Scope Validator";
-    private Log log = LogFactory.getLog(XACMLScopeValidator.class);
+    private static final Log log = LogFactory.getLog(XACMLScopeValidator.class);
 
     @Override
     public boolean validateScope(AccessTokenDO accessTokenDO, String resource) throws IdentityOAuth2Exception {
