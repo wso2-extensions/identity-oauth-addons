@@ -256,7 +256,7 @@
             <dependency>
                 <groupId>org.wso2.carbon.identity.framework</groupId>
                 <artifactId>org.wso2.carbon.identity.testutil</artifactId>
-                <version>${carbon.identity.test.version}</version>
+                <version>${carbon.identity.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
@@ -470,7 +470,6 @@
         <axiom.org.jaxen.imp.pkg.version.range>[1.1.1, 2.0.0)</axiom.org.jaxen.imp.pkg.version.range>
 
         <!--Test Dependencies-->
-        <carbon.identity.test.version>5.11.9</carbon.identity.test.version>
         <commons.collections.version>3.2.2</commons.collections.version>
         <junit.version>4.12</junit.version>
         <testng.version>6.9.10</testng.version>
@@ -478,7 +477,7 @@
         <powermock.version>1.6.6</powermock.version>
         <maven.surefire.plugin.version>2.18.1</maven.surefire.plugin.version>
         <javaee.web.api.version>7.0</javaee.web.api.version>
-        <h2database.version>1.0.60</h2database.version>
+        <h2database.version>1.4.199</h2database.version>
         <org.wso2.carbon.identity.testutil.version>5.11.9</org.wso2.carbon.identity.testutil.version>
         <maven.plugins.version>2.0</maven.plugins.version>
         <maven.source.plugin.version>1.22.0</maven.source.plugin.version>
