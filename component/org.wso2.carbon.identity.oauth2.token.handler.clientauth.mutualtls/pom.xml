@@ -175,6 +175,10 @@
             <artifactId>org.wso2.carbon.tomcat.ext</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.ops4j.pax.logging</groupId>
+            <artifactId>pax-logging-api</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -228,11 +232,6 @@
                         </Export-Package>
                     </instructions>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-scr-plugin</artifactId>
-                <version>${maven.source.plugin.version}</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

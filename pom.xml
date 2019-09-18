@@ -21,7 +21,7 @@
     <parent>
         <groupId>org.wso2</groupId>
         <artifactId>wso2</artifactId>
-        <version>1</version>
+        <version>1.2</version>
     </parent>
     <groupId>org.wso2.carbon.extension.identity.oauth.addons</groupId>
     <artifactId>identity-oauth2-extenstions</artifactId>
@@ -275,6 +275,12 @@
                 <artifactId>org.wso2.carbon.identity.oauth2.validators.xacml</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <!-- Pax Logging -->
+            <dependency>
+                <groupId>org.ops4j.pax.logging</groupId>
+                <artifactId>pax-logging-api</artifactId>
+                <version>${pax.logging.api.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -309,19 +315,6 @@
                         <doCheck>false</doCheck>
                         <doUpdate>false</doUpdate>
                     </configuration>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.felix</groupId>
-                    <artifactId>maven-scr-plugin</artifactId>
-                    <version>${maven.source.plugin.version}</version>
-                    <executions>
-                        <execution>
-                            <id>generate-scr-scrdescriptor</id>
-                            <goals>
-                                <goal>scr</goal>
-                            </goals>
-                        </execution>
-                    </executions>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -425,11 +418,13 @@
 
     <properties>
 
+
         <carbon.identity.version>5.14.67</carbon.identity.version>
         <identity.inbound.auth.oauth.version>6.2.18</identity.inbound.auth.oauth.version>
         <identity.inbound.auth.oauth.imp.pkg.version>[6.2.18,7.0.0)</identity.inbound.auth.oauth.imp.pkg.version>
         <carbon.kernel.version>4.5.0</carbon.kernel.version>
         <carbon.kernel.feature.version>4.5.0</carbon.kernel.feature.version>
+
         <org.apache.oltu.oauth2.client.version>1.0.0</org.apache.oltu.oauth2.client.version>
         <org.apache.oltu.oauth2.common.version>1.0.1</org.apache.oltu.oauth2.common.version>
         <oltu.package.import.version.range>[1.0.0, 2.0.0)</oltu.package.import.version.range>
@@ -458,7 +453,7 @@
         <net.minidev.json.imp.pkg.version.range>[1.3.0, 3.0.0)</net.minidev.json.imp.pkg.version.range>
         <javax.servlet.http.package.import.version.range>[2.6,3)</javax.servlet.http.package.import.version.range>
         <apache.commons.lang.package.import.version.range>[2.6,3)</apache.commons.lang.package.import.version.range>
-        <apache.commons.logging.package.import.version.range>[1.1,2)
+        <apache.commons.logging.package.import.version.range>[1.2.0,2.0.0)
         </apache.commons.logging.package.import.version.range>
         <apache.oltu.oauth2.common.package.import.version.range>[1.0,2)
         </apache.oltu.oauth2.common.package.import.version.range>
@@ -481,11 +476,13 @@
         <h2database.version>1.0.60</h2database.version>
         <org.wso2.carbon.identity.testutil.version>5.11.9</org.wso2.carbon.identity.testutil.version>
         <maven.plugins.version>2.0</maven.plugins.version>
-        <maven.source.plugin.version>1.22.0</maven.source.plugin.version>
         <maven.resource.plugin.version>3.0.2</maven.resource.plugin.version>
         <maven.plugins.version.source>1.7</maven.plugins.version.source>
-        <maven.bundle.plugins.version>2.4.0</maven.bundle.plugins.version>
+        <maven.bundle.plugins.version>3.2.0</maven.bundle.plugins.version>
         <maven.compiler.plugin>3.7.0</maven.compiler.plugin>
         <maven.buildnumber.plugin.version>1.4</maven.buildnumber.plugin.version>
+
+        <!-- Pax Logging Version -->
+        <pax.logging.api.version>1.10.1</pax.logging.api.version>
     </properties>
 </project>
