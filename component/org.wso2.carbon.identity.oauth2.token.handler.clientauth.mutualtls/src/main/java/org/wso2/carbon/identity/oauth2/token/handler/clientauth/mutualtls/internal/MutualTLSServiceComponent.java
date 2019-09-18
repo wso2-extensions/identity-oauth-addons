@@ -36,7 +36,7 @@ import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.Mutual
 )
 public class MutualTLSServiceComponent {
 
-    private static Log log = LogFactory.getLog(MutualTLSServiceComponent.class);
+    private static final Log log = LogFactory.getLog(MutualTLSServiceComponent.class);
     private BundleContext bundleContext;
 
     @Activate
