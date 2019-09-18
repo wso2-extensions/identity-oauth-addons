@@ -425,10 +425,10 @@
 
     <properties>
 
-        <carbon.identity.version>5.13.4</carbon.identity.version>
-        <identity.inbound.auth.oauth.version>6.1.1</identity.inbound.auth.oauth.version>
-        <identity.inbound.auth.oauth.imp.pkg.version>[6.1.0,7.0.0)</identity.inbound.auth.oauth.imp.pkg.version>
-        <carbon.kernel.version>4.5.0-m1</carbon.kernel.version>
+        <carbon.identity.version>5.14.67</carbon.identity.version>
+        <identity.inbound.auth.oauth.version>6.2.18</identity.inbound.auth.oauth.version>
+        <identity.inbound.auth.oauth.imp.pkg.version>[6.2.18,7.0.0)</identity.inbound.auth.oauth.imp.pkg.version>
+        <carbon.kernel.version>4.5.0</carbon.kernel.version>
         <carbon.kernel.feature.version>4.5.0</carbon.kernel.feature.version>
         <org.apache.oltu.oauth2.client.version>1.0.0</org.apache.oltu.oauth2.client.version>
         <org.apache.oltu.oauth2.common.version>1.0.1</org.apache.oltu.oauth2.common.version>
@@ -447,7 +447,7 @@
         <apache.felix.scr.ds.annotations.version>1.2.4</apache.felix.scr.ds.annotations.version>
         <equinox.osgi.services.version>3.5.100.v20160504-1419</equinox.osgi.services.version>
 
-        <carbon.identity.package.import.version.range>[5.13.0, 6.0.0)</carbon.identity.package.import.version.range>
+        <carbon.identity.package.import.version.range>[5.14.0, 6.0.0)</carbon.identity.package.import.version.range>
         <org.apache.commons.codec.package.import.version.range>[1.10.0,2
             )</org.apache.commons.codec.package.import.version.range>
         <org.apache.commons.io.package.import.version.range>[2.4.0,3
