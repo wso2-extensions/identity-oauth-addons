@@ -453,7 +453,7 @@
         <net.minidev.json.imp.pkg.version.range>[1.3.0, 3.0.0)</net.minidev.json.imp.pkg.version.range>
         <javax.servlet.http.package.import.version.range>[2.6,3)</javax.servlet.http.package.import.version.range>
         <apache.commons.lang.package.import.version.range>[2.6,3)</apache.commons.lang.package.import.version.range>
-        <apache.commons.logging.package.import.version.range>[1.2.0,2.0.0)
+        <apache.commons.logging.package.import.version.range>[1.2.0, 2.0.0)
         </apache.commons.logging.package.import.version.range>
         <apache.oltu.oauth2.common.package.import.version.range>[1.0,2)
         </apache.oltu.oauth2.common.package.import.version.range>
