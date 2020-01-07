@@ -387,7 +387,8 @@ public class MutualTLSClientAuthenticatorTest extends PowerMockTestCase {
         PowerMockito.doReturn(getJsonArray(testJson)).when(mutualTLSClientAuthenticator1).getResourceContent(any());
         PowerMockito.doReturn(new URL("https://wso2is.com/.well-known/jwks.json"))
                 .when(mutualTLSClientAuthenticator1).getJWKSEndpointOfSP(any(),any());
-        PowerMockito.when(MutualTLSUtil.getThumbPrint(any())).thenReturn("da39a3ee5e6b4b0d3255bfef95601890afd80709");
+        PowerMockito.when(MutualTLSUtil.getThumbPrint(any(), any())).thenReturn(
+                "da39a3ee5e6b4b0d3255bfef95601890afd80709");
         PowerMockito.when(httpServletRequest.getAttribute(JAVAX_SERVLET_REQUEST_CERTIFICATE)).thenReturn(certificate);
         assertEquals(mutualTLSClientAuthenticator1
                         .authenticateClient(httpServletRequest, bodyContent, oAuthClientAuthnContext), authenticationResult,
