@@ -237,8 +237,8 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
 
         boolean trustedCert = false;
         try {
-            String publicKeyOfRegisteredCert = MutualTLSUtil.getThumbPrint(registeredCert);
-            String publicKeyOfRequestCert = MutualTLSUtil.getThumbPrint(requestCert);
+            String publicKeyOfRegisteredCert = MutualTLSUtil.getThumbPrint(registeredCert, null);
+            String publicKeyOfRequestCert = MutualTLSUtil.getThumbPrint(requestCert, null);
             if (StringUtils.equals(publicKeyOfRegisteredCert, publicKeyOfRequestCert)) {
                 if (log.isDebugEnabled()) {
                     log.debug("Client certificate thumbprint matched with the registered certificate thumbprint.");
@@ -250,7 +250,7 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
                             "registered certificate thumbprint.");
                 }
             }
-        } catch (NoSuchAlgorithmException | CertificateEncodingException e) {
+        } catch (CertificateEncodingException e) {
             throw new OAuthClientAuthnException(OAuth2ErrorCodes.INVALID_GRANT, "Error occurred while " +
                     "generating certificate thumbprint. Error: " + e.getMessage(), e);
         }
@@ -269,13 +269,9 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
 
         try {
             return isAuthenticated(getResourceContent(jwksUri), requestCert);
-
         } catch (IOException e) {
             throw new OAuthClientAuthnException(OAuth2ErrorCodes.SERVER_ERROR,
                     "Error occurred while opening HTTP connection for the JWKS URL : " + jwksUri, e);
-        } catch (NoSuchAlgorithmException e) {
-            throw new OAuthClientAuthnException(OAuth2ErrorCodes.SERVER_ERROR,
-                    "Error occurred while generating thumbprint for registered certificate ", e);
         } catch (CertificateException e) {
             throw new OAuthClientAuthnException(OAuth2ErrorCodes.SERVER_ERROR,
                     "Error occurred while parsing certificate retrieved from JWKS endpoint ", e);
@@ -290,12 +286,12 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
      * @return Whether the client was successfully authenticated or not.
      */
     private boolean isAuthenticated(JsonArray resourceArray, X509Certificate requestCert)
-            throws CertificateException, OAuthClientAuthnException, NoSuchAlgorithmException {
+            throws CertificateException, OAuthClientAuthnException {
 
         for (JsonElement jsonElement : resourceArray) {
             JsonElement attributeValue = jsonElement.getAsJsonObject().get(X5T);
             if (attributeValue != null) {
-                if (attributeValue.getAsString().equals(MutualTLSUtil.getThumbPrint(requestCert))) {
+                if (attributeValue.getAsString().equals(MutualTLSUtil.getThumbPrint(requestCert, null))) {
                     if (log.isDebugEnabled()) {
                         log.debug("Client authentication successful using the attribute: " + X5T);
                     }
