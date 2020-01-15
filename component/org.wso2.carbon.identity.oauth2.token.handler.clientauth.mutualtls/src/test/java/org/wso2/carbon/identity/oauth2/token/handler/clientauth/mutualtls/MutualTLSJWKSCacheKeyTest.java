@@ -41,7 +41,6 @@ public class MutualTLSJWKSCacheKeyTest {
         assertEquals(mutualTLSJWKSCacheKey.getJWKSCacheKey(), cacheKeyString, "Get MutualTLSJWKSCacheKey failed");
     }
 
-
     @Test
     public void testEqualsWhenCacheKeyEqual() throws Exception {
 
