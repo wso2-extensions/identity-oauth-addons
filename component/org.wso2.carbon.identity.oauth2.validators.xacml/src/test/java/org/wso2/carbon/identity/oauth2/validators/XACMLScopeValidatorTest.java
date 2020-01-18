@@ -134,15 +134,15 @@ public class XACMLScopeValidatorTest extends IdentityBaseTest {
     public Object[][] createRequestObj() {
 
         return new Object[][]{
-                // Create XACML request string for token validation phase
+                // Create XACML request string for token validation phase.
                 {accessTokenDO.getScope(), XACMLScopeValidatorConstants.ACTION_VALIDATE
                         , RESOURCE, accessTokenDO.getAccessToken()},
 
-                // Create XACML request string for token issuing phase
+                // Create XACML request string for token issuing phase.
                 {tokenReqMessageContext.getOauth2AccessTokenReqDTO().getScope(),
                         XACMLScopeValidatorConstants.ACTION_SCOPE_VALIDATE, null, null},
 
-                // Create XACML request string for code issuing phase
+                // Create XACML request string for code issuing phase.
                 {oauthAuthzMsgCtx.getAuthorizationReqDTO().getScopes(),
                         XACMLScopeValidatorConstants.ACTION_SCOPE_VALIDATE, null, null},
         };
