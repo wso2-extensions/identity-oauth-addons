@@ -24,13 +24,13 @@
     <parent>
         <groupId>org.wso2.carbon.extension.identity.oauth.addons</groupId>
         <artifactId>identity-oauth2-extenstions</artifactId>
-        <version>2.1.2-SNAPSHOT</version>
+        <version>2.2.6-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <artifactId>org.wso2.carbon.identity.oauth2.validators.xacml</artifactId>
     <packaging>bundle</packaging>
-    <version>2.1.2-SNAPSHOT</version>
+    <version>2.2.6-SNAPSHOT</version>
     <name>Identity Component - XACML based scope validator for OAuth access token</name>
     <description>XACML based scope validator for OAuth access token</description>
     <url>http://wso2.org</url>
@@ -39,6 +39,16 @@
         <dependency>
             <groupId>org.wso2.carbon.identity.inbound.auth.oauth2</groupId>
             <artifactId>org.wso2.carbon.identity.oauth</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.ops4j.pax.logging</groupId>
+                    <artifactId>pax-logging-api</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.ops4j.pax.logging</groupId>
+                    <artifactId>pax-logging-log4j2</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.wso2.balana</groupId>
@@ -47,10 +57,22 @@
         <dependency>
             <groupId>org.wso2.carbon.identity.framework</groupId>
             <artifactId>org.wso2.carbon.identity.entitlement</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.ops4j.pax.logging</groupId>
+                    <artifactId>pax-logging-api</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.wso2.carbon.identity.framework</groupId>
             <artifactId>org.wso2.carbon.identity.application.authentication.framework</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.ops4j.pax.logging</groupId>
+                    <artifactId>pax-logging-api</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.felix</groupId>
@@ -82,22 +104,13 @@
             <artifactId>powermock-api-mockito</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.ops4j.pax.logging</groupId>
+            <artifactId>pax-logging-api</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-scr-plugin</artifactId>
-                <version>${maven.source.plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>generate-scr-scrdescriptor</id>
-                        <goals>
-                            <goal>scr</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
@@ -122,12 +135,15 @@
                             org.wso2.balana.utils.exception;version="${balana.import.version.range}",
                             org.wso2.balana.utils.policy;version="${balana.import.version.range}",
                             org.wso2.balana.utils.policy.dto;version="${balana.import.version.range}",
+                            org.wso2.balana.utils.Constants;version="${balana.import.version.range}",
                             org.wso2.carbon.identity.entitlement;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.entitlement.common.dto;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.entitlement.common.util;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.application.authentication.framework.model;version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.application.authentication.framework.util;version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.application.common.model;version="${carbon.identity.package.import.version.range}",
 
+                            org.wso2.carbon.identity.oauth.cache;version="${identity.inbound.auth.oauth.imp.pkg.version}",
                             org.wso2.carbon.identity.oauth.common.exception;version="${identity.inbound.auth.oauth.imp.pkg.version}",
                             org.wso2.carbon.identity.oauth.dao;version="${identity.inbound.auth.oauth.imp.pkg.version}",
                             org.wso2.carbon.identity.oauth2;version="${identity.inbound.auth.oauth.imp.pkg.version}",

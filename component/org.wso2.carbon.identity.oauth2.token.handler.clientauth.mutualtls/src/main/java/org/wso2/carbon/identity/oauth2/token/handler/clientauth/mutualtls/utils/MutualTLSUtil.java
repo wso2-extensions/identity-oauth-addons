@@ -28,6 +28,8 @@ import org.wso2.carbon.identity.core.util.IdentityUtil;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.Charsets;
+import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
+import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -39,7 +41,7 @@ import java.security.cert.X509Certificate;
  */
 public class MutualTLSUtil {
 
-    private static Log log = LogFactory.getLog(MutualTLSUtil.class);
+    private static final Log log = LogFactory.getLog(MutualTLSUtil.class);
     private static final String JWKS_URI = "jwksURI";
     private static final String KEYS = "keys";
 
@@ -51,6 +53,7 @@ public class MutualTLSUtil {
     /**
      * Helper method to retrieve the thumbprint of a X509 certificate.
      *
+     * @deprecated Use the method {@link #getThumbPrint(X509Certificate, String)} which honour OAuth2 module.
      * @param cert X509 certificate
      * @return Thumbprint of the X509 certificate
      * @throws NoSuchAlgorithmException
@@ -64,6 +67,26 @@ public class MutualTLSUtil {
         md.update(certEncoded);
         return new String(new Base64(0, null, true).encode(
                 hexify(md.digest()).getBytes(Charsets.UTF_8)), Charsets.UTF_8);
+    }
+
+    /**
+     * Helper method to retrieve the thumbprint of a X509 certificate.
+     *
+     * @param cert X509 certificate
+     * @return Thumbprint of the X509 certificate
+     * @throws NoSuchAlgorithmException
+     * @throws CertificateEncodingException
+     */
+    public static String getThumbPrint(X509Certificate cert, String alias) throws CertificateEncodingException {
+
+        try {
+            return OAuth2Util.getThumbPrint(cert, alias);
+        } catch (IdentityOAuth2Exception e) {
+            if (log.isDebugEnabled()) {
+                log.debug("An error occurred while getting the thumbprint of the certificate: " + cert.toString());
+            }
+            throw new CertificateEncodingException("Error occurred while getting certificate thumbprint", e);
+        }
     }
 
     /**

@@ -35,6 +35,7 @@ public class XACMLScopeValidatorConstants {
     public static final String SP_CATEGORY = "http://wso2.org/identity/sp";
     public static final String USER_CATEGORY = "http://wso2.org/identity/user";
     public static final String SCOPE_CATEGORY = "http://wso2.org/identity/oauth-scope";
+    public static final String SP_CLAIM_CATEGORY = "http://wso2.org/identity/user/claim/sp";
 
     public static final String AUTH_ACTION_ID = ACTION_CATEGORY + "/action-name";
     public static final String SP_NAME_ID = SP_CATEGORY + "/sp-name";
@@ -42,4 +43,5 @@ public class XACMLScopeValidatorConstants {
     public static final String USER_STORE_ID = USER_CATEGORY + "/user-store-domain";
     public static final String USER_TENANT_DOMAIN_ID = USER_CATEGORY + "/user-tenant-domain";
     public static final String SCOPE_ID = SCOPE_CATEGORY + "/scope-name";
+    public static final String USER_TYPE_ID = USER_CATEGORY + "/user-type";
 }

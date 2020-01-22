@@ -31,6 +31,8 @@ import java.io.ByteArrayInputStream;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import javax.xml.bind.DatatypeConverter;
+
+import static org.mockito.Matchers.any;
 import static org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
 
 import static org.testng.Assert.*;
@@ -81,7 +83,8 @@ public class MutualTLSUtilTest extends PowerMockTestCase {
         CertificateFactory factory = CertificateFactory.getInstance("X.509");
         X509Certificate Cert = (X509Certificate) factory.generateCertificate(
                 new ByteArrayInputStream(DatatypeConverter.parseBase64Binary(CERTIFICATE_CONTENT)));
-        assertEquals(MutualTLSUtil.getThumbPrint(Cert), "OTE2OWI4MzQ0MTQ5ZDMzMTk3ZmI2NjNjOGYyNjZhNTZhYzgxZWU5Zg");
+        assertEquals(MutualTLSUtil.getThumbPrint(Cert, null),
+                "OTE2OWI4MzQ0MTQ5ZDMzMTk3ZmI2NjNjOGYyNjZhNTZhYzgxZWU5Zg");
 
     }
 

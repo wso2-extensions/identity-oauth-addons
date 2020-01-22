@@ -26,17 +26,23 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jaxen.JaxenException;
+import org.wso2.balana.utils.Constants.PolicyConstants;
 import org.wso2.balana.utils.exception.PolicyBuilderException;
 import org.wso2.balana.utils.policy.PolicyBuilder;
 import org.wso2.balana.utils.policy.dto.RequestElementDTO;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
+import org.wso2.carbon.identity.application.common.model.ClaimMapping;
+import org.wso2.carbon.identity.core.util.IdentityCoreConstants;
 import org.wso2.carbon.identity.entitlement.EntitlementException;
 import org.wso2.carbon.identity.entitlement.PDPConstants;
 import org.wso2.carbon.identity.entitlement.common.EntitlementPolicyConstants;
 import org.wso2.carbon.identity.entitlement.common.dto.RequestDTO;
 import org.wso2.carbon.identity.entitlement.common.dto.RowDTO;
 import org.wso2.carbon.identity.entitlement.common.util.PolicyCreatorUtil;
+import org.wso2.carbon.identity.oauth.cache.AuthorizationGrantCache;
+import org.wso2.carbon.identity.oauth.cache.AuthorizationGrantCacheEntry;
+import org.wso2.carbon.identity.oauth.cache.AuthorizationGrantCacheKey;
 import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
 import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
@@ -52,6 +58,7 @@ import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import javax.xml.stream.XMLStreamException;
 
 /**
@@ -60,7 +67,7 @@ import javax.xml.stream.XMLStreamException;
 public class XACMLScopeValidator extends OAuth2ScopeValidator {
 
     private static final String SCOPE_VALIDATOR_NAME = "XACML Scope Validator";
-    private Log log = LogFactory.getLog(XACMLScopeValidator.class);
+    private static final Log log = LogFactory.getLog(XACMLScopeValidator.class);
 
     @Override
     public boolean validateScope(AccessTokenDO accessTokenDO, String resource) throws IdentityOAuth2Exception {
@@ -70,7 +77,7 @@ public class XACMLScopeValidator extends OAuth2ScopeValidator {
         }
         String consumerKey = accessTokenDO.getConsumerKey();
         return validateScope(accessTokenDO.getScope(), accessTokenDO.getAuthzUser(), consumerKey,
-                XACMLScopeValidatorConstants.ACTION_VALIDATE, resource);
+                XACMLScopeValidatorConstants.ACTION_VALIDATE, resource, accessTokenDO.getAccessToken());
     }
 
     @Override
@@ -79,7 +86,7 @@ public class XACMLScopeValidator extends OAuth2ScopeValidator {
 
         String consumerKey = tokReqMsgCtx.getOauth2AccessTokenReqDTO().getClientId();
         return validateScope(tokReqMsgCtx.getOauth2AccessTokenReqDTO().getScope(), tokReqMsgCtx.getAuthorizedUser(),
-                consumerKey, XACMLScopeValidatorConstants.ACTION_SCOPE_VALIDATE, null);
+                consumerKey, XACMLScopeValidatorConstants.ACTION_SCOPE_VALIDATE, null, null);
 
     }
 
@@ -90,7 +97,7 @@ public class XACMLScopeValidator extends OAuth2ScopeValidator {
         String consumerKey = oauthAuthzMsgCtx.getAuthorizationReqDTO().getConsumerKey();
         return validateScope(oauthAuthzMsgCtx.getAuthorizationReqDTO().getScopes(),
                 oauthAuthzMsgCtx.getAuthorizationReqDTO().getUser(), consumerKey,
-                XACMLScopeValidatorConstants.ACTION_SCOPE_VALIDATE, null);
+                XACMLScopeValidatorConstants.ACTION_SCOPE_VALIDATE, null, null);
     }
 
     /**
@@ -104,7 +111,7 @@ public class XACMLScopeValidator extends OAuth2ScopeValidator {
      * @throws IdentityOAuth2Exception by an Underline method.
      */
     private boolean validateScope(String[] scopes, AuthenticatedUser authenticatedUser, String consumerKey,
-                                  String action, String resource) throws IdentityOAuth2Exception {
+                                  String action, String resource, String token) throws IdentityOAuth2Exception {
 
         boolean isValid = false;
         FrameworkUtils.startTenantFlow(authenticatedUser.getTenantDomain());
@@ -112,7 +119,7 @@ public class XACMLScopeValidator extends OAuth2ScopeValidator {
             try {
 
                 OAuthAppDO oAuthAppDO = getOAuthAppDO(consumerKey);
-                String request = createRequest(scopes, authenticatedUser, oAuthAppDO, action, resource);
+                String request = createRequest(scopes, authenticatedUser, oAuthAppDO, action, resource, token);
                 isValid = isRequestPermit(request, oAuthAppDO, authenticatedUser.toFullQualifiedUsername());
 
             } catch (InvalidOAuthClientException e) {
@@ -134,8 +141,8 @@ public class XACMLScopeValidator extends OAuth2ScopeValidator {
      * @param oAuthAppDO        OAuth application.
      * @return XACML Request string.
      */
-    private String createRequest(String[] scopes, AuthenticatedUser authenticatedUser,
-                                        OAuthAppDO oAuthAppDO, String action, String resource) throws IdentityOAuth2Exception {
+    private String createRequest(String[] scopes, AuthenticatedUser authenticatedUser, OAuthAppDO oAuthAppDO,
+                                 String action, String resource, String token) throws IdentityOAuth2Exception {
 
         List<RowDTO> rowDTOs = new ArrayList<>();
         RowDTO actionDTO = createRowDTO(action, XACMLScopeValidatorConstants.AUTH_ACTION_ID,
@@ -150,6 +157,10 @@ public class XACMLScopeValidator extends OAuth2ScopeValidator {
                 XACMLScopeValidatorConstants.USER_TENANT_DOMAIN_ID, XACMLScopeValidatorConstants.USER_CATEGORY);
         RowDTO resourceDTO = createRowDTO(resource, EntitlementPolicyConstants.RESOURCE_ID, PDPConstants
                 .RESOURCE_CATEGORY_URI);
+        RowDTO subjectDTO =
+                createRowDTO(authenticatedUser.toString(), PolicyConstants.SUBJECT_ID_DEFAULT,
+                        PolicyConstants.SUBJECT_CATEGORY_URI);
+        rowDTOs.add(subjectDTO);
 
         rowDTOs.add(actionDTO);
         rowDTOs.add(spNameDTO);
@@ -163,6 +174,10 @@ public class XACMLScopeValidator extends OAuth2ScopeValidator {
                     XACMLScopeValidatorConstants.SCOPE_CATEGORY);
             rowDTOs.add(scopeNameDTO);
         }
+
+        createRowDTOForUserType(authenticatedUser, rowDTOs);
+        createRowDTOsForUserAttributes(authenticatedUser, action, rowDTOs, token);
+
         RequestDTO requestDTO = new RequestDTO();
         requestDTO.setRowDTOs(rowDTOs);
 
@@ -301,5 +316,79 @@ public class XACMLScopeValidator extends OAuth2ScopeValidator {
     @Override
     public String getValidatorName() {
         return SCOPE_VALIDATOR_NAME;
+    }
+
+    private void createRowDTOForUserType(AuthenticatedUser authenticatedUser, List<RowDTO> rowDTOs) {
+
+        String userType = null;
+        if (authenticatedUser.isFederatedUser()) {
+            userType = "FEDERATED";
+        } else {
+            userType = "LOCAL";
+        }
+        RowDTO userTypeDTO = createRowDTO(userType, XACMLScopeValidatorConstants.USER_TYPE_ID,
+                XACMLScopeValidatorConstants.USER_CATEGORY);
+        rowDTOs.add(userTypeDTO);
+    }
+
+    private void createRowDTOsForUserAttributes(AuthenticatedUser authenticatedUser,
+                                                String action, List<RowDTO> rowDTOs, String token) {
+
+        // User attributes are obtained from context. During token validation flow, if the user attributes are not
+        // available, then authorization grant cache is used to get user attributes.
+        Map<ClaimMapping, String> userAttributes = authenticatedUser.getUserAttributes();
+        if (userAttributes.isEmpty()) {
+            // UserAttributes can be null during token validation phase if OAuthCache expires.
+            if (action.equals(XACMLScopeValidatorConstants.ACTION_VALIDATE)) {
+                userAttributes = getUserAttributesFromAuthorizationGrantCache(token);
+            }
+        }
+        if (userAttributes != null) {
+            for (Map.Entry<ClaimMapping, String> entry : userAttributes.entrySet()) {
+                if (entry.getKey().getRemoteClaim() != null && StringUtils.isNotEmpty(entry.getKey().getRemoteClaim().
+                        getClaimUri()) && StringUtils.isNotEmpty(entry.getValue())) {
+                    if (entry.getKey().getRemoteClaim().getClaimUri().
+                            equalsIgnoreCase(IdentityCoreConstants.MULTI_ATTRIBUTE_SEPARATOR)) {
+                        continue;
+                    }
+                    String userAttribute = entry.getValue();
+                    String[] attributeValueList = null;
+                    if (userAttribute.contains(FrameworkUtils.getMultiAttributeSeparator())) {
+                        attributeValueList = getAttributeValues(userAttribute);
+                    } else {
+                        attributeValueList = new String[]{userAttribute};
+                    }
+                    for (String attributes : attributeValueList) {
+                        String remoteClaimURI = entry.getKey().getRemoteClaim().getClaimUri();
+                        // Creating XACML requestDTOs for each userattribute with attribute ID as mapped claim URI .
+                        // If it is OIDC, claims are always in OIDC dialect, If it is OAuth, claims should be
+                        // requested from service provider and will be in sp's requested claim dialect. That's why sp
+                        // claim category is used.
+                        RowDTO userClaims =
+                                createRowDTO(attributes, remoteClaimURI,
+                                        XACMLScopeValidatorConstants.SP_CLAIM_CATEGORY);
+                        rowDTOs.add(userClaims);
+                    }
+                }
+            }
+        }
+    }
+
+    private Map<ClaimMapping, String> getUserAttributesFromAuthorizationGrantCache(String token) {
+
+        Map<ClaimMapping, String> userAttributes = null;
+        AuthorizationGrantCacheKey cacheKey = new AuthorizationGrantCacheKey(token);
+        AuthorizationGrantCacheEntry cacheEntry =
+                AuthorizationGrantCache.getInstance().getValueFromCacheByToken(cacheKey);
+        if (cacheEntry != null) {
+            userAttributes = cacheEntry.getUserAttributes();
+
+        }
+        return userAttributes;
+    }
+
+    private String[] getAttributeValues(String attributes) {
+
+        return attributes.split(FrameworkUtils.getMultiAttributeSeparator());
     }
 }

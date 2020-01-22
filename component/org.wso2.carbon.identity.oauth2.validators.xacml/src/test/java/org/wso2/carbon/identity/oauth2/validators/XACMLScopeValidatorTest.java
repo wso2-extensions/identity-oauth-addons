@@ -33,11 +33,15 @@ import org.wso2.balana.utils.policy.PolicyBuilder;
 import org.wso2.balana.utils.policy.dto.RequestElementDTO;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
+import org.wso2.carbon.identity.application.common.cache.BaseCache;
 import org.wso2.carbon.identity.common.testng.WithCarbonHome;
 import org.wso2.carbon.identity.entitlement.EntitlementException;
 import org.wso2.carbon.identity.entitlement.EntitlementService;
 import org.wso2.carbon.identity.entitlement.common.dto.RequestDTO;
 import org.wso2.carbon.identity.entitlement.common.util.PolicyCreatorUtil;
+import org.wso2.carbon.identity.oauth.cache.AuthorizationGrantCache;
+import org.wso2.carbon.identity.oauth.cache.AuthorizationGrantCacheEntry;
+import org.wso2.carbon.identity.oauth.cache.AuthorizationGrantCacheKey;
 import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.authz.OAuthAuthzReqMessageContext;
@@ -63,7 +67,8 @@ import static org.testng.Assert.assertTrue;
 /**
  * Unit tests for XACMLScopeValidator class.
  */
-@PrepareForTest({FrameworkUtils.class, PolicyCreatorUtil.class, PolicyBuilder.class, OAuth2Util.class})
+@PrepareForTest({FrameworkUtils.class, PolicyCreatorUtil.class, PolicyBuilder.class, OAuth2Util.class,
+        AuthorizationGrantCache.class})
 @PowerMockIgnore({"javax.xml.*"})
 @WithCarbonHome
 public class XACMLScopeValidatorTest extends IdentityBaseTest {
@@ -80,11 +85,14 @@ public class XACMLScopeValidatorTest extends IdentityBaseTest {
     private AccessTokenDO accessTokenDO;
     private OAuthAppDO authApp;
     private final String RESOURCE = "resource";
+    private String accessToken = "cf7da41d-6a73-3cfe-9c17-9cf1927c7f46";
     private OAuthTokenReqMessageContext tokenReqMessageContext;
     private OAuth2AccessTokenReqDTO oauth2AccessTokenReqDTO;
-    OAuthAuthzReqMessageContext oauthAuthzMsgCtx;
-    OAuth2AuthorizeReqDTO oAuth2AuthorizeReqDTO;
-    AuthenticatedUser authenticatedUser;
+    private OAuthAuthzReqMessageContext oauthAuthzMsgCtx;
+    private OAuth2AuthorizeReqDTO oAuth2AuthorizeReqDTO;
+    private AuthenticatedUser authenticatedUser;
+    private AuthorizationGrantCacheEntry authorizationGrantCacheEntry;
+    private AuthorizationGrantCacheKey cacheKey;
 
 
     @ObjectFactory
@@ -103,6 +111,7 @@ public class XACMLScopeValidatorTest extends IdentityBaseTest {
         accessTokenDO.setConsumerKey("consumer-key");
         accessTokenDO.setAuthzUser(authenticatedUser);
         accessTokenDO.setScope(scopeArray);
+        accessTokenDO.setAccessToken(accessToken);
         authApp = new OAuthAppDO();
         authApp.setApplicationName(APP_NAME);
 
@@ -118,36 +127,38 @@ public class XACMLScopeValidatorTest extends IdentityBaseTest {
         oAuth2AuthorizeReqDTO.setScopes(scopeArray);
         oauthAuthzMsgCtx = new OAuthAuthzReqMessageContext(oAuth2AuthorizeReqDTO);
 
+        cacheKey = new AuthorizationGrantCacheKey(accessToken);
     }
 
     @DataProvider(name = "createRequestObj")
     public Object[][] createRequestObj() {
 
         return new Object[][]{
-                // Create XACML request string for token validation phase
+                // Create XACML request string for token validation phase.
                 {accessTokenDO.getScope(), XACMLScopeValidatorConstants.ACTION_VALIDATE
-                        , RESOURCE},
+                        , RESOURCE, accessTokenDO.getAccessToken()},
 
-                // Create XACML request string for token issuing phase
+                // Create XACML request string for token issuing phase.
                 {tokenReqMessageContext.getOauth2AccessTokenReqDTO().getScope(),
-                        XACMLScopeValidatorConstants.ACTION_SCOPE_VALIDATE, null},
+                        XACMLScopeValidatorConstants.ACTION_SCOPE_VALIDATE, null, null},
 
-                // Create XACML request string for code issuing phase
+                // Create XACML request string for code issuing phase.
                 {oauthAuthzMsgCtx.getAuthorizationReqDTO().getScopes(),
-                        XACMLScopeValidatorConstants.ACTION_SCOPE_VALIDATE, null},
+                        XACMLScopeValidatorConstants.ACTION_SCOPE_VALIDATE, null, null},
         };
     }
 
     @Test(dataProvider = "createRequestObj")
-    public void testCreateRequestObj(String[] scopes, String action, String resource) throws Exception {
+    public void testCreateRequestObj(String[] scopes, String action, String resource, String token) throws Exception {
 
         mockStatic(PolicyBuilder.class);
         PolicyBuilder policyBuilder = mock(PolicyBuilder.class);
         mockStatic(PolicyBuilder.class);
         when(PolicyBuilder.getInstance()).thenReturn(policyBuilder);
         when(policyBuilder.buildRequest(any(RequestElementDTO.class))).thenReturn(POLICY);
+        mockAuthorizationGrantCache();
         String request = WhiteboxImpl.invokeMethod(xacmlScopeValidator,
-                "createRequest", scopes, authenticatedUser, authApp, action, resource);
+                "createRequest", scopes, authenticatedUser, authApp, action, resource, token);
         assertTrue(!request.isEmpty());
     }
 
@@ -198,6 +209,8 @@ public class XACMLScopeValidatorTest extends IdentityBaseTest {
         when(policyBuilder.buildRequest(any(RequestElementDTO.class))).thenReturn(POLICY);
         EntitlementService entitlementService = mock(EntitlementService.class);
         OAuthScopeValidatorDataHolder.getInstance().setEntitlementService(entitlementService);
+
+        mockAuthorizationGrantCache();
 
         when(entitlementService.getDecision(anyString())).thenReturn(xacmlResponse);
         assertFalse(xacmlScopeValidator.validateScope(accessTokenDO, RESOURCE));
@@ -315,5 +328,14 @@ public class XACMLScopeValidatorTest extends IdentityBaseTest {
 
         when(policyBuilder.buildRequest(any(RequestElementDTO.class))).thenThrow(new PolicyBuilderException(ERROR));
         xacmlScopeValidator.validateScope(oauthAuthzMsgCtx);
+    }
+
+    private void mockAuthorizationGrantCache() {
+
+        AuthorizationGrantCache authorizationGrantCache = mock(AuthorizationGrantCache.class);
+        mockStatic(AuthorizationGrantCache.class);
+        when(AuthorizationGrantCache.getInstance()).thenReturn(authorizationGrantCache);
+        when(authorizationGrantCache.getValueFromCacheByToken(any(AuthorizationGrantCacheKey.class))).thenReturn
+                (authorizationGrantCacheEntry);
     }
 }
