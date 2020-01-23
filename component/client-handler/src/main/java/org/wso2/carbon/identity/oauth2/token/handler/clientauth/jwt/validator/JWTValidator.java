@@ -388,9 +388,9 @@ public class JWTValidator {
                     }
                 }
                 // Validate the signature of the assertion using the jwks end point.
-                if(!StringUtils.isBlank(jwksUri)) {
+                if (StringUtils.isNotBlank(jwksUri)) {
                     if (log.isDebugEnabled()) {
-                        String message = "Found jwks end point for service provider "+jwksUri;
+                        String message = "Found jwks end point for service provider " + jwksUri;
                         log.debug(message);
                     }
                     String jwtString = signedJWT.getParsedString();
