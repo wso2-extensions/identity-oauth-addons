@@ -159,10 +159,8 @@ public class MutualTLSUtil {
             return null;
         }
         for (ServiceProviderProperty property : properties) {
-            if (propertyName.equals(property.getName())) {
-                if (StringUtils.isNotBlank(property.getValue())) {
-                    return property.getValue();
-                }
+            if (propertyName.equals(property.getName()) && StringUtils.isNotBlank(property.getValue())) {
+                return property.getValue();
             }
         }
         return null;

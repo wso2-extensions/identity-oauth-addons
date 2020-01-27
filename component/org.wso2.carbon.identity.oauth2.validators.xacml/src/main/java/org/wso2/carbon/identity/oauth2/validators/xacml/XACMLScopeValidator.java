@@ -117,7 +117,6 @@ public class XACMLScopeValidator extends OAuth2ScopeValidator {
         FrameworkUtils.startTenantFlow(authenticatedUser.getTenantDomain());
         if (StringUtils.isNotEmpty(consumerKey)) {
             try {
-
                 OAuthAppDO oAuthAppDO = getOAuthAppDO(consumerKey);
                 String request = createRequest(scopes, authenticatedUser, oAuthAppDO, action, resource, token);
                 isValid = isRequestPermit(request, oAuthAppDO, authenticatedUser.toFullQualifiedUsername());

@@ -80,6 +80,7 @@ public class XACMLScopeValidatorTest extends IdentityBaseTest {
     private static final String RULE_EFFECT_NOT_APPLICABLE = "NotApplicable";
     private static final String POLICY = "policy";
     private static final String ERROR = "error";
+    private static final String CONSUMER_KEY = "consumer-key";
 
     private org.wso2.carbon.identity.oauth2.validators.xacml.XACMLScopeValidator xacmlScopeValidator = new XACMLScopeValidator();
     private AccessTokenDO accessTokenDO;
@@ -108,7 +109,7 @@ public class XACMLScopeValidatorTest extends IdentityBaseTest {
         authenticatedUser = new AuthenticatedUser();
         authenticatedUser.setUserName(ADMIN_USER);
         accessTokenDO = new AccessTokenDO();
-        accessTokenDO.setConsumerKey("consumer-key");
+        accessTokenDO.setConsumerKey(CONSUMER_KEY);
         accessTokenDO.setAuthzUser(authenticatedUser);
         accessTokenDO.setScope(scopeArray);
         accessTokenDO.setAccessToken(accessToken);
@@ -116,13 +117,13 @@ public class XACMLScopeValidatorTest extends IdentityBaseTest {
         authApp.setApplicationName(APP_NAME);
 
         oauth2AccessTokenReqDTO = new OAuth2AccessTokenReqDTO();
-        oauth2AccessTokenReqDTO.setClientId("consumer-key");
+        oauth2AccessTokenReqDTO.setClientId(CONSUMER_KEY);
         oauth2AccessTokenReqDTO.setScope(scopeArray);
         tokenReqMessageContext = new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTO);
         tokenReqMessageContext.setAuthorizedUser(authenticatedUser);
 
         oAuth2AuthorizeReqDTO = new OAuth2AuthorizeReqDTO();
-        oAuth2AuthorizeReqDTO.setConsumerKey("consumer-key");
+        oAuth2AuthorizeReqDTO.setConsumerKey(CONSUMER_KEY);
         oAuth2AuthorizeReqDTO.setUser(authenticatedUser);
         oAuth2AuthorizeReqDTO.setScopes(scopeArray);
         oauthAuthzMsgCtx = new OAuthAuthzReqMessageContext(oAuth2AuthorizeReqDTO);
