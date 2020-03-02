@@ -25,7 +25,7 @@
     </parent>
     <groupId>org.wso2.carbon.extension.identity.oauth.addons</groupId>
     <artifactId>identity-oauth2-extenstions</artifactId>
-    <version>2.2.8-SNAPSHOT</version>
+    <version>2.3.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>WSO2 Carbon Extension - Identity OAuth Extensions Pom</name>
     <url>http://wso2.org</url>
@@ -422,8 +422,8 @@
         <carbon.identity.version>5.14.67</carbon.identity.version>
         <identity.inbound.auth.oauth.version>6.2.18</identity.inbound.auth.oauth.version>
         <identity.inbound.auth.oauth.imp.pkg.version>[6.2.18,7.0.0)</identity.inbound.auth.oauth.imp.pkg.version>
-        <carbon.kernel.version>4.5.0</carbon.kernel.version>
-        <carbon.kernel.feature.version>4.5.0</carbon.kernel.feature.version>
+        <carbon.kernel.version>4.6.0</carbon.kernel.version>
+        <carbon.kernel.feature.version>4.6.0</carbon.kernel.feature.version>
 
         <org.apache.oltu.oauth2.client.version>1.0.0</org.apache.oltu.oauth2.client.version>
         <org.apache.oltu.oauth2.common.version>1.0.1</org.apache.oltu.oauth2.common.version>
