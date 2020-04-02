@@ -55,6 +55,8 @@ import java.util.Map;
 
 import static org.junit.Assert.assertFalse;
 import static org.mockito.Matchers.any;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
@@ -62,7 +64,7 @@ import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls
 import static org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
 
 @WithCarbonHome
-@PrepareForTest({OAuth2Util.class, HttpServletRequest.class, MutualTLSUtil.class})
+@PrepareForTest({OAuth2Util.class, HttpServletRequest.class, MutualTLSUtil.class, IdentityUtil.class})
 public class MutualTLSClientAuthenticatorTest extends PowerMockTestCase {
 
     private MutualTLSClientAuthenticator mutualTLSClientAuthenticator = new MutualTLSClientAuthenticator();
@@ -109,6 +111,29 @@ public class MutualTLSClientAuthenticatorTest extends PowerMockTestCase {
             + "vmO/dYUXGrprjfL7BaCq1eLw9Mx68anuhFYRspmdxoRGidJ6sm/I1ZD5oQEKa1tS\n"
             + "O6eaZWIa6CJF2/e4TMtEPeVEgWqtpLxYzhX2kEgzEXapxMkPwXPfym4I0b2Y0Ag/\n"
             + "7Kun3EsBCgp4r4S9zWAyLA1aJIo63OPDb9Q=";
+
+    private static String CERTIFICATE_CONTENT3 = "-----BEGIN CERTIFICATE-----MIID3" +
+            "TCCAsWgAwIBAgIUJQW8iwYsAbyjc/oHti8DPLJH5ZcwDQYJKoZIhvcNAQELBQAwfjELMA" +
+            "kGA1UEBhMCU0wxEDAOBgNVBAgMB1dlc3Rlcm4xEDAOBgNVBAcMB0NvbG9tYm8xDTALBgN" +
+            "VBAoMBFdTTzIxDDAKBgNVBAsMA0lBTTENMAsGA1UEAwwER2FnYTEfMB0GCSqGSIb3DQEJ" +
+            "ARYQZ2FuZ2FuaUB3c28yLmNvbTAeFw0yMDAzMjQxMjQyMDFaFw0zMDAzMjIxMjQyMDFaM" +
+            "H4xCzAJBgNVBAYTAlNMMRAwDgYDVQQIDAdXZXN0ZXJuMRAwDgYDVQQHDAdDb2xvbWJvMQ" +
+            "0wCwYDVQQKDARXU08yMQwwCgYDVQQLDANJQU0xDTALBgNVBAMMBEdhZ2ExHzAdBgkqhki" +
+            "G9w0BCQEWEGdhbmdhbmlAd3NvMi5jb20wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK" +
+            "AoIBAQC+reCEYOn2lnWgFsp0TF0R1wQiD9C/N+dnv4xCa0rFiu4njDzWR/8tYFl0koaxX" +
+            "oP0+oGnT07KlkA66q0ztwikLZXphLdCBbJ1hSmNvor48FuSb6DgqWixrUa2LHlpaaV7Rv" +
+            "lmG+IhZEgKDXdS+/tK0hlcgRzENyOEdETDO5fFlKGGuwaGv6/w69h2LTKGu5nyDLF51rj" +
+            "Q18xp026btHC7se/XSlcp3X63xeOIcFv6m84AN2lnV+g8MOfu2wgWtsKaxn4BL64E7nHZ" +
+            "NNLxMRf7GtUm2bl9ydFX4aD1r1Oj4iqFWMNcfQ676Qshk8s7ui3LKWFXwNN/SRD0c/ORt" +
+            "v23AgMBAAGjUzBRMB0GA1UdDgQWBBRDu/vqRafReh4fFHS3Nz4T6u9mUDAfBgNVHSMEGD" +
+            "AWgBRDu/vqRafReh4fFHS3Nz4T6u9mUDAPBgNVHRMBAf8EBTADAQH/MA0GCSqGSIb3DQE" +
+            "BCwUAA4IBAQB7NH51Yj4moEhMonnLUh3eTtf6DUnrpscx6td28rryoDZPfCkJs4VHU9F5" +
+            "0etw54FoHqoIaHp5UIB6l1OsVXytUmwrdxbqW7nfOItYwN1yV093aI2aOeMQYmS+vrPkS" +
+            "kxySP6+wGCWe4gfMgpr6iu9xiWLpnILw5q71gmXWtS900S5aLbllGYe74jkyldLIdhS4T" +
+            "yEBIDgcpZrD8x/Z42al6T/6EANMpvu4Jopisg+uwwkEGSM1I/kjiW+YkWC4oTZ1jMZUWC" +
+            "11WbcouLwjfaf6gt4zWitYCP0r0fLGk4bSJfUFsnJNu6vDhx60TbRhIh9P2jxkmgNYPuA" +
+            "xFtF8v+h-----END CERTIFICATE-----";
+
     private static String TEST_JSON_WITH_X5T ="{\n" +
             "  \"keys\" : [ {\n" +
             "    \"e\" : \"AQAB\",\n" +
@@ -249,6 +274,7 @@ public class MutualTLSClientAuthenticatorTest extends PowerMockTestCase {
         List<String> clientIdList = new ArrayList<>();
         clientIdList.add(CLIENT_ID);
         bodyParamsWithClientId.put(OAuth.OAUTH_CLIENT_ID, clientIdList);
+        OAuthClientAuthnContext oAuthClientAuthnContext = new OAuthClientAuthnContext();
 
         return new Object[][]{
 
@@ -257,6 +283,9 @@ public class MutualTLSClientAuthenticatorTest extends PowerMockTestCase {
 
                 // Correct  client certificate present with client Id in request body.
                 {getCertificate(CERTIFICATE_CONTENT), bodyParamsWithClientId, buildOAuthClientAuthnContext(CLIENT_ID), true},
+
+                // Incorrect  client certificate present without client Id in request body.
+                {getCertificate("CERTIFICATE_CONTENT"), bodyParamsWithClientId, oAuthClientAuthnContext, false},
 
                 // Correct client certificate not provided.
                 {null, new HashMap<String, List>(), buildOAuthClientAuthnContext(null), false},
@@ -289,7 +318,6 @@ public class MutualTLSClientAuthenticatorTest extends PowerMockTestCase {
         return new Object[][]{
 
                 {getCertificate(CERTIFICATE_CONTENT), new HashMap<String, List>(), false},
-                {null, getBodyContentWithClientId(CLIENT_ID), false},
                 {getCertificate(CERTIFICATE_CONTENT), getBodyContentWithClientId(CLIENT_ID), true},
         };
     }
@@ -301,6 +329,18 @@ public class MutualTLSClientAuthenticatorTest extends PowerMockTestCase {
 
         HttpServletRequest httpServletRequest = PowerMockito.mock(HttpServletRequest.class);
         PowerMockito.when(httpServletRequest.getAttribute(JAVAX_SERVLET_REQUEST_CERTIFICATE)).thenReturn(certificate);
+        assertEquals(mutualTLSClientAuthenticator.canAuthenticate(httpServletRequest, bodyContent, new
+                OAuthClientAuthnContext()), canHandle, "Expected can authenticate evaluation not received");
+    }
+
+    @Test(dataProvider = "testCanAuthenticateData")
+    public void testCanAuthenticateWithHeader (X509Certificate certificate,
+                                               HashMap<String, List> bodyContent, boolean canHandle) {
+
+        mockStatic(IdentityUtil.class);
+        HttpServletRequest httpServletRequest = PowerMockito.mock(HttpServletRequest.class);
+        when(IdentityUtil.getProperty(MutualTLSUtil.MTLS_AUTH_HEADER)).thenReturn("x-wso2-mtls-cert");
+        PowerMockito.when(httpServletRequest.getHeader("x-wso2-mtls-cert")).thenReturn(CERTIFICATE_CONTENT3);
         assertEquals(mutualTLSClientAuthenticator.canAuthenticate(httpServletRequest, bodyContent, new
                 OAuthClientAuthnContext()), canHandle, "Expected can authenticate evaluation not received");
     }

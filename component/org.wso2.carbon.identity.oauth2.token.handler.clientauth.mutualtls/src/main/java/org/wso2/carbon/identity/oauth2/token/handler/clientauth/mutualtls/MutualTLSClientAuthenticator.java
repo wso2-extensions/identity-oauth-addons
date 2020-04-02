@@ -29,6 +29,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.oltu.oauth2.common.OAuth;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth.common.OAuth2ErrorCodes;
 import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
@@ -50,13 +51,14 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils.MutualTLSUtil.JAVAX_SERVLET_REQUEST_CERTIFICATE;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils.MutualTLSUtil.isJwksUriConfigured;
@@ -72,15 +74,6 @@ import static org.wso2.carbon.identity.oauth2.util.OAuth2Util.getServiceProvider
 public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticator {
 
     private static final Log log = LogFactory.getLog(MutualTLSClientAuthenticator.class);
-    private static final String X5T = "x5t";
-    private static final String X5C = "x5c";
-    private static final String X509 = "X.509";
-    private static final String HTTP_CONNECTION_TIMEOUT_XPATH = "JWTValidatorConfigs.JWKSEndpoint" +
-            ".HTTPConnectionTimeout";
-    private static final String HTTP_READ_TIMEOUT_XPATH = "JWTValidatorConfigs.JWKSEndpoint" +
-            ".HTTPReadTimeout";
-    private static final String KEYS = "keys";
-    private static final String JWKS_URI = "jwksURI";
 
     /**
      * @param request                 HttpServletRequest which is the incoming request.
@@ -96,6 +89,10 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
 
         X509Certificate registeredCert;
         URL jwksUri;
+
+        // This value is consumed by MTLS token binding to validate whether the client was authenticated using MTLS.
+        oAuthClientAuthnContext.addParameter(MutualTLSUtil.AUTHENTICATOR_TYPE_PARAM,
+                MutualTLSUtil.AUTHENTICATOR_TYPE_MTLS);
 
         // In case if the client ID is not set from canAuthenticate method.
         if (StringUtils.isEmpty(oAuthClientAuthnContext.getClientId())) {
@@ -119,17 +116,32 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
             }
             X509Certificate requestCert;
             Object certObject = request.getAttribute(JAVAX_SERVLET_REQUEST_CERTIFICATE);
-            if (certObject instanceof X509Certificate[]) {
-                X509Certificate[] cert = (X509Certificate[]) certObject;
-                requestCert = cert[0];
-            } else if (certObject instanceof X509Certificate){
-                requestCert = (X509Certificate) certObject;
-            } else {
-                if (log.isDebugEnabled()) {
-                    log.debug("Could not find client certificate in required format for client: " +
-                            oAuthClientAuthnContext.getClientId());
+            if (certObject != null) {
+                if (certObject instanceof X509Certificate[]) {
+                    X509Certificate[] cert = (X509Certificate[]) certObject;
+                    requestCert = cert[0];
+                } else if (certObject instanceof X509Certificate) {
+                    requestCert = (X509Certificate) certObject;
+                } else {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Could not find client certificate in required format for client: " +
+                                oAuthClientAuthnContext.getClientId());
+                    }
+                    return false;
                 }
-                return false;
+            } else {
+                // Get Mutual TLS Certificate
+                Optional<X509Certificate> x509certObject = getCertificateFromHeader(request);
+
+                if (!x509certObject.isPresent()) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Could not find client certificate in required format for client: " +
+                                oAuthClientAuthnContext.getClientId());
+                    }
+                    return false;
+                } else {
+                    requestCert = x509certObject.get();
+                }
             }
 
             String tenantDomain = OAuth2Util.getTenantDomainOfOauthApp(oAuthClientAuthnContext.getClientId());
@@ -174,16 +186,18 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
     public boolean canAuthenticate(HttpServletRequest request, Map<String, List> bodyParams,
                                    OAuthClientAuthnContext context) {
 
-        if (clientIdExistsAsParam(bodyParams) && validCertExistsAsAttribute(request)) {
+        String headerName = IdentityUtil.getProperty(MutualTLSUtil.MTLS_AUTH_HEADER);
+        if (clientIdExistsAsParam(bodyParams) && (validCertExistsAsAttribute(request) || (headerName != null &&
+                getCertificateFromHeader(request).isPresent()))) {
             if (log.isDebugEnabled()) {
-                log.debug("Client ID exists in request body parameters and a valid certificate found in request " +
-                        "attributes. Hence returning true.");
+                log.debug("Client ID exists in request body parameters and a valid certificate found in " +
+                        "the request. Hence returning true.");
             }
             return true;
         } else {
             if (log.isDebugEnabled()) {
-                log.debug("Mutual TLS authenticator cannot handle this request. Client id is not available in body " +
-                        "params or valid certificate not found in request attributes.");
+                log.debug("Mutual TLS authenticator cannot handle this request. " +
+                        "Client id is not available in body params or valid certificate is not found in the request.");
             }
             return false;
         }
@@ -205,6 +219,49 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
         Map<String, String> stringContent = getBodyParameters(bodyParams);
         oAuthClientAuthnContext.setClientId(stringContent.get(OAuth.OAUTH_CLIENT_ID));
         return oAuthClientAuthnContext.getClientId();
+    }
+
+    private Optional<X509Certificate> getCertificateFromHeader(HttpServletRequest request) {
+
+        String headerName = IdentityUtil.getProperty(MutualTLSUtil.MTLS_AUTH_HEADER);
+        String headerString = request.getHeader(headerName);
+
+        if (StringUtils.isNotEmpty(headerString)) {
+
+            if (log.isDebugEnabled()) {
+                log.debug(String.format("%s header available in request", headerName));
+            }
+
+            try {
+                return Optional.of(parseCertificate(headerString));
+            } catch (CertificateException e) {
+                log.error("Unable to parse certificate sent in header");
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    /**
+     * Return Certificate for give Certificate Content.
+     *
+     * @param content   Certificate Content
+     * @return X509Certificate
+     * @throws CertificateException Certificate Exception.
+     */
+    private X509Certificate parseCertificate(String content) throws CertificateException {
+
+        // Trim extra spaces.
+        String decodedContent = content.trim();
+
+        // Remove Certificate Headers.
+        byte[] decoded = Base64.getDecoder().decode(decodedContent
+                .replaceAll(MutualTLSUtil.BEGIN_CERT, StringUtils.EMPTY)
+                .replaceAll(MutualTLSUtil.END_CERT, StringUtils.EMPTY).trim()
+        );
+
+        return (java.security.cert.X509Certificate) CertificateFactory.getInstance("X.509")
+                .generateCertificate(new ByteArrayInputStream(decoded));
     }
 
     private boolean clientIdExistsAsParam(Map<String, List> contentParam) {
@@ -290,22 +347,22 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
             throws CertificateException, OAuthClientAuthnException {
 
         for (JsonElement jsonElement : resourceArray) {
-            JsonElement attributeValue = jsonElement.getAsJsonObject().get(X5T);
+            JsonElement attributeValue = jsonElement.getAsJsonObject().get(MutualTLSUtil.X5T);
             if (attributeValue != null && attributeValue.getAsString().equals(MutualTLSUtil.getThumbPrint(requestCert,
                     null))) {
                 if (log.isDebugEnabled()) {
-                    log.debug("Client authentication successful using the attribute: " + X5T);
+                    log.debug("Client authentication successful using the attribute: " + MutualTLSUtil.X5T);
                 }
                 return true;
             }
-            attributeValue = jsonElement.getAsJsonObject().get(X5C);
+            attributeValue = jsonElement.getAsJsonObject().get(MutualTLSUtil.X5C);
             if (attributeValue != null) {
-                CertificateFactory factory = CertificateFactory.getInstance(X509);
+                CertificateFactory factory = CertificateFactory.getInstance(MutualTLSUtil.X509);
                 X509Certificate cert = (X509Certificate) factory.generateCertificate(
                         new ByteArrayInputStream(DatatypeConverter.parseBase64Binary(attributeValue.getAsString())));
                 if (authenticate(cert, requestCert)) {
                     if (log.isDebugEnabled()) {
-                        log.debug("Client authentication successful using the attribute: " + X5C);
+                        log.debug("Client authentication successful using the attribute: " + MutualTLSUtil.X5C);
                     }
                     return true;
                 }
@@ -340,8 +397,8 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
 
                 DefaultResourceRetriever defaultResourceRetriever;
                 defaultResourceRetriever = new DefaultResourceRetriever(
-                        MutualTLSUtil.readHTTPConnectionConfigValue(HTTP_CONNECTION_TIMEOUT_XPATH),
-                        MutualTLSUtil.readHTTPConnectionConfigValue(HTTP_READ_TIMEOUT_XPATH));
+                        MutualTLSUtil.readHTTPConnectionConfigValue(MutualTLSUtil.HTTP_CONNECTION_TIMEOUT_XPATH),
+                        MutualTLSUtil.readHTTPConnectionConfigValue(MutualTLSUtil.HTTP_READ_TIMEOUT_XPATH));
                 if (log.isDebugEnabled()) {
                     log.debug("Fetching JWKS from remote endpoint. JWKS URI: " + jwksUri);
                 }
@@ -356,7 +413,7 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
                         InputStreamReader inputStreamReader = new InputStreamReader(inputStream)) {
                     JsonElement root = jp.parse(inputStreamReader);
                     JsonObject rootObj = root.getAsJsonObject();
-                    JsonElement keys = rootObj.get(KEYS);
+                    JsonElement keys = rootObj.get(MutualTLSUtil.KEYS);
                     if (keys != null) {
                         return keys.getAsJsonArray();
                     } else {
@@ -365,7 +422,6 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
                 }
             }
         }
-
         return null;
     }
 
@@ -377,7 +433,7 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
     public URL getJWKSEndpointOfSP(ServiceProvider serviceProvider, String clientID) throws OAuthClientAuthnException {
 
         String jwksUri;
-        jwksUri = MutualTLSUtil.getPropertyValue(serviceProvider, JWKS_URI);
+        jwksUri = MutualTLSUtil.getPropertyValue(serviceProvider, MutualTLSUtil.JWKS_URI);
         if (StringUtils.isEmpty(jwksUri)) {
             throw new OAuthClientAuthnException(
                     "jwks endpoint not configured for the service provider for client ID: " + clientID,
@@ -401,4 +457,3 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
         return this.getClass().getSimpleName();
     }
 }
-
