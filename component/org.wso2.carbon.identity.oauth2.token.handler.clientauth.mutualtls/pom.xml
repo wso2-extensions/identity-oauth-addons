@@ -206,13 +206,19 @@
                             org.apache.commons.lang;version="${apache.commons.lang.package.import.version.range}",
                             org.apache.commons.logging;version="${apache.commons.logging.package.import.version.range}",
                             org.apache.oltu.oauth2.common;version="${apache.oltu.oauth2.common.package.import.version.range}",
+                            org.json;version="${wso2.json}",
                             org.osgi.framework;version="${osgi.framework.package.import.version.range}",
                             org.osgi.service.component;version="${osgi.service.component.package.import.version.range}",
                             org.wso2.carbon.identity.oauth.common;version="${identity.inbound.auth.oauth.imp.pkg.version}",
                             org.wso2.carbon.identity.oauth.common.exception;version="${identity.inbound.auth.oauth.imp.pkg.version}",
+                            org.wso2.carbon.identity.oauth.event;version="${identity.inbound.auth.oauth.imp.pkg.version}",
                             org.wso2.carbon.identity.oauth2;version="${identity.inbound.auth.oauth.imp.pkg.version}",
                             org.wso2.carbon.identity.oauth2.bean;version="${identity.inbound.auth.oauth.imp.pkg.version}",
                             org.wso2.carbon.identity.oauth2.client.authentication;version="${identity.inbound.auth.oauth.imp.pkg.version}",
+                            org.wso2.carbon.identity.oauth2.dto;version="${identity.inbound.auth.oauth.imp.pkg.version}",
+                            org.wso2.carbon.identity.oauth2.model;version="${identity.inbound.auth.oauth.imp.pkg.version}",
+                            org.wso2.carbon.identity.oauth2.token;version="${identity.inbound.auth.oauth.imp.pkg.version}",
+                            org.wso2.carbon.identity.oauth2.token.handlers.grant;version="${identity.inbound.auth.oauth.imp.pkg.version}",
                             org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls,
                             org.wso2.carbon.identity.oauth2.util;version="${identity.inbound.auth.oauth.imp.pkg.version}",
                             org.wso2.carbon.identity.application.common.model;version="${carbon.identity.package.import.version.range}",
@@ -223,10 +229,14 @@
                             org.apache.commons.codec.binary;
                             version="${org.apache.commons.codec.package.import.version.range}",
                             org.apache.commons.io; version="${org.apache.commons.io.package.import.version.range}",
+                            org.wso2.carbon.identity.core.handler;
+                            version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.core.util; version="${carbon.identity.package.import.version.range}"
                         </Import-Package>
                         <Export-Package>
                             !org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.internal,
+                            org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.handlers.*,
+                            org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.introspection.*,
                             org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils.*,
                             org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.*,
                         </Export-Package>

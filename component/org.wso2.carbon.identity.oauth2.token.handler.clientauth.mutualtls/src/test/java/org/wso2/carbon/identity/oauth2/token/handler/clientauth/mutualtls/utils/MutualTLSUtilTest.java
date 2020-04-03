@@ -25,6 +25,7 @@ import org.testng.annotations.Test;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.common.testng.WithCarbonHome;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 
 import java.io.ByteArrayInputStream;
@@ -32,7 +33,6 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import javax.xml.bind.DatatypeConverter;
 
-import static org.mockito.Matchers.any;
 import static org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
 
 import static org.testng.Assert.*;
@@ -41,7 +41,7 @@ import static org.testng.Assert.*;
  * Test class for MutualTLSUtil class.
  */
 @WithCarbonHome
-@PrepareForTest(OAuth2Util.class)
+@PrepareForTest({OAuth2Util.class, IdentityUtil.class})
 public class MutualTLSUtilTest extends PowerMockTestCase {
 
     @Test
@@ -103,5 +103,15 @@ public class MutualTLSUtilTest extends PowerMockTestCase {
         PowerMockito.when(OAuth2Util.getServiceProvider(clientID, SUPER_TENANT_DOMAIN_NAME))
                 .thenReturn(serviceProvider);
         assertTrue(MutualTLSUtil.isJwksUriConfigured(serviceProvider));
+    }
+
+    @Test
+    public void testReadHTTPConnectionConfigValue() {
+
+        PowerMockito.mockStatic(IdentityUtil.class);
+        PowerMockito.when(IdentityUtil.getProperty("path")).thenReturn("xPath");
+        assertEquals(MutualTLSUtil.readHTTPConnectionConfigValue("path"), 0);
+        PowerMockito.when(IdentityUtil.getProperty("path")).thenReturn("123");
+        assertEquals(MutualTLSUtil.readHTTPConnectionConfigValue("path"), 123);
     }
 }

@@ -42,8 +42,6 @@ import java.security.cert.X509Certificate;
 public class MutualTLSUtil {
 
     private static final Log log = LogFactory.getLog(MutualTLSUtil.class);
-    private static final String JWKS_URI = "jwksURI";
-    private static final String KEYS = "keys";
 
     /**
      * Attribute name for reading client certificate in the request.
@@ -130,7 +128,6 @@ public class MutualTLSUtil {
 
     /**
      * Checking Whether JWKS URI configured in the UI or not.
-     *
      * @param serviceProvider service provider.
      * @return true if jwks uri configured.
      */
@@ -138,7 +135,7 @@ public class MutualTLSUtil {
 
         ServiceProviderProperty[] serviceProviderProperties = serviceProvider.getSpProperties();
         for (ServiceProviderProperty sp : serviceProviderProperties) {
-            if (sp.getName().equals(JWKS_URI) && StringUtils.isNotBlank(sp.getValue())) {
+            if (sp.getName().equals(CommonConstants.JWKS_URI) && StringUtils.isNotBlank(sp.getValue())) {
                 return true;
             }
         }

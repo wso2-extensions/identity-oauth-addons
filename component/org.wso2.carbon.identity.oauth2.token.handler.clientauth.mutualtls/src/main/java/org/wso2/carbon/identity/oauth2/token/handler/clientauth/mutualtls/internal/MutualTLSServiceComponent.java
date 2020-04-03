@@ -24,8 +24,12 @@ import org.osgi.framework.BundleContext;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.wso2.carbon.identity.oauth.event.OAuthEventInterceptor;
+import org.wso2.carbon.identity.oauth2.IntrospectionDataProvider;
 import org.wso2.carbon.identity.oauth2.client.authentication.OAuthClientAuthenticator;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.MutualTLSClientAuthenticator;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.introspection.ISIntrospectionDataProvider;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.introspection.IntrospectionResponseInterceptor;
 
 /**
  * TLS Mutual Auth osgi Component.
@@ -37,23 +41,27 @@ import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.Mutual
 public class MutualTLSServiceComponent {
 
     private static final Log log = LogFactory.getLog(MutualTLSServiceComponent.class);
-    private BundleContext bundleContext;
 
     @Activate
     protected void activate(ComponentContext context) {
 
         try {
-            // Registering MutualTLSClientAuthenticator as an OSGIService.
-            bundleContext = context.getBundleContext();
+            BundleContext bundleContext = context.getBundleContext();
             MutualTLSClientAuthenticator mutualTLSClientAuthenticator = new MutualTLSClientAuthenticator();
+            IntrospectionResponseInterceptor introspectionResponseInterceptor = new IntrospectionResponseInterceptor();
+            ISIntrospectionDataProvider isIntrospectionDataProvider = new ISIntrospectionDataProvider();
             bundleContext.registerService(OAuthClientAuthenticator.class.getName(), mutualTLSClientAuthenticator,
+                    null);
+            bundleContext.registerService(OAuthEventInterceptor.class.getName(), introspectionResponseInterceptor,
+                    null);
+            bundleContext.registerService(IntrospectionDataProvider.class.getName(), isIntrospectionDataProvider,
                     null);
             if (log.isDebugEnabled()) {
                 log.debug("Mutual TLS bundle is activated");
             }
 
         } catch (Throwable e) {
-            log.error("Error occurred while registering MutualTLSClientAuthenticator.", e);
+            log.error("Error occurred while registering MTLS component.", e);
         }
     }
 }
