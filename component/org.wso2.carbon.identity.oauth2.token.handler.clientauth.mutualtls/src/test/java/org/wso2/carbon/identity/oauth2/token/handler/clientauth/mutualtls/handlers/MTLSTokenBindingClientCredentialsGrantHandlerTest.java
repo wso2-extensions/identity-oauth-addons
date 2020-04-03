@@ -35,7 +35,7 @@ import org.wso2.carbon.identity.oauth2.bean.OAuthClientAuthnContext;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2AccessTokenReqDTO;
 import org.wso2.carbon.identity.oauth2.model.HttpRequestHeader;
 import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
-import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils.MutualTLSUtil;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils.CommonConstants;
 import org.wso2.carbon.identity.oauth2.util.Oauth2ScopeUtils;
 import org.wso2.carbon.utils.CarbonUtils;
 
@@ -74,8 +74,8 @@ public class MTLSTokenBindingClientCredentialsGrantHandlerTest extends PowerMock
                 (new String[]{"content-type","x-wso2-mutual-auth-cert", "user-agent"},
                         new String[]{"application/x-www-form-urlencoded", CERTIFICATE_CONTENT, "PostmanRuntime/7.24.0"}));
         OAuthClientAuthnContext oAuthClientAuthnContext = new OAuthClientAuthnContext();
-        oAuthClientAuthnContext.addParameter(MutualTLSUtil.AUTHENTICATOR_TYPE_PARAM,
-                MutualTLSUtil.AUTHENTICATOR_TYPE_MTLS);
+        oAuthClientAuthnContext.addParameter(CommonConstants.AUTHENTICATOR_TYPE_PARAM,
+                CommonConstants.AUTHENTICATOR_TYPE_MTLS);
         oauth2AccessTokenReqDTO.setoAuthClientAuthnContext(oAuthClientAuthnContext);
         oauth2AccessTokenReqDTO.setGrantType("Bearer");
         return oauth2AccessTokenReqDTO;
@@ -97,7 +97,7 @@ public class MTLSTokenBindingClientCredentialsGrantHandlerTest extends PowerMock
         mockStatic(CarbonUtils.class);
         PowerMockito.when(CarbonUtils.getCarbonConfigDirPath()).thenReturn("repository/conf");
         mockStatic(IdentityUtil.class);
-        PowerMockito.when(IdentityUtil.getProperty((MutualTLSUtil.MTLS_AUTH_HEADER))).
+        PowerMockito.when(IdentityUtil.getProperty((CommonConstants.MTLS_AUTH_HEADER))).
                 thenReturn("x-wso2-mutual-auth-cert");
         PowerMockito.when(IdentityUtil.getIdentityConfigDirPath()).thenReturn(System.
                 getProperty("user.dir") + "/src/test/resources/repository/conf/identity");

@@ -25,6 +25,7 @@ import org.json.JSONObject;
 import org.wso2.carbon.identity.oauth.event.AbstractOAuthEventInterceptor;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2IntrospectionResponseDTO;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2TokenValidationRequestDTO;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils.CommonConstants;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils.MutualTLSUtil;
 
 import java.util.ArrayList;
@@ -59,8 +60,8 @@ public class IntrospectionResponseInterceptor extends AbstractOAuthEventIntercep
 
             // Iterate the scope list and remove any internal scopes.
             for (String scope : scopeList) {
-                if (scope.startsWith(MutualTLSUtil.CERT_THUMBPRINT)) {
-                    String[] certHashScope = scope.split(MutualTLSUtil.CERT_THUMBPRINT_SEPARATOR, 2);
+                if (scope.startsWith(CommonConstants.CERT_THUMBPRINT)) {
+                    String[] certHashScope = scope.split(CommonConstants.CERT_THUMBPRINT_SEPARATOR, 2);
                     cnf = new JSONObject();
                     cnf.put(certHashScope[0].trim(), certHashScope[1].trim());
 
@@ -81,7 +82,7 @@ public class IntrospectionResponseInterceptor extends AbstractOAuthEventIntercep
 
         // If the MTLS cert hash is present as a scope, add the cert hash under cnf parameter.
         if (cnf != null) {
-            introspectionResponseProperties.put(MutualTLSUtil.CONFIRMATION_CLAIM_ATTRIBUTE, cnf);
+            introspectionResponseProperties.put(CommonConstants.CONFIRMATION_CLAIM_ATTRIBUTE, cnf);
         }
         oAuth2IntrospectionResponseDTO.setProperties(introspectionResponseProperties);
     }

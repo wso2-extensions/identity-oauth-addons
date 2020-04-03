@@ -33,7 +33,6 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import javax.xml.bind.DatatypeConverter;
 
-import static org.mockito.Matchers.any;
 import static org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
 
 import static org.testng.Assert.*;

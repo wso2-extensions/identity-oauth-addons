@@ -29,7 +29,7 @@ import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2AccessTokenRespDTO;
 import org.wso2.carbon.identity.oauth2.model.HttpRequestHeader;
 import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
-import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils.MutualTLSUtil;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils.CommonConstants;
 import org.wso2.carbon.identity.oauth2.token.handlers.grant.ClientCredentialsGrantHandler;
 
 import java.io.ByteArrayInputStream;
@@ -68,14 +68,14 @@ public class MTLSTokenBindingClientCredentialsGrantHandler extends ClientCredent
 
         // Get MTLS certificate from transport headers.
         HttpRequestHeader[] requestHeaders = tokReqMsgCtx.getOauth2AccessTokenReqDTO().getHttpRequestHeaders();
-        String headerName = IdentityUtil.getProperty(MutualTLSUtil.MTLS_AUTH_HEADER);
+        String headerName = IdentityUtil.getProperty(CommonConstants.MTLS_AUTH_HEADER);
 
         Optional<HttpRequestHeader> certHeader =
                 Arrays.stream(requestHeaders).filter(h -> headerName.equals(h.getName())).findFirst();
 
         String authenticatorType = (String) tokReqMsgCtx.getOauth2AccessTokenReqDTO().getoAuthClientAuthnContext()
-                .getParameter(MutualTLSUtil.AUTHENTICATOR_TYPE_PARAM);
-        if (certHeader.isPresent() && MutualTLSUtil.AUTHENTICATOR_TYPE_MTLS.equals(authenticatorType)) {
+                .getParameter(CommonConstants.AUTHENTICATOR_TYPE_PARAM);
+        if (certHeader.isPresent() && CommonConstants.AUTHENTICATOR_TYPE_MTLS.equals(authenticatorType)) {
             Base64URL certThumbprint = null;
             if (log.isDebugEnabled()) {
                 log.debug("Client MTLS certificate found: " + certHeader);
@@ -95,8 +95,8 @@ public class MTLSTokenBindingClientCredentialsGrantHandler extends ClientCredent
                 }
                 String[] scopes = tokReqMsgCtx.getScope();
                 List<String> scopesList = new LinkedList<>(Arrays.asList(scopes));
-                scopesList.add(MutualTLSUtil.CERT_THUMBPRINT + "#" + MutualTLSUtil.SHA256_DIGEST_ALGORITHM +
-                        MutualTLSUtil.CERT_THUMBPRINT_SEPARATOR + certThumbprint.toString());
+                scopesList.add(CommonConstants.CERT_THUMBPRINT + "#" + CommonConstants.SHA256_DIGEST_ALGORITHM +
+                        CommonConstants.CERT_THUMBPRINT_SEPARATOR + certThumbprint.toString());
                 tokReqMsgCtx.setScope(scopesList.toArray(new String[scopesList.size()]));
             }
         }
@@ -118,8 +118,8 @@ public class MTLSTokenBindingClientCredentialsGrantHandler extends ClientCredent
 
         // Remove certificate headers.
         byte[] decoded = Base64.getDecoder().decode(decodedContent
-                .replaceAll(MutualTLSUtil.BEGIN_CERT, StringUtils.EMPTY)
-                .replaceAll(MutualTLSUtil.END_CERT, StringUtils.EMPTY).trim()
+                .replaceAll(CommonConstants.BEGIN_CERT, StringUtils.EMPTY)
+                .replaceAll(CommonConstants.END_CERT, StringUtils.EMPTY).trim()
         );
 
         return (java.security.cert.X509Certificate) CertificateFactory.getInstance("X.509")
@@ -139,7 +139,7 @@ public class MTLSTokenBindingClientCredentialsGrantHandler extends ClientCredent
             if (scopes.length == 1) {
                 scopesList.add(0, "default");
             }
-            scopesList.removeIf(s -> s.startsWith(MutualTLSUtil.CERT_THUMBPRINT));
+            scopesList.removeIf(s -> s.startsWith(CommonConstants.CERT_THUMBPRINT));
             return scopesList.toArray(new String[scopesList.size()]);
         }
         return scopes;

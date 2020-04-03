@@ -24,7 +24,7 @@ import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2AccessTokenRespDTO;
 import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
-import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils.MutualTLSUtil;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils.CommonConstants;
 import org.wso2.carbon.identity.oauth2.token.handlers.grant.RefreshGrantHandler;
 
 import java.util.ArrayList;
@@ -94,7 +94,7 @@ public class MTLSTokenBindingRefreshGrantHandler extends RefreshGrantHandler {
 
         if (scopes != null && scopes.length > 0) {
             List<String> scopesList = new LinkedList<>(Arrays.asList(scopes));
-            scopesList.removeIf(s -> s.startsWith(MutualTLSUtil.CERT_THUMBPRINT));
+            scopesList.removeIf(s -> s.startsWith(CommonConstants.CERT_THUMBPRINT));
             return scopesList.toArray(new String[0]);
         }
         return scopes;
@@ -102,7 +102,7 @@ public class MTLSTokenBindingRefreshGrantHandler extends RefreshGrantHandler {
 
     private boolean isAllowedScope(String scope) {
 
-        return scope.startsWith(MutualTLSUtil.CERT_THUMBPRINT) ||
-                scope.startsWith(MutualTLSUtil.TIMESTAMP_SCOPE_PREFIX);
+        return scope.startsWith(CommonConstants.CERT_THUMBPRINT) ||
+                scope.startsWith(CommonConstants.TIMESTAMP_SCOPE_PREFIX);
     }
 }

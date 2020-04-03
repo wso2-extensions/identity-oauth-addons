@@ -35,6 +35,7 @@ import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.common.testng.WithCarbonHome;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth2.bean.OAuthClientAuthnContext;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils.CommonConstants;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils.MutualTLSUtil;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 
@@ -339,7 +340,7 @@ public class MutualTLSClientAuthenticatorTest extends PowerMockTestCase {
 
         mockStatic(IdentityUtil.class);
         HttpServletRequest httpServletRequest = PowerMockito.mock(HttpServletRequest.class);
-        when(IdentityUtil.getProperty(MutualTLSUtil.MTLS_AUTH_HEADER)).thenReturn("x-wso2-mtls-cert");
+        when(IdentityUtil.getProperty(CommonConstants.MTLS_AUTH_HEADER)).thenReturn("x-wso2-mtls-cert");
         PowerMockito.when(httpServletRequest.getHeader("x-wso2-mtls-cert")).thenReturn(CERTIFICATE_CONTENT3);
         assertEquals(mutualTLSClientAuthenticator.canAuthenticate(httpServletRequest, bodyContent, new
                 OAuthClientAuthnContext()), canHandle, "Expected can authenticate evaluation not received");
