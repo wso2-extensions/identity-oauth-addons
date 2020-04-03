@@ -176,17 +176,31 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
                                    OAuthClientAuthnContext context) {
 
         String headerName = IdentityUtil.getProperty(MutualTLSUtil.MTLS_AUTH_HEADER);
-        if (clientIdExistsAsParam(bodyParams) && (validCertExistsAsAttribute(request) || (StringUtils.isNotBlank(headerName) &&
-                getCertificateFromHeader(request).isPresent()))) {
-            if (log.isDebugEnabled()) {
-                log.debug("Client ID exists in request body parameters and a valid certificate found in " +
-                        "the request. Hence returning true.");
+        if (clientIdExistsAsParam(bodyParams)) {
+            if (validCertExistsAsAttribute(request)) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Valid certificate found in the request attribute. Hence returning true.");
+                }
+                return true;
+
+            } else {
+                if (StringUtils.isNotBlank(headerName) && getCertificateFromHeader(request).isPresent()) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Valid certificate found from the request header. Hence returning true.");
+                    }
+                    return true;
+                } else {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Mutual TLS authenticator cannot handle this request. " +
+                                "Valid certificate is not found in the request.");
+                    }
+                    return false;
+                }
             }
-            return true;
-        } else {
+        }  else {
             if (log.isDebugEnabled()) {
                 log.debug("Mutual TLS authenticator cannot handle this request. " +
-                        "Client id is not available in body params or valid certificate is not found in the request.");
+                        "Client id is not available in body params.");
             }
             return false;
         }
