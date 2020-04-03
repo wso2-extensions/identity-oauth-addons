@@ -18,9 +18,9 @@
 
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.handlers;
 
-
 import com.nimbusds.jose.util.Base64URL;
 import com.nimbusds.jose.util.X509CertUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -133,7 +133,8 @@ public class MTLSTokenBindingClientCredentialsGrantHandler extends ClientCredent
      * @return scopes by removing the custom scope.
      */
     private String[] getReducedResponseScopes(String[] scopes) {
-        if (scopes != null && scopes.length > 0) {
+
+        if (ArrayUtils.isNotEmpty(scopes) && scopes.length > 0) {
             List<String> scopesList = new LinkedList<>(Arrays.asList(scopes));
             if (scopes.length == 1) {
                 scopesList.add(0, "default");

@@ -57,11 +57,11 @@ public class MutualTLSServiceComponent {
             bundleContext.registerService(IntrospectionDataProvider.class.getName(), isIntrospectionDataProvider,
                     null);
             if (log.isDebugEnabled()) {
-                log.debug("Mutual TLS bundles are activated");
+                log.debug("Mutual TLS bundle is activated");
             }
 
         } catch (Throwable e) {
-            log.error("Error occurred while registering MTLS components.", e);
+            log.error("Error occurred while registering MTLS component.", e);
         }
     }
 }

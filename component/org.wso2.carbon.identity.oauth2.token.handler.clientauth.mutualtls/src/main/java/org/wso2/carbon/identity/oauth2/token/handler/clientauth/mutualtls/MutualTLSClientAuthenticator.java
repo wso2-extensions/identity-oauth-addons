@@ -116,32 +116,21 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
             }
             X509Certificate requestCert;
             Object certObject = request.getAttribute(JAVAX_SERVLET_REQUEST_CERTIFICATE);
-            if (certObject != null) {
-                if (certObject instanceof X509Certificate[]) {
-                    X509Certificate[] cert = (X509Certificate[]) certObject;
-                    requestCert = cert[0];
-                } else if (certObject instanceof X509Certificate) {
-                    requestCert = (X509Certificate) certObject;
-                } else {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Could not find client certificate in required format for client: " +
-                                oAuthClientAuthnContext.getClientId());
-                    }
-                    return false;
-                }
-            } else {
-                // Get Mutual TLS Certificate
-                Optional<X509Certificate> x509certObject = getCertificateFromHeader(request);
+            Optional<X509Certificate> x509certObject = getCertificateFromHeader(request);
 
-                if (!x509certObject.isPresent()) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Could not find client certificate in required format for client: " +
-                                oAuthClientAuthnContext.getClientId());
-                    }
-                    return false;
-                } else {
-                    requestCert = x509certObject.get();
+            if (certObject instanceof X509Certificate[]) {
+                X509Certificate[] cert = (X509Certificate[]) certObject;
+                requestCert = cert[0];
+            } else if (certObject instanceof X509Certificate) {
+                requestCert = (X509Certificate) certObject;
+            } else if (x509certObject.isPresent()) {
+                requestCert = x509certObject.get();
+            } else {
+                if (log.isDebugEnabled()) {
+                    log.debug("Could not find client certificate in required format for client: " +
+                            oAuthClientAuthnContext.getClientId());
                 }
+                return false;
             }
 
             String tenantDomain = OAuth2Util.getTenantDomainOfOauthApp(oAuthClientAuthnContext.getClientId());
@@ -187,7 +176,7 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
                                    OAuthClientAuthnContext context) {
 
         String headerName = IdentityUtil.getProperty(MutualTLSUtil.MTLS_AUTH_HEADER);
-        if (clientIdExistsAsParam(bodyParams) && (validCertExistsAsAttribute(request) || (headerName != null &&
+        if (clientIdExistsAsParam(bodyParams) && (validCertExistsAsAttribute(request) || (StringUtils.isNotBlank(headerName) &&
                 getCertificateFromHeader(request).isPresent()))) {
             if (log.isDebugEnabled()) {
                 log.debug("Client ID exists in request body parameters and a valid certificate found in " +
