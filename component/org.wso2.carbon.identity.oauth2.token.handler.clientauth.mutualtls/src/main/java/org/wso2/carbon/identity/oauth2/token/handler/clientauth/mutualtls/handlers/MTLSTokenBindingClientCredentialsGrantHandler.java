@@ -71,7 +71,8 @@ public class MTLSTokenBindingClientCredentialsGrantHandler extends ClientCredent
         String headerName = IdentityUtil.getProperty(CommonConstants.MTLS_AUTH_HEADER);
 
         Optional<HttpRequestHeader> certHeader =
-                Arrays.stream(requestHeaders).filter(h -> headerName.equals(h.getName())).findFirst();
+                Arrays.stream(requestHeaders).filter(httpRequestHeader ->
+                        headerName.equals(httpRequestHeader.getName())).findFirst();
 
         String authenticatorType = (String) tokReqMsgCtx.getOauth2AccessTokenReqDTO().getoAuthClientAuthnContext()
                 .getParameter(CommonConstants.AUTHENTICATOR_TYPE_PARAM);
@@ -114,13 +115,12 @@ public class MTLSTokenBindingClientCredentialsGrantHandler extends ClientCredent
     private static X509Certificate parseCertificate(String content) throws CertificateException {
 
         // Trim extra spaces.
-        String decodedContent = content.trim();
+        String decodedContent = StringUtils.trim(content);
 
         // Remove certificate headers.
-        byte[] decoded = Base64.getDecoder().decode(decodedContent
+        byte[] decoded = Base64.getDecoder().decode(StringUtils.trim(decodedContent
                 .replaceAll(CommonConstants.BEGIN_CERT, StringUtils.EMPTY)
-                .replaceAll(CommonConstants.END_CERT, StringUtils.EMPTY).trim()
-        );
+                .replaceAll(CommonConstants.END_CERT, StringUtils.EMPTY)));
 
         return (java.security.cert.X509Certificate) CertificateFactory.getInstance("X.509")
                 .generateCertificate(new ByteArrayInputStream(decoded));
@@ -139,7 +139,7 @@ public class MTLSTokenBindingClientCredentialsGrantHandler extends ClientCredent
             if (scopes.length == 1) {
                 scopesList.add(0, "default");
             }
-            scopesList.removeIf(s -> s.startsWith(CommonConstants.CERT_THUMBPRINT));
+            scopesList.removeIf(scope -> scope.startsWith(CommonConstants.CERT_THUMBPRINT));
             return scopesList.toArray(new String[scopesList.size()]);
         }
         return scopes;

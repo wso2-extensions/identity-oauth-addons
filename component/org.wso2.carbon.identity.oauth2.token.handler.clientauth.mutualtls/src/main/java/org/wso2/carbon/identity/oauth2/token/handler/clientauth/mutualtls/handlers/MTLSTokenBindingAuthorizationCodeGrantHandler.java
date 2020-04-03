@@ -70,18 +70,21 @@ public class MTLSTokenBindingAuthorizationCodeGrantHandler extends Authorization
         String headerName = IdentityUtil.getProperty(CommonConstants.MTLS_AUTH_HEADER);
 
         Optional<HttpRequestHeader> certHeader =
-                Arrays.stream(requestHeaders).filter(h -> headerName.equals(h.getName())).findFirst();
+                Arrays.stream(requestHeaders).filter(httpRequestHeader ->
+                        headerName.equals(httpRequestHeader.getName())).findFirst();
 
         String authenticatorType = (String) tokReqMsgCtx.getOauth2AccessTokenReqDTO().getoAuthClientAuthnContext()
                 .getParameter(CommonConstants.AUTHENTICATOR_TYPE_PARAM);
         if (certHeader.isPresent() && CommonConstants.AUTHENTICATOR_TYPE_MTLS.equals(authenticatorType)) {
-            Base64URL certThumbprint;
+            Base64URL certThumbprint = null;
             if (log.isDebugEnabled()) {
                 log.debug("Client MTLS certificate found: " + certHeader);
             }
             try {
-                X509Certificate certificate = parseCertificate(certHeader.get().getValue()[0]);
-                certThumbprint = X509CertUtils.computeSHA256Thumbprint(certificate);
+                if (certHeader.get().getValue() != null) {
+                    X509Certificate certificate = parseCertificate(certHeader.get().getValue()[0]);
+                    certThumbprint = X509CertUtils.computeSHA256Thumbprint(certificate);
+                }
             } catch (CertificateException e) {
                 log.error("Error occurred while calculating the thumbprint of the client MTLS certificate", e);
                 return false;
@@ -112,13 +115,12 @@ public class MTLSTokenBindingAuthorizationCodeGrantHandler extends Authorization
     private static X509Certificate parseCertificate(String content) throws CertificateException {
 
         // Trim extra spaces.
-        String decodedContent = content.trim();
+        String decodedContent = StringUtils.trim(content);
 
         // Remove certificate headers.
-        byte[] decoded = Base64.getDecoder().decode(decodedContent
+        byte[] decoded = Base64.getDecoder().decode(StringUtils.trim(decodedContent
                 .replaceAll(CommonConstants.BEGIN_CERT, StringUtils.EMPTY)
-                .replaceAll(CommonConstants.END_CERT, StringUtils.EMPTY).trim()
-        );
+                .replaceAll(CommonConstants.END_CERT, StringUtils.EMPTY)));
 
         return (X509Certificate) CertificateFactory.getInstance("X.509")
                 .generateCertificate(new ByteArrayInputStream(decoded));
@@ -134,7 +136,7 @@ public class MTLSTokenBindingAuthorizationCodeGrantHandler extends Authorization
 
         if (ArrayUtils.isNotEmpty(scopes) && scopes.length > 0) {
             List<String> scopesList = new LinkedList<>(Arrays.asList(scopes));
-            scopesList.removeIf(s -> s.startsWith(CommonConstants.CERT_THUMBPRINT));
+            scopesList.removeIf(scope -> scope.startsWith(CommonConstants.CERT_THUMBPRINT));
             return scopesList.toArray(new String[0]);
         }
         return scopes;

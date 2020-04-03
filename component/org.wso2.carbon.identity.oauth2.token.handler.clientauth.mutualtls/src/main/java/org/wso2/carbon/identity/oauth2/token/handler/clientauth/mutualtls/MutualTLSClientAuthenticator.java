@@ -230,10 +230,10 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
         String headerName = IdentityUtil.getProperty(CommonConstants.MTLS_AUTH_HEADER);
         String headerString = request.getHeader(headerName);
 
-        if (StringUtils.isNotEmpty(headerString)) {
+        if (StringUtils.isNotBlank(headerString)) {
 
             if (log.isDebugEnabled()) {
-                log.debug(String.format("%s header available in request", headerName));
+                log.debug(String.format("%s header available in request as %s", headerName, headerString));
             }
 
             try {
@@ -250,21 +250,21 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
      * Return Certificate for give Certificate Content.
      *
      * @param content   Certificate Content
-     * @return X509Certificate
+     * @return X509Certificate X.509 certificate after decoding the certificate content.
      * @throws CertificateException Certificate Exception.
      */
     private X509Certificate parseCertificate(String content) throws CertificateException {
 
         // Trim extra spaces.
-        String decodedContent = content.trim();
+        String decodedContent = StringUtils.trim(content);
 
         // Remove Certificate Headers.
-        byte[] decoded = Base64.getDecoder().decode(decodedContent
+        byte[] decoded = Base64.getDecoder().decode(StringUtils.trim(decodedContent
                 .replaceAll(CommonConstants.BEGIN_CERT, StringUtils.EMPTY)
-                .replaceAll(CommonConstants.END_CERT, StringUtils.EMPTY).trim()
-        );
+                .replaceAll(CommonConstants.END_CERT, StringUtils.EMPTY)
+        ));
 
-        return (java.security.cert.X509Certificate) CertificateFactory.getInstance("X.509")
+        return (java.security.cert.X509Certificate) CertificateFactory.getInstance(CommonConstants.X509)
                 .generateCertificate(new ByteArrayInputStream(decoded));
     }
 

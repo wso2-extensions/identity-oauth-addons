@@ -94,7 +94,7 @@ public class MTLSTokenBindingRefreshGrantHandler extends RefreshGrantHandler {
 
         if (scopes != null && scopes.length > 0) {
             List<String> scopesList = new LinkedList<>(Arrays.asList(scopes));
-            scopesList.removeIf(s -> s.startsWith(CommonConstants.CERT_THUMBPRINT));
+            scopesList.removeIf(scope -> scope.startsWith(CommonConstants.CERT_THUMBPRINT));
             return scopesList.toArray(new String[0]);
         }
         return scopes;
