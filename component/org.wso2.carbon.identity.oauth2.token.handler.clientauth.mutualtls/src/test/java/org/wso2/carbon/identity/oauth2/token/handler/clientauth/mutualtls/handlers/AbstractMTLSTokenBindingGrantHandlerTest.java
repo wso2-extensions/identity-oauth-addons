@@ -18,7 +18,6 @@
 
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.handlers;
 
-
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 import static org.testng.Assert.assertFalse;
@@ -45,7 +44,7 @@ import java.util.ArrayList;
 @PrepareForTest({IdentityUtil.class, CarbonUtils.class, Oauth2ScopeUtils.class, OAuth2Util.class})
 
 @WithCarbonHome
-public class MTLSTokenBindingAuthorizationCodeGrantHandlerTest extends PowerMockTestCase {
+public class AbstractMTLSTokenBindingGrantHandlerTest extends PowerMockTestCase {
 
     MTLSTokenBindingAuthorizationCodeGrantHandler mtlsTokenBindingAuthorizationCodeGrantHandler;
 

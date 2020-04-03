@@ -30,8 +30,7 @@
             <class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils.MutualTLSUtilTest"/>
             <class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.introspection.ISIntrospectionDataProviderTest"/>
             <class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.introspection.IntrospectionResponseInterceptorTest"/>
-            <class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.handlers.MTLSTokenBindingAuthorizationCodeGrantHandlerTest"/>
-            <class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.handlers.MTLSTokenBindingClientCredentialsGrantHandlerTest"/>
+            <class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.handlers.AbstractMTLSTokenBindingGrantHandlerTest"/>
             <class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.handlers.MTLSTokenBindingRefreshGrantHandlerTest"/>
         </classes>
     </test>
