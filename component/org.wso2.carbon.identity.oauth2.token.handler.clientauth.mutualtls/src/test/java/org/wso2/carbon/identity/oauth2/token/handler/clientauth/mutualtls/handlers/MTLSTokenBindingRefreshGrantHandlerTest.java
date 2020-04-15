@@ -18,7 +18,6 @@
 
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.handlers;
 
-
 import org.mockito.Matchers;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;

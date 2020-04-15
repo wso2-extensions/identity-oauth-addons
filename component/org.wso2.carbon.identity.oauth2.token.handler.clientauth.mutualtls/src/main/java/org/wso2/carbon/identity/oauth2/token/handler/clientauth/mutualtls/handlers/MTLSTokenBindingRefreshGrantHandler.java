@@ -73,7 +73,7 @@ public class MTLSTokenBindingRefreshGrantHandler extends RefreshGrantHandler {
             for (String scope : grantedScopes) {
                 if (isAllowedScope(scope)) {
                     if (log.isDebugEnabled()) {
-                        log.debug("Adding custom scope " + scope + " to the requested scopes");
+                        log.debug("Adding custom scope " + scope + " to the requested scopes.");
                     }
                     requestedScopeList.add(scope);
                 }

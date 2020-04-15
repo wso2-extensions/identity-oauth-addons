@@ -180,20 +180,20 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
         if (clientIdExistsAsParam(bodyParams)) {
             if (validCertExistsAsAttribute(request)) {
                 if (log.isDebugEnabled()) {
-                    log.debug("Valid certificate found in the request attribute. Hence returning true.");
+                    log.debug("A valid certificate was found in the request attribute hence returning true.");
                 }
                 return true;
 
             } else {
                 if (StringUtils.isNotBlank(headerName) && getCertificateFromHeader(request).isPresent()) {
                     if (log.isDebugEnabled()) {
-                        log.debug("Valid certificate found from the request header. Hence returning true.");
+                        log.debug("A valid certificate was found from the request header hence returning true.");
                     }
                     return true;
                 } else {
                     if (log.isDebugEnabled()) {
                         log.debug("Mutual TLS authenticator cannot handle this request. " +
-                                "Valid certificate is not found in the request.");
+                                "A valid certificate could not be found in the request.");
                     }
                     return false;
                 }
@@ -239,7 +239,7 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
             try {
                 return Optional.of(parseCertificate(headerString));
             } catch (CertificateException e) {
-                log.error("Unable to parse certificate sent in header", e);
+                log.error("Unable to parse the certificate sent in header", e);
             }
         }
 
