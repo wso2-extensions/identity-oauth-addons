@@ -59,7 +59,7 @@ public class IntrospectionResponseInterceptor extends AbstractOAuthEventIntercep
 
             // Iterate the scope list and remove any internal scopes.
             for (String scope : scopeList) {
-                if (scope.startsWith(CommonConstants.CERT_THUMBPRINT)) {
+                if (scope.startsWith(CommonConstants.CERT_THUMBPRINT+ CommonConstants.SEPARATOR)) {
                     String[] certHashScope = scope.split(CommonConstants.CERT_THUMBPRINT_SEPARATOR, 2);
                     cnf = new JSONObject();
                     cnf.put(certHashScope[0].trim(), certHashScope[1].trim());

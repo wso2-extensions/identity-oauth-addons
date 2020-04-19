@@ -94,7 +94,7 @@ public class MTLSTokenBindingRefreshGrantHandler extends RefreshGrantHandler {
 
         if (scopes != null && scopes.length > 0) {
             List<String> scopesList = new LinkedList<>(Arrays.asList(scopes));
-            scopesList.removeIf(scope -> scope.startsWith(CommonConstants.CERT_THUMBPRINT));
+            scopesList.removeIf(scope -> scope.startsWith(CommonConstants.CERT_THUMBPRINT+ CommonConstants.SEPARATOR));
             return scopesList.toArray(new String[0]);
         }
         return scopes;
@@ -102,7 +102,7 @@ public class MTLSTokenBindingRefreshGrantHandler extends RefreshGrantHandler {
 
     private boolean isAllowedScope(String scope) {
 
-        return scope.startsWith(CommonConstants.CERT_THUMBPRINT) ||
+        return scope.startsWith(CommonConstants.CERT_THUMBPRINT+ CommonConstants.SEPARATOR) ||
                 scope.startsWith(CommonConstants.TIMESTAMP_SCOPE_PREFIX);
     }
 }

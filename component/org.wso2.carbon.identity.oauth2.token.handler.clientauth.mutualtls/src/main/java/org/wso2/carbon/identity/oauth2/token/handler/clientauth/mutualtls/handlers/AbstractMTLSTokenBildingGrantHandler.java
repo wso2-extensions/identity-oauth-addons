@@ -77,8 +77,9 @@ public class AbstractMTLSTokenBildingGrantHandler {
                 }
                 String[] scopes = tokReqMsgCtx.getScope();
                 List<String> scopesList = new LinkedList<>(Arrays.asList(scopes));
-                scopesList.add(CommonConstants.CERT_THUMBPRINT + "#" + CommonConstants.SHA256_DIGEST_ALGORITHM +
-                        CommonConstants.CERT_THUMBPRINT_SEPARATOR + certThumbprint.toString());
+                scopesList.add(CommonConstants.CERT_THUMBPRINT + CommonConstants.SEPARATOR +
+                        CommonConstants.SHA256_DIGEST_ALGORITHM + CommonConstants.CERT_THUMBPRINT_SEPARATOR
+                        + certThumbprint.toString());
                 tokReqMsgCtx.setScope(scopesList.toArray(new String[scopesList.size()]));
             }
         }
@@ -102,7 +103,7 @@ public class AbstractMTLSTokenBildingGrantHandler {
                 .replaceAll(CommonConstants.BEGIN_CERT, StringUtils.EMPTY)
                 .replaceAll(CommonConstants.END_CERT, StringUtils.EMPTY)));
 
-        return (X509Certificate) CertificateFactory.getInstance("X.509")
+        return (X509Certificate) CertificateFactory.getInstance(CommonConstants.X509)
                 .generateCertificate(new ByteArrayInputStream(decoded));
     }
 }

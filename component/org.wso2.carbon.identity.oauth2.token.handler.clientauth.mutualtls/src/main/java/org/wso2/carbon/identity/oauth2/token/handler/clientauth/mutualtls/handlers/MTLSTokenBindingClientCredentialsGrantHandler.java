@@ -69,7 +69,7 @@ public class MTLSTokenBindingClientCredentialsGrantHandler extends ClientCredent
             if (scopes.length == 1) {
                 scopesList.add(0, "default");
             }
-            scopesList.removeIf(scope -> scope.startsWith(CommonConstants.CERT_THUMBPRINT));
+            scopesList.removeIf(scope -> scope.startsWith(CommonConstants.CERT_THUMBPRINT+ CommonConstants.SEPARATOR));
             return scopesList.toArray(new String[scopesList.size()]);
         }
         return scopes;

@@ -27,7 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Introspection data provider.
+ * Introspection data provider to get the modified introspection data.
  */
 public class ISIntrospectionDataProvider extends AbstractIdentityHandler implements IntrospectionDataProvider {
 

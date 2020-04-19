@@ -22,6 +22,7 @@ public class CommonConstants {
 
     public static final String JWKS_URI = "jwksURI";
     public static final String CERT_THUMBPRINT = "x5t";
+    public static final String SEPARATOR = "#";
     public static final String TIMESTAMP_SCOPE_PREFIX = "TIME_";
     public static final String CERT_THUMBPRINT_SEPARATOR = ":";
     public static final String CONFIRMATION_CLAIM_ATTRIBUTE = "cnf";
