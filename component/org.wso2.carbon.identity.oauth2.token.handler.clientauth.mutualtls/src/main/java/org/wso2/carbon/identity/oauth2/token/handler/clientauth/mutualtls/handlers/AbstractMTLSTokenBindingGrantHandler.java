@@ -39,9 +39,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
-public class AbstractMTLSTokenBildingGrantHandler {
+public class AbstractMTLSTokenBindingGrantHandler {
 
-    private static Log log = LogFactory.getLog(MTLSTokenBindingAuthorizationCodeGrantHandler.class);
+    private static final Log log = LogFactory.getLog(MTLSTokenBindingAuthorizationCodeGrantHandler.class);
 
     public boolean validateScope(OAuthTokenReqMessageContext tokReqMsgCtx, boolean validateScope) throws IdentityOAuth2Exception {
 
@@ -66,7 +66,9 @@ public class AbstractMTLSTokenBildingGrantHandler {
                     certThumbprint = X509CertUtils.computeSHA256Thumbprint(certificate);
                 }
             } catch (CertificateException e) {
-                log.error("Error occurred while calculating the thumbprint of the client MTLS certificate", e);
+                if (log.isDebugEnabled()) {
+                    log.debug("Error occurred while calculating the thumbprint of the client MTLS certificate", e);
+                }
                 return false;
             }
 

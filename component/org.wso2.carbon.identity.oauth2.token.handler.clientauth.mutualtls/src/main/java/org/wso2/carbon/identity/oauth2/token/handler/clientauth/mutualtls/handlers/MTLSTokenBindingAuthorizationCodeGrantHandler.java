@@ -48,9 +48,9 @@ public class MTLSTokenBindingAuthorizationCodeGrantHandler extends Authorization
     public boolean validateScope(OAuthTokenReqMessageContext tokReqMsgCtx) throws IdentityOAuth2Exception {
 
         boolean validateScope = super.validateScope(tokReqMsgCtx);
-        AbstractMTLSTokenBildingGrantHandler abstractMTLSTokenBildingGrantHandler =
-                new AbstractMTLSTokenBildingGrantHandler();
-        validateScope = abstractMTLSTokenBildingGrantHandler.validateScope(tokReqMsgCtx, validateScope);
+        AbstractMTLSTokenBindingGrantHandler abstractMTLSTokenBindingGrantHandler =
+                new AbstractMTLSTokenBindingGrantHandler();
+        validateScope = abstractMTLSTokenBindingGrantHandler.validateScope(tokReqMsgCtx, validateScope);
         return validateScope;
     }
 

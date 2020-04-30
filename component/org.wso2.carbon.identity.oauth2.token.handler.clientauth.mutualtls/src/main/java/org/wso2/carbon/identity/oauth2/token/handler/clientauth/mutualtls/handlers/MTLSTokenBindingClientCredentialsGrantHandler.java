@@ -50,9 +50,9 @@ public class MTLSTokenBindingClientCredentialsGrantHandler extends ClientCredent
     public boolean validateScope(OAuthTokenReqMessageContext tokReqMsgCtx) throws IdentityOAuth2Exception {
 
         boolean validateScope = super.validateScope(tokReqMsgCtx);
-        AbstractMTLSTokenBildingGrantHandler abstractMTLSTokenBildingGrantHandler =
-                new AbstractMTLSTokenBildingGrantHandler();
-        validateScope = abstractMTLSTokenBildingGrantHandler.validateScope(tokReqMsgCtx, validateScope);
+        AbstractMTLSTokenBindingGrantHandler abstractMTLSTokenBindingGrantHandler =
+                new AbstractMTLSTokenBindingGrantHandler();
+        validateScope = abstractMTLSTokenBindingGrantHandler.validateScope(tokReqMsgCtx, validateScope);
         return validateScope;
     }
 
@@ -70,7 +70,7 @@ public class MTLSTokenBindingClientCredentialsGrantHandler extends ClientCredent
                 scopesList.add(0, "default");
             }
             scopesList.removeIf(scope -> scope.startsWith(CommonConstants.CERT_THUMBPRINT+ CommonConstants.SEPARATOR));
-            return scopesList.toArray(new String[scopesList.size()]);
+            return scopesList.toArray(new String[0]);
         }
         return scopes;
     }
