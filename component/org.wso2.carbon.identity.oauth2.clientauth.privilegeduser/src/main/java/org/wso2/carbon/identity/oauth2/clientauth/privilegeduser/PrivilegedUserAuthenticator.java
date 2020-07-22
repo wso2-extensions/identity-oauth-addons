@@ -98,7 +98,7 @@ public class PrivilegedUserAuthenticator extends AbstractOAuthClientAuthenticato
 
         if (isUserCredentialsExists(map) && httpServletRequest.getRequestURI().equals(CommonConstants.REVOKE_ENDPOINT)) {
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Authorization header exists. Hence this authenticator can authenticate this request");
+                LOG.debug("User credentials body param exists. Hence this authenticator can authenticate this request");
             }
             return true;
         }

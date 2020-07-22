@@ -188,6 +188,7 @@
                             javax.servlet.http;version="${javax.servlet.http.package.import.version.range}",
                             org.apache.axiom.util.base64; version="${axiom.osgi.version.range}",
                             org.apache.commons.io; version="${org.apache.commons.io.package.import.version.range}",
+                            org.apache.commons.logging; version="${apache.commons.logging.package.import.version.range}",
                             org.wso2.carbon.utils.*; version="${carbon.kernel.package.import.version.range}",
                             org.wso2.carbon.user.core.util; version="${carbon.kernel.package.import.version.range}",
                             org.wso2.carbon.user.core.service;version="${carbon.kernel.package.import.version.range}",
