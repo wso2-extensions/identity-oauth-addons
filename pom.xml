@@ -37,6 +37,7 @@
         <module>component/org.wso2.carbon.identity.oauth2.validators.xacml</module>
         <module>features/org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.feature</module>
         <module>features/org.wso2.carbon.identity.oauth2.validators.xacml.server.feature</module>
+        <module>component/org.wso2.carbon.identity.oauth2.clientauth.privilegeduser</module>
     </modules>
 
     <profiles>
@@ -424,6 +425,7 @@
         <identity.inbound.auth.oauth.imp.pkg.version>[6.2.18,7.0.0)</identity.inbound.auth.oauth.imp.pkg.version>
         <carbon.kernel.version>4.6.0</carbon.kernel.version>
         <carbon.kernel.feature.version>4.6.0</carbon.kernel.feature.version>
+        <carbon.user.api.imp.pkg.version.range>[1.0.1, 2.0.0)</carbon.user.api.imp.pkg.version.range>
 
         <org.apache.oltu.oauth2.client.version>1.0.0</org.apache.oltu.oauth2.client.version>
         <org.apache.oltu.oauth2.common.version>1.0.1</org.apache.oltu.oauth2.common.version>
