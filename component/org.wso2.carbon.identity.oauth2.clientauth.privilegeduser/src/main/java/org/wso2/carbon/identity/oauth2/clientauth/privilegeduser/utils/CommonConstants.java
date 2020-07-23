@@ -20,10 +20,10 @@ package org.wso2.carbon.identity.oauth2.clientauth.privilegeduser.utils;
 
 public class CommonConstants {
 
-    public static final String CREDENTIAL_SEPARATOR = ":";
     public static final String DEFAULT_ADMIN_PERMISSION = "/permission/admin/manage/application/revoke";
     public static final int CREDENTIAL_LENGTH = 2;
     public static final String REVOKE_ENDPOINT = "/oauth2/revoke";
-    public static final String CREDENTIALS = "credentials";
+    public static final String USERNAME_PARAM = "username";
+    public static final String PASSWORD_PARAM = "password";
 
 }

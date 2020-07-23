@@ -76,9 +76,12 @@ public class PrivilegedUserAuthenticator extends AbstractOAuthClientAuthenticato
             throws OAuthClientAuthnException {
 
         String[] credentials = getCredentials(map);
-        String userName = credentials[0];
-        String password = credentials[1];
-        return isUserAuthorized(userName, password);
+        if (credentials != null) {
+            String userName = credentials[0];
+            String password = credentials[1];
+            return isUserAuthorized(userName, password);
+        }
+        return false;
     }
 
     /**
@@ -147,7 +150,7 @@ public class PrivilegedUserAuthenticator extends AbstractOAuthClientAuthenticato
      */
     private boolean isUserCredentialsExists(Map<String, List> map) {
 
-        if(getCredentials(map) == null){
+        if (getCredentials(map) == null) {
             return false;
         }
         return CommonConstants.CREDENTIAL_LENGTH == getCredentials(map).length;
@@ -157,14 +160,14 @@ public class PrivilegedUserAuthenticator extends AbstractOAuthClientAuthenticato
      * Returns username and password from the request.
      *
      * @param map HttpRequestBody
-     * @return Array of username and passoword if they exist. Else returns null.
+     * @return Array of username and password if they exist. Else returns null.
      */
     private String[] getCredentials(Map<String, List> map) {
 
         Map<String, String> stringContent = getBodyParameters(map);
-        String username = stringContent.get("username");
-        String password = stringContent.get("password");
-        if(username != null && password != null){
+        String username = stringContent.get(CommonConstants.USERNAME_PARAM);
+        String password = stringContent.get(CommonConstants.PASSWORD_PARAM);
+        if (username != null && password != null) {
             return new String[]{username, password};
         }
         return null;
