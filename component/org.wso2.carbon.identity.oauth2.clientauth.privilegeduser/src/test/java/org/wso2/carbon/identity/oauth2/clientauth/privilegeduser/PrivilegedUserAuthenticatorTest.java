@@ -18,8 +18,6 @@
 
 package org.wso2.carbon.identity.oauth2.clientauth.privilegeduser;
 
-import org.apache.axiom.util.base64.Base64Utils;
-import org.apache.axis2.transport.http.HTTPConstants;
 import org.mockito.Mock;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -51,6 +49,7 @@ import static org.mockito.Matchers.anyString;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 @PrepareForTest({
         HttpServletRequest.class,
@@ -63,10 +62,10 @@ import static org.testng.Assert.assertEquals;
 public class PrivilegedUserAuthenticatorTest extends PowerMockIdentityBaseTest {
 
     private PrivilegedUserAuthenticator privilegedUserAuthenticator = new PrivilegedUserAuthenticator();
-    private static final String CREDENTIALS = "credentials";
-    private static final String FAULT_CREDENTIALS_PARAM = "faultcredentials";
     private static final String USERNAME = "username";
     private static final String PASSWORD = "password";
+    private static final String USERNAME_VALUE = "user1";
+    private static final String PASSWORD_VALUE = "password1";
     private static final String CLIENT_ID = "KrVLov4Bl3natUksF2HmWsdw684a";
     private static final String REVOKE_ENDPOINT = "/oauth2/revoke";
 
@@ -88,31 +87,37 @@ public class PrivilegedUserAuthenticatorTest extends PowerMockIdentityBaseTest {
 
         return new Object[][]{
 
-                // Correct request parameter name with valid username and password.
-                {CREDENTIALS, getBase64EncodedUserAuthHeader(USERNAME,
-                        PASSWORD), new HashMap<String, List>(), true},
+                // Correct request parameters.
+                {"username", "password", new HashMap<String, List>(), true},
 
-                // Fault  request parameter name with valid username and password.
-                {FAULT_CREDENTIALS_PARAM, getBase64EncodedUserAuthHeader(USERNAME,
-                        PASSWORD), new HashMap<String, List>(), false},
+                // Fault  request parameter name.
+                {"user","password", new HashMap<String, List>(), false},
+
+                // Fault  request parameter names.
+                {"username","pass", new HashMap<String, List>(), false},
+
+                // Fault  request parameter names.
+                {"user","pass", new HashMap<String, List>(), false},
 
                 // No credential parameter
                 { null, null, new HashMap<String, List>(), false},
-
 
         };
     }
 
     @Test(dataProvider = "testCanAuthenticateData")
-    public void testCanAuthenticate(String paramName, String paramValue, HashMap<String, List> bodyContent, boolean
+    public void testCanAuthenticate(String userNameParam, String passwordParam,
+                                    HashMap<String, List> bodyContent, boolean
             canHandle) throws Exception {
 
         HttpServletRequest httpServletRequest = PowerMockito.mock(HttpServletRequest.class);
-        List<String> userCredentialContent = new ArrayList<>();
-        userCredentialContent.add(paramName);
-        bodyContent.put(paramName, userCredentialContent);
+        List<String> userNameCredentials = new ArrayList<>();
+        userNameCredentials.add(USERNAME_VALUE);
+        List<String> passwordCredentials = new ArrayList<>();
+        passwordCredentials.add(PASSWORD_VALUE);
+        bodyContent.put(userNameParam, userNameCredentials);
+        bodyContent.put(passwordParam, passwordCredentials);
         when(httpServletRequest.getRequestURI()).thenReturn(REVOKE_ENDPOINT);
-        PowerMockito.when(httpServletRequest.getHeader(paramName)).thenReturn(paramValue);
         assertEquals(privilegedUserAuthenticator.canAuthenticate(httpServletRequest, bodyContent, new
                 OAuthClientAuthnContext()), canHandle, "Expected can authenticate evaluation not received");
     }
@@ -138,24 +143,10 @@ public class PrivilegedUserAuthenticatorTest extends PowerMockIdentityBaseTest {
     }
 
 
-    @DataProvider(name = "testClientAuthnData")
-    public Object[][] testClientAuthnData() {
+    @Test()
+    public void testAuthenticateClient() throws Exception {
 
-        return new Object[][]{
-
-                // Correct authorization header present with correct encoding
-                {HTTPConstants.HEADER_AUTHORIZATION, getBase64EncodedUserAuthHeader(USERNAME,
-                        PASSWORD), new HashMap<String, List>(), buildOAuthClientAuthnContext(CLIENT_ID),
-                        true},
-        };
-    }
-
-    @Test(dataProvider = "testClientAuthnData")
-    public void testAuthenticateClient(String headerName, String headerValue, HashMap<String, List> bodyContent,
-                                       Object oAuthClientAuthnContextObj,
-                                       boolean authenticationResult) throws Exception {
-
-        OAuthClientAuthnContext oAuthClientAuthnContext = (OAuthClientAuthnContext) oAuthClientAuthnContextObj;
+        OAuthClientAuthnContext oAuthClientAuthnContextObj =  buildOAuthClientAuthnContext(CLIENT_ID);
         HttpServletRequest httpServletRequest = PowerMockito.mock(HttpServletRequest.class);
 
         mockStatic(IdentityTenantUtil.class);
@@ -166,9 +157,13 @@ public class PrivilegedUserAuthenticatorTest extends PowerMockIdentityBaseTest {
 
         mockStatic(UserCoreUtil.class);
 
-        List<String> userCredentialContent = new ArrayList<>();
-        userCredentialContent.add(getBase64EncodedUserAuthHeader(USERNAME, PASSWORD));
-        bodyContent.put(CREDENTIALS, userCredentialContent);
+        HashMap<String, List> bodyContent = new HashMap<>();
+        List<String> userNameCredentials = new ArrayList<>();
+        userNameCredentials.add(USERNAME_VALUE);
+        List<String> passwordCredentials = new ArrayList<>();
+        passwordCredentials.add(PASSWORD_VALUE);
+        bodyContent.put(USERNAME, userNameCredentials);
+        bodyContent.put(PASSWORD, passwordCredentials);
 
         when(privilegedUserAuthenticatorServiceHolder.getRealmService()).thenReturn(realmService);
         when(realmService.getTenantUserRealm(anyInt())).thenReturn(userRealm);
@@ -181,16 +176,11 @@ public class PrivilegedUserAuthenticatorTest extends PowerMockIdentityBaseTest {
         when(userRealm.getAuthorizationManager()).thenReturn(authorizationManager);
         when(authorizationManager.isUserAuthorized(anyString(), anyString(), anyString())).thenReturn(true);
 
-        PowerMockito.when(httpServletRequest.getHeader(headerName)).thenReturn(headerValue);
-        assertEquals(privilegedUserAuthenticator.authenticateClient(httpServletRequest, bodyContent,
-                oAuthClientAuthnContext), authenticationResult, "Expected client authentication result was not " +
+        assertTrue(privilegedUserAuthenticator.authenticateClient(httpServletRequest, bodyContent,
+                oAuthClientAuthnContextObj), "Expected client authentication result was not " +
                 "received");
     }
 
-    private  String getBase64EncodedUserAuthHeader(String userName, String password) {
-
-        return "User " + Base64Utils.encode((userName + ":" + password).getBytes());
-    }
 
     private OAuthClientAuthnContext buildOAuthClientAuthnContext(String clientId) {
 
