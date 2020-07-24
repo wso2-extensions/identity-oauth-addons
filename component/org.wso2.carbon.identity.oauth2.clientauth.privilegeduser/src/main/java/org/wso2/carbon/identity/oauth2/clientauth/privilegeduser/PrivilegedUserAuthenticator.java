@@ -18,8 +18,6 @@
 
 package org.wso2.carbon.identity.oauth2.clientauth.privilegeduser;
 
-import org.apache.axiom.util.base64.Base64Utils;
-import org.apache.commons.io.Charsets;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -50,8 +48,6 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
-import static org.apache.commons.lang.StringUtils.isNotEmpty;
-
 /**
  * Authenticator that can authenticate user and allow access for a user to access a OAuth endpoint on behalf of an
  * application.
@@ -79,10 +75,13 @@ public class PrivilegedUserAuthenticator extends AbstractOAuthClientAuthenticato
                                       OAuthClientAuthnContext oAuthClientAuthnContext)
             throws OAuthClientAuthnException {
 
-        String[] credentials = extractCredentialsFromReq(getCredentials(map));
-        String userName = credentials[0];
-        String password = credentials[1];
-        return isUserAuthorized(userName, password);
+        String[] credentials = getCredentials(map);
+        if (credentials != null) {
+            String userName = credentials[0];
+            String password = credentials[1];
+            return isUserAuthorized(userName, password);
+        }
+        return false;
     }
 
     /**
@@ -144,48 +143,34 @@ public class PrivilegedUserAuthenticator extends AbstractOAuthClientAuthenticato
     }
 
     /**
-     * Validates the authorization header and returns true if the header present.
+     * Checks whether the username nad password exists in body param and returns true if present.
      *
      * @param map RequestBody
-     * @return True if the authorization header present, else returns false.
+     * @return True if the username and password present, else returns false.
      */
     private boolean isUserCredentialsExists(Map<String, List> map) {
 
-        return isNotEmpty(getCredentials(map));
+        if (getCredentials(map) == null) {
+            return false;
+        }
+        return CommonConstants.CREDENTIAL_LENGTH == getCredentials(map).length;
     }
 
     /**
-     * Returns Authorization header from the request.
+     * Returns username and password from the request.
      *
      * @param map HttpRequestBody
-     * @return Authorization header
+     * @return Array of username and password if they exist. Else returns null.
      */
-    private String getCredentials(Map<String, List> map) {
+    private String[] getCredentials(Map<String, List> map) {
 
         Map<String, String> stringContent = getBodyParameters(map);
-        return stringContent.get(CommonConstants.CREDENTIALS);
-    }
-
-    /**
-     * Extract Credentials of the user from authorization header present in the request.
-     *
-     * @param encodedCredentials AuthorizationHeader
-     * @return Array contains username and password.
-     * @throws OAuthClientAuthnException
-     */
-    private static String[] extractCredentialsFromReq(String encodedCredentials)
-            throws OAuthClientAuthnException {
-
-        if (isNotEmpty(encodedCredentials)) {
-            byte[] decodedBytes = Base64Utils.decode(encodedCredentials);
-            String userNamePassword = new String(decodedBytes, Charsets.UTF_8);
-            String[] credentials = userNamePassword.split(CommonConstants.CREDENTIAL_SEPARATOR);
-            if (credentials.length == CommonConstants.CREDENTIAL_LENGTH) {
-                return credentials;
-            }
+        String username = stringContent.get(CommonConstants.USERNAME_PARAM);
+        String password = stringContent.get(CommonConstants.PASSWORD_PARAM);
+        if (username != null && password != null) {
+            return new String[]{username, password};
         }
-        String errMsg = "Error decoding credentials param.";
-        throw new OAuthClientAuthnException(errMsg, OAuth2ErrorCodes.INVALID_REQUEST);
+        return null;
     }
 
     /**

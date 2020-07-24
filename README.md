@@ -54,3 +54,51 @@ org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt-<version>-SNAPSHOT.
     ```curl -v POST -H "Content-Type: application/x-www-form-urlencoded;charset=UTF-8" -k -d 'client_id=<clientid>&grant_type=authorization_code&code=$CODE&client_assertion_type=urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-bearer&client_assertion=<private_key_jwt>&redirect_uri=http://localhost:8080/playground2/oauth2client" https://localhost:9443/oauth2/token```
 
 8. Refer https://docs.wso2.com/display/IS550/Private+Key+JWT+Client+Authentication+for+OIDC for more details
+
+### 02. Privileged User Authenticator
+
+This authenticator is used to authenticate a privileged user and allow the permission to revoke accesstokens
+ on behalf of an application.
+
+
+**Deploying and Configuring  artifacts**
+1. Execute "mvn clean install" to build the project.
+
+2. Place component/org.wso2.carbon.identity.oauth2.clientauth.privilegeduser/target/
+org.wso2.carbon.identity.oauth2.clientauth.privilegeduser-<version>-SNAPSHOT.jar in the
+ <IS_HOME>/repository/component/dropins directory.
+3.The cURL command below can be used to revoke an accesstoken.
+ 
+ ```
+ curl -k -v -d "username=<username>&password=<password>&token=<token>&token_type_hint
+ =<token_type>&client_id=<client-id>"  -H "Content-Type: application/x-www-form-urlencoded" https
+://localhost
+:9443/oauth2/revoke
+ ```
+
+Sample Request:
+
+```
+curl -k -v -d "username=admin@abc.com&password=admin&token=9f716139-4493-3635-abec-7498c2e6cba8&token_type_hint
+=access_token&client_id=9e8S8L1lkippHTPIwhfXSl6IWGUa"  -H "Content-Type: application/x-www-form-urlencoded" https://localhost:9443/oauth2/revoke
+```
+
+**Deployment.toml Config**
+
+Add the following config in the deployment.toml file to enable this authenticator.
+```
+[[event_listener]]
+id = "privileged_user_authenticator"
+type = "org.wso2.carbon.identity.core.handler.AbstractIdentityHandler"
+name = "org.wso2.carbon.identity.oauth2.clientauth.privilegeduser.PrivilegedUserAuthenticator"
+order = "200"
+```
+
+
+**User Permission**
+
+- The privileged user should have the following permission to revoke the access token `/permission/admin/manage
+/application/revoke`
+- Create the above permission
+- Assign that permission to the privileged user
+
