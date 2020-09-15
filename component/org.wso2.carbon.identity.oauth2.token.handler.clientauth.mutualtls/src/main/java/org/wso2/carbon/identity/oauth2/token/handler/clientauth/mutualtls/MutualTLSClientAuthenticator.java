@@ -183,7 +183,6 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
                     log.debug("A valid certificate was found in the request attribute hence returning true.");
                 }
                 return true;
-
             } else {
                 if (StringUtils.isNotBlank(headerName) && getCertificateFromHeader(request).isPresent()) {
                     if (log.isDebugEnabled()) {
@@ -201,7 +200,7 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
         }  else {
             if (log.isDebugEnabled()) {
                 log.debug("Mutual TLS authenticator cannot handle this request. " +
-                        "Client id is not available in body params.");
+                        "Client id is not available as a parameter in body.");
             }
             return false;
         }
@@ -231,7 +230,6 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
         String headerString = request.getHeader(headerName);
 
         if (StringUtils.isNotBlank(headerString)) {
-
             if (log.isDebugEnabled()) {
                 log.debug(String.format("%s header available in request as %s", headerName, headerString));
             }

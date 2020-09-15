@@ -101,7 +101,7 @@ public class AbstractMTLSTokenBindingGrantHandler {
     }
 
     /**
-     * Return Certificate for give Certificate Content.
+     * Return X509 Certificate for the given Certificate Content.
      *
      * @param content Certificate Content.
      * @return X509Certificate.
