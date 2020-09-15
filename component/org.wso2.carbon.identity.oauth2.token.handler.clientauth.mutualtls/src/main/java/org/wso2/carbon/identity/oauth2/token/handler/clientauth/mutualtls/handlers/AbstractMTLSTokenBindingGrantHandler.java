@@ -39,11 +39,23 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * This class contains the common methods of MTLS Token Binding Grant Handlers.
+ */
 public class AbstractMTLSTokenBindingGrantHandler {
 
     private static final Log log = LogFactory.getLog(MTLSTokenBindingAuthorizationCodeGrantHandler.class);
 
-    public boolean validateScope(OAuthTokenReqMessageContext tokReqMsgCtx, boolean validateScope) throws IdentityOAuth2Exception {
+    /**
+     * Validate whether scope requested by the access token is valid.
+     *
+     * @param tokReqMsgCtx  Message context of token request.
+     * @param validateScope Boolean by checking if the scope is correct.
+     * @return if the scope is correct.
+     * @throws IdentityOAuth2Exception Error when performing the callback.
+     */
+    public boolean validateScope(OAuthTokenReqMessageContext tokReqMsgCtx, boolean validateScope)
+            throws IdentityOAuth2Exception {
 
         // Get MTLS certificate from transport headers.
         HttpRequestHeader[] requestHeaders = tokReqMsgCtx.getOauth2AccessTokenReqDTO().getHttpRequestHeaders();
@@ -67,7 +79,7 @@ public class AbstractMTLSTokenBindingGrantHandler {
                 }
             } catch (CertificateException e) {
                 if (log.isDebugEnabled()) {
-                    log.debug("Error occurred while calculating the thumbprint of the client MTLS certificate", e);
+                    log.debug("Error occurred while calculating the thumbprint of the client MTLS certificate.", e);
                 }
                 return false;
             }

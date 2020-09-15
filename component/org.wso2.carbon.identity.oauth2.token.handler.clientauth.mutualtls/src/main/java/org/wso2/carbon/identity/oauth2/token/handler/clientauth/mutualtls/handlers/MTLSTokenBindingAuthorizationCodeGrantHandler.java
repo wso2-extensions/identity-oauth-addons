@@ -64,7 +64,7 @@ public class MTLSTokenBindingAuthorizationCodeGrantHandler extends Authorization
 
         if (ArrayUtils.isNotEmpty(scopes) && scopes.length > 0) {
             List<String> scopesList = new LinkedList<>(Arrays.asList(scopes));
-            scopesList.removeIf(scope -> scope.startsWith(CommonConstants.CERT_THUMBPRINT+ CommonConstants.SEPARATOR));
+            scopesList.removeIf(scope -> scope.startsWith(CommonConstants.CERT_THUMBPRINT + CommonConstants.SEPARATOR));
             return scopesList.toArray(new String[0]);
         }
         return scopes;
