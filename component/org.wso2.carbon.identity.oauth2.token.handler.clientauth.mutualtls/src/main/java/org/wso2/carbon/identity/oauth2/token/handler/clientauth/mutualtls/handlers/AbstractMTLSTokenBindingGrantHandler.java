@@ -79,7 +79,8 @@ public class AbstractMTLSTokenBindingGrantHandler {
                 }
             } catch (CertificateException e) {
                 if (log.isDebugEnabled()) {
-                    log.debug("Error occurred while calculating the thumbprint of the client MTLS certificate.", e);
+                    log.debug("Error occurred while calculating the thumbprint of the MTLS certificate " +
+                            "of the client: " + tokReqMsgCtx.getOauth2AccessTokenReqDTO().getClientId(), e);
                 }
                 return false;
             }
