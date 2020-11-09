@@ -29,6 +29,9 @@ import java.util.Map;
 
 import static org.testng.Assert.assertEquals;
 
+/**
+ * Test class for ISIntrospectionDataProviderTest class.
+ */
 public class ISIntrospectionDataProviderTest extends PowerMockTestCase {
 
     ISIntrospectionDataProvider isIntrospectionDataProvider;

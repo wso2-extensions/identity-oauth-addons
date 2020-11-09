@@ -42,6 +42,9 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 import static org.testng.Assert.assertFalse;
 
+/**
+ * Test class for AbstractMTLSTokenBindingGrantHandlerTest class.
+ */
 @PrepareForTest({IdentityUtil.class, CarbonUtils.class, Oauth2ScopeUtils.class, OAuth2Util.class})
 
 @WithCarbonHome
@@ -72,8 +75,9 @@ public class AbstractMTLSTokenBindingGrantHandlerTest extends PowerMockTestCase 
 
         OAuth2AccessTokenReqDTO oauth2AccessTokenReqDTO = new OAuth2AccessTokenReqDTO();
         oauth2AccessTokenReqDTO.setHttpRequestHeaders(getHttpRequestHeaders
-                (new String[]{"content-type","x-wso2-mutual-auth-cert", "user-agent"},
-                        new String[]{"application/x-www-form-urlencoded", CERTIFICATE_CONTENT, "PostmanRuntime/7.24.0"}));
+                (new String[]{"content-type", "x-wso2-mutual-auth-cert", "user-agent"},
+                        new String[]{"application/x-www-form-urlencoded", CERTIFICATE_CONTENT,
+                                "PostmanRuntime/7.24.0"}));
         OAuthClientAuthnContext oAuthClientAuthnContext = new OAuthClientAuthnContext();
         oAuthClientAuthnContext.addParameter(CommonConstants.AUTHENTICATOR_TYPE_PARAM,
                 CommonConstants.AUTHENTICATOR_TYPE_MTLS);

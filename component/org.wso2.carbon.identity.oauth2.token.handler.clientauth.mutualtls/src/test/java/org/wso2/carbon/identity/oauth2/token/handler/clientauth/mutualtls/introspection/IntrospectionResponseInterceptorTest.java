@@ -28,6 +28,9 @@ import java.util.Map;
 
 import static org.testng.Assert.assertNotNull;
 
+/**
+ * Test class for IntrospectionResponseInterceptorTest class.
+ */
 public class IntrospectionResponseInterceptorTest {
 
     IntrospectionResponseInterceptor introspectionResponseInterceptor;

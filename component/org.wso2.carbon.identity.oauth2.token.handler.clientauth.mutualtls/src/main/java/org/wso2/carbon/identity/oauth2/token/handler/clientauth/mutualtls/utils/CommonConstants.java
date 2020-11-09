@@ -18,6 +18,9 @@
 
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils;
 
+/**
+ * Common Constants for MTLS.
+ */
 public class CommonConstants {
 
     public static final String JWKS_URI = "jwksURI";
