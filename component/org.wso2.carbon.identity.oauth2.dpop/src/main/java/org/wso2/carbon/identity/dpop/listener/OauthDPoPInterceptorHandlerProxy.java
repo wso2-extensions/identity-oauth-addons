@@ -45,7 +45,7 @@ import java.util.Map;
 public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventInterceptor {
     private static final Log log = LogFactory.getLog(OauthDPoPInterceptorHandlerProxy.class);
     private int dPopValidity;
-    private boolean isDPoPEnable;
+    private boolean isDPoPConfigEnable;
 
     /**
      * This method handles dpop proof validation during pre token issuance.
@@ -228,9 +228,11 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
             IdentityConfigParser configParser = IdentityConfigParser.getInstance();
             OMElement oauthElem = configParser.getConfigElement("OAuth");
             getDPoPConfig(oauthElem);
-            if((currentTimestamp.getTime()-issueAt.getTime())>dPopValidity){
-                // TODO should throw an exception
-                log.info("DPoP Proof expired");
+            if(((currentTimestamp.getTime()-issueAt.getTime())/1000)>dPopValidity){
+                if (log.isDebugEnabled()) {
+                    log.debug("DPoP Proof expired");
+                }
+                throw new IdentityOAuth2Exception("Expired DPoP Proof Payload");
             }
         }
     }
@@ -238,18 +240,18 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
         OMElement dPopConfigElem = oauthElem
                 .getFirstChildWithName(getQNameWithIdentityNS("DPoPConfig"));
         if (dPopConfigElem != null) {
-            isDPoPEnable =true;
+            isDPoPConfigEnable =true;
             OMElement tokenCleanupConfigElem =
                     dPopConfigElem.getFirstChildWithName(getQNameWithIdentityNS("HeaderValidity"));
             if (tokenCleanupConfigElem != null && StringUtils.isNotBlank(tokenCleanupConfigElem.getText())) {
                 dPopValidity = Integer.parseInt(tokenCleanupConfigElem.getText().trim());
 
             } else {
-                dPopValidity = 0;
-                isDPoPEnable = false;
+                dPopValidity = 60;
+                isDPoPConfigEnable = false;
             }
         } else {
-            isDPoPEnable = false;
+            isDPoPConfigEnable = false;
         }
     }
 

@@ -60,7 +60,11 @@
             <artifactId>json-smart</artifactId>
             <version>2.3</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.wso2.carbon</groupId>
+            <artifactId>org.wso2.carbon.core.common</artifactId>
+            <version>4.6.0</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -98,7 +102,7 @@
                             org.wso2.carbon.identity.dpop.util.*;
                             version="${project.version}"
                         </Export-Package>
-<!--                        <DynamicImport-Package>*</DynamicImport-Package>-->
+                        <DynamicImport-Package>*</DynamicImport-Package>
                     </instructions>
                 </configuration>
             </plugin>
