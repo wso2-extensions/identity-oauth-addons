@@ -17,15 +17,15 @@ public class DPoPServiceComponent {
     private static final Log log = LogFactory.getLog(DPoPServiceComponent.class);
 
     @Activate
-    protected void activate(ComponentContext context){
-        context.getBundleContext().registerService(OAuthEventInterceptor.class, new OauthDPoPInterceptorHandlerProxy(),null);
-        if (log.isDebugEnabled()){
+    protected void activate(ComponentContext context) {
+        context.getBundleContext().registerService(OAuthEventInterceptor.class, new OauthDPoPInterceptorHandlerProxy(), null);
+        if (log.isDebugEnabled()) {
             log.debug("DPoP Interceptor is Activated");
         }
     }
 
     @Deactivate
-    protected void deActivate(ComponentContext context){
+    protected void deActivate(ComponentContext context) {
 
     }
 }
