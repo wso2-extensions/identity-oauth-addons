@@ -38,7 +38,7 @@
         <module>features/org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.feature</module>
         <module>features/org.wso2.carbon.identity.oauth2.validators.xacml.server.feature</module>
         <module>component/org.wso2.carbon.identity.oauth2.clientauth.privilegeduser</module>
-        <module>component/org.wso2.carbon.identity.oauth2.dpop</module>
+        <module>component/org.wso2.carbon.identity.dpop</module>
     </modules>
 
     <profiles>

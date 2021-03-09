@@ -10,7 +10,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>org.wso2.carbon.identity.oauth2.dpop</artifactId>
+    <artifactId>org.wso2.carbon.identity.dpop</artifactId>
     <packaging>bundle</packaging>
 
     <dependencies>
@@ -32,7 +32,12 @@
         </dependency>
         <dependency>
             <groupId>org.wso2.carbon.identity.inbound.auth.oauth2</groupId>
-            <artifactId>identity-inbound-auth-oauth</artifactId>
+            <artifactId>org.wso2.carbon.identity.oauth</artifactId>
+            <version>6.4.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.inbound.auth.oauth2</groupId>
+            <artifactId>org.wso2.carbon.identity.oauth.common</artifactId>
             <version>6.4.2</version>
         </dependency>
         <dependency>
@@ -65,8 +70,8 @@
                 <extensions>true</extensions>
                 <configuration>
                     <instructions>
-                        <Bundle-SymbolicName>org.wso2.carbon.identity.oauth2.dpop</Bundle-SymbolicName>
-                        <Bundle-Name>org.wso2.carbon.identity.oauth2.dpop</Bundle-Name>
+                        <Bundle-SymbolicName>org.wso2.carbon.identity.dpop</Bundle-SymbolicName>
+                        <Bundle-Name>org.wso2.carbon.identity.dpop</Bundle-Name>
                         <Private-Package>
                             org.wso2.carbon.identity.dpop.internal,
                         </Private-Package>
