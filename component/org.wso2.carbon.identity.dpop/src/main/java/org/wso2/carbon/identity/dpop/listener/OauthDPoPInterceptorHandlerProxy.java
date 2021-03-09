@@ -55,7 +55,7 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
     private static final Log log = LogFactory.getLog(OauthDPoPInterceptorHandlerProxy.class);
     private int dPopValidity;
     private static final String ECDSA_ENCRYPTION = "EC";
-    private static final String RSA_ENCRYPTION = "RSS";
+    private static final String RSA_ENCRYPTION = "RSA";
     private boolean isRefreshRequest = false;
 
     /**
