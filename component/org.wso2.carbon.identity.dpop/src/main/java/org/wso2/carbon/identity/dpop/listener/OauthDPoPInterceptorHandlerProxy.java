@@ -73,6 +73,7 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
             log.debug(String.format("Listening to the pre token issue event with the DPoP proof for the " +
                     "application: %s", tokenReqDTO.getClientId()));
         }
+        isRefreshRequest = false;
         String dPopProof = getDPoPHeader(tokReqMsgCtx.getOauth2AccessTokenReqDTO().getHttpRequestHeaders());
 
         try {
