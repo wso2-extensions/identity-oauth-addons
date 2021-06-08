@@ -60,7 +60,7 @@ import static org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENA
 @WithKeyStore
 public class PrivateKeyJWTClientAuthenticatorTest {
 
-    PrivateKeyJWTClientAuthenticator privateKeyJWTClientAuthenticator = new PrivateKeyJWTClientAuthenticator();
+    PrivateKeyJWTClientAuthenticator privateKeyJWTClientAuthenticator;
     @Mock
     HttpServletRequest httpServletRequest;
 
@@ -77,6 +77,7 @@ public class PrivateKeyJWTClientAuthenticatorTest {
                 System.getProperty(CarbonBaseConstants.CARBON_HOME));
         key1 = clientKeyStore.getKey("wso2carbon", "wso2carbon".toCharArray());
         audience = IdentityUtil.getServerURL(IdentityConstants.OAuth.TOKEN, true, false);
+        privateKeyJWTClientAuthenticator = new PrivateKeyJWTClientAuthenticator();
     }
 
     @Test

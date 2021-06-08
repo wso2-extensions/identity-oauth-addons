@@ -22,6 +22,8 @@ import com.nimbusds.jose.util.Resource;
 import org.testng.IObjectFactory;
 import org.testng.annotations.ObjectFactory;
 import org.testng.annotations.Test;
+import org.wso2.carbon.identity.common.testng.WithCarbonHome;
+import org.wso2.carbon.identity.common.testng.WithRealmService;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.cache.MutualTLSJWKSCache;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.cache.MutualTLSJWKSCacheEntry;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.cache.MutualTLSJWKSCacheKey;
@@ -32,6 +34,8 @@ import static org.testng.Assert.assertNotNull;
 /**
  * Test class for MutualTLSJWKSCache class.
  */
+@WithCarbonHome
+@WithRealmService
 public class MutualTLSJWKSCacheTest {
 
 
