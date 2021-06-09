@@ -23,7 +23,7 @@ import com.nimbusds.jose.util.Resource;
 /**
  * MutualTLSJWKSCacheEntry wraps Resource cache value to make them serializable. This will be used with MutualTLSJWKSCache.
  */
-public class MutualTLSJWKSCacheEntry extends org.wso2.carbon.identity.application.common.cache.CacheEntry {
+public class MutualTLSJWKSCacheEntry extends org.wso2.carbon.identity.core.cache.CacheEntry {
 
     private transient Resource resource;
 

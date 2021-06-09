@@ -19,7 +19,7 @@
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.cache;
 
 import com.nimbusds.jwt.SignedJWT;
-import org.wso2.carbon.identity.application.common.cache.CacheEntry;
+import org.wso2.carbon.identity.core.cache.CacheEntry;
 
 import java.text.ParseException;
 
