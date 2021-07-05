@@ -22,8 +22,8 @@
 <suite name="Identity-Oauth-Mutual-TLS-Test-Suite">
     <test name="oauth.tests.with.debug.x" preserve-order="true" parallel="false">
         <parameter name="log-level" value="debug, info"/>
-        <!--classes>
+        <classes>
             <class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.tlswithidsecret.MutualTLSWithIdSecretAuthenticator"/>
-        </classes-->
+        </classes>
     </test>
 </suite>

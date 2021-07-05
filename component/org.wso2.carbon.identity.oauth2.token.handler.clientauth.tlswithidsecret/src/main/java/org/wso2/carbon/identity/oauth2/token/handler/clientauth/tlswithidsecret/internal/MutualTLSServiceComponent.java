@@ -53,7 +53,7 @@ public class MutualTLSServiceComponent {
                 log.debug("Mutual TLS with basic auth bundle is activated");
             }
 
-        } catch (Throwable e) {
+        } catch (Exception e) {
             log.error("Error occurred while registering MutualTLSWithIdSecretAuthenticator.", e);
         }
     }
