@@ -28,21 +28,20 @@ import org.wso2.carbon.identity.oauth.event.OAuthEventInterceptor;
 
 @Component(
         name = "org.wso2.carbon.identity.oauth.dpop.listener.oauth.dpopinterceptorhandler",
-        immediate = true
-)
+        immediate = true)
 public class DPoPServiceComponent {
+
     private static final Log log = LogFactory.getLog(DPoPServiceComponent.class);
 
     @Activate
     protected void activate(ComponentContext context) {
+
         try {
-            context.getBundleContext().registerService(OAuthEventInterceptor.class, new OauthDPoPInterceptorHandlerProxy(),
-                    null);
-            if (log.isDebugEnabled()) {
-                log.debug("DPoP Interceptor is Activated");
-            }
+            context.getBundleContext().registerService(OAuthEventInterceptor.class,
+                    new OauthDPoPInterceptorHandlerProxy(), null);
+            log.debug("DPoP interceptor is activated.");
         } catch (Throwable e) {
-            log.error("Error while registering DPoP Interceptor", e);
+            log.error("Error while registering DPoP interceptor.", e);
         }
     }
 }

@@ -16,16 +16,23 @@
  * under the License
  */
 
-package org.wso2.carbon.identity.dpop.util;
+package org.wso2.carbon.identity.dpop.constant;
 
-public class DPoPConstants {
-    public static final String OAUTH_CONFIG_ELEMENT = "OAuth";
-    public static final String DPOP_CONFIG_ELEMENT = "DPoPConfig";
-    public static final String DPOP_CONFIG_HEADER_VALIDITY = "HeaderValidity";
-    public static final String DPOP_ISSUE_AT = "iat";
+/**
+ * This class defines constants for Oauth2 DPoP validation.
+ */
+public class Constants {
+
+    public static final String DPOP_CONFIG_ELEMENT = "OAuth.DPoPConfig";
+    public static final String HEADER_VALIDITY = "HeaderValidity";
+    public static final int DEFAULT_HEADER_VALIDITY = 60000;
+    public static final String DPOP_ISSUED_AT = "iat";
     public static final String DPOP_HTTP_URI = "htu";
     public static final String DPOP_HTTP_METHOD = "htm";
     public static final String DPOP_JWT_TYPE = "dpop+jwt";
     public static final String DPOP_TOKEN_TYPE = "DPoP";
-    public static final String INVALID_DPOP_ERROR = "Invalid DPoP Proof";
+    public static final String INVALID_DPOP_PROOF = "invalid_dpop_proof";
+
+    public static final String ECDSA_ENCRYPTION = "EC";
+    public static final String RSA_ENCRYPTION = "RSA";
 }
