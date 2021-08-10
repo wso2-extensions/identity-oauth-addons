@@ -35,4 +35,11 @@ public class Constants {
 
     public static final String ECDSA_ENCRYPTION = "EC";
     public static final String RSA_ENCRYPTION = "RSA";
+
+    public static final String OAUTH_HEADER = "Bearer";
+    public static final String OAUTH_DPOP_HEADER = "DPoP";
+    public static final String CONSUMER_KEY = "consumer-key";
+    public static final String SERVICE_PROVIDER = "serviceProvider";
+    public static final String SERVICE_PROVIDER_TENANT_DOMAIN = "serviceProviderTenantDomain";
+    public static final String SCIM_ME_ENDPOINT_URI = "scim2/me";
 }
