@@ -23,6 +23,8 @@ import org.apache.commons.logging.LogFactory;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.wso2.carbon.identity.auth.service.handler.AuthenticationHandler;
+import org.wso2.carbon.identity.dpop.handler.DPoPAuthenticationHandler;
 import org.wso2.carbon.identity.dpop.listener.OauthDPoPInterceptorHandlerProxy;
 import org.wso2.carbon.identity.oauth.event.OAuthEventInterceptor;
 
@@ -39,9 +41,11 @@ public class DPoPServiceComponent {
         try {
             context.getBundleContext().registerService(OAuthEventInterceptor.class,
                     new OauthDPoPInterceptorHandlerProxy(), null);
-            log.debug("DPoP interceptor is activated.");
+            context.getBundleContext().registerService(AuthenticationHandler.class.getName(),
+                    new DPoPAuthenticationHandler(), null);
+            log.debug("DPoPService is activated.");
         } catch (Throwable e) {
-            log.error("Error while registering DPoP interceptor.", e);
+            log.error(e.getMessage(), e);
         }
     }
 }
