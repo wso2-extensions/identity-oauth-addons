@@ -89,10 +89,7 @@
                             org.wso2.carbon.identity.dpop.internal,
                         </Private-Package>
                         <Import-Package>
-                            com.nimbusds.jose; version="${nimbusds.osgi.version.range}",
-                            com.nimbusds.jose.jwk; version="${nimbusds.osgi.version.range}",
-                            com.nimbusds.jose.crypto; version="${nimbusds.osgi.version.range}",
-                            com.nimbusds.jose.util; version="${nimbusds.osgi.version.range}",
+                            com.nimbusds.jose.*; version="${nimbusds.osgi.version.range}",
                             com.nimbusds.jwt; version="${nimbusds.osgi.version.range}",
                             javax.servlet.http; version="${javax.servlet.http.package.import.version.range}",
                             org.osgi.framework; version="${osgi.framework.package.import.version.range}",
@@ -100,48 +97,28 @@
                             version="${osgi.service.component.package.import.version.range}",
                             org.apache.commons.logging;
                             version="${apache.commons.logging.package.import.version.range}",
-                            org.wso2.carbon.identity.oauth.common.exception;
+                            org.wso2.carbon.identity.oauth.*;
                             version="${identity.inbound.auth.oauth.imp.pkg.version}",
-                            org.wso2.carbon.identity.oauth.common;
+                            org.wso2.carbon.identity.oauth2.*;
                             version="${identity.inbound.auth.oauth.imp.pkg.version}",
-                            org.wso2.carbon.identity.oauth.event;
-                            version="${identity.inbound.auth.oauth.imp.pkg.version}",
-                            org.wso2.carbon.identity.oauth2;
-                            version="${identity.inbound.auth.oauth.imp.pkg.version}",
-                            org.wso2.carbon.identity.oauth2.dto;
-                            version="${identity.inbound.auth.oauth.imp.pkg.version}",
-                            org.wso2.carbon.identity.oauth.dao;
-                            version="${identity.inbound.auth.oauth.imp.pkg.version}",
-                            org.wso2.carbon.identity.oauth2.model;
-                            version="${identity.inbound.auth.oauth.imp.pkg.version}",
-                            org.wso2.carbon.identity.oauth2.token;
-                            version="${identity.inbound.auth.oauth.imp.pkg.version}",
-                            org.wso2.carbon.identity.oauth2.token.bindings;
-                            version="${identity.inbound.auth.oauth.imp.pkg.version}",
-                            org.wso2.carbon.identity.oauth2.util;
-                            version="${identity.inbound.auth.oauth.imp.pkg.version}",
-                            org.wso2.carbon.identity.auth.service;
-                            version="${identity.carbon.auth.rest.version}",
-                            org.wso2.carbon.identity.auth.service.util;
-                            version="${identity.carbon.auth.rest.version}",
-                            org.wso2.carbon.identity.auth.service.handler;
-                            version="${identity.carbon.auth.rest.version}",
-                            org.wso2.carbon.identity.auth.service.handler.impl;
+                            org.wso2.carbon.identity.auth.service.*;
                             version="${identity.carbon.auth.rest.version}",
                             org.wso2.carbon.identity.base;
                             version="${carbon.identity.package.import.version.range}",
-                            org.wso2.carbon.identity.core;
+                            org.wso2.carbon.identity.core.*;
                             version="${carbon.identity.package.import.version.range}",
-                            org.wso2.carbon.identity.core.handler;
+                            org.wso2.carbon.user.core.util;
+                            version="${carbon.kernel.package.import.version.range}",
+                            org.wso2.carbon.identity.application.common.*;
                             version="${carbon.identity.package.import.version.range}",
-                            org.wso2.carbon.identity.core.util;
-                            version="${carbon.identity.package.import.version.range}"
+                            org.wso2.carbon.utils.multitenancy;
+                            version="${carbon.kernel.package.import.version.range}",
+                            org.apache.catalina.*;version="${apache.catalina.version}"
                         </Import-Package>
                         <Export-Package>
                             !org.wso2.carbon.identity.dpop.internal,
                             org.wso2.carbon.identity.dpop.*; version="${project.version}"
                         </Export-Package>
-                        <DynamicImport-Package>*</DynamicImport-Package>
                     </instructions>
                 </configuration>
             </plugin>
