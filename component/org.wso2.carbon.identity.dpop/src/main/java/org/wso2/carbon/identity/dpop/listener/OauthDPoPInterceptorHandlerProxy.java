@@ -36,7 +36,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.core.handler.AbstractIdentityHandler;
 import org.wso2.carbon.identity.core.model.IdentityEventListenerConfig;
-import org.wso2.carbon.identity.core.util.IdentityCoreConstants;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.dpop.constant.Constants;
@@ -52,8 +51,6 @@ import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
 import org.wso2.carbon.identity.oauth2.token.bindings.TokenBinding;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 
-import javax.servlet.http.HttpServletRequestWrapper;
-import javax.xml.namespace.QName;
 import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPublicKey;
 import java.sql.Connection;
@@ -64,6 +61,8 @@ import java.sql.Timestamp;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.Map;
+
+import javax.servlet.http.HttpServletRequestWrapper;
 
 /**
  * This class extends AbstractOAuthEventInterceptor and listen to oauth token related events.
@@ -168,16 +167,15 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
 
     @Override
     public boolean isEnabled() {
-
         IdentityEventListenerConfig identityEventListenerConfig = IdentityUtil.readEventListenerProperty
                 (AbstractIdentityHandler.class.getName(), this.getClass().getName());
-        return identityEventListenerConfig != null &&
+        return identityEventListenerConfig == null ||
                 Boolean.parseBoolean(identityEventListenerConfig.getEnable());
     }
 
     private boolean isValidDPoP(String dPoPProof, OAuth2AccessTokenReqDTO tokenReqDTO,
                                 OAuthTokenReqMessageContext tokReqMsgCtx, boolean isRenewalRequest)
-                                throws IdentityOAuth2Exception {
+            throws IdentityOAuth2Exception {
 
         try {
             SignedJWT signedJwt = SignedJWT.parse(dPoPProof);
@@ -210,7 +208,7 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
                 tokenBinding.setBindingValue(publicKey);
                 tokenBinding.setBindingReference(DigestUtils.md5Hex(publicKey));
             }
-        // Using the RSA algorithm.
+            // Using the RSA algorithm.
         } else if (Constants.RSA_ENCRYPTION.equalsIgnoreCase(jwk.getKeyType().toString())) {
             RSAKey rsaKey = (RSAKey) jwk;
             RSAPublicKey rsaPublicKey = rsaKey.toRSAPublicKey();
@@ -263,15 +261,16 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
 
         HttpServletRequestWrapper requestWrapper = tokenReqDTO.getHttpServletRequestWrapper();
         Object dPoPHttpMethod = jwtClaimsSet.getClaim(Constants.DPOP_HTTP_METHOD);
+
         // Validate if the DPoP proof HTTP method matches that of the request.
-        if (requestWrapper.getMethod().equalsIgnoreCase(dPoPHttpMethod.toString())) {
+        if (!requestWrapper.getMethod().equalsIgnoreCase(dPoPHttpMethod.toString())) {
             log.debug("DPoP Proof HTTP method mismatch.");
             throw new IdentityOAuth2Exception(Constants.INVALID_DPOP_PROOF);
         }
 
         // Validate if the DPoP proof HTTP method matches that of the request.
         Object dPoPContextPath = jwtClaimsSet.getClaim(Constants.DPOP_HTTP_URI);
-        if (requestWrapper.getContextPath().equalsIgnoreCase(dPoPContextPath.toString())) {
+        if (!requestWrapper.getRequestURL().toString().equalsIgnoreCase(dPoPContextPath.toString())) {
             log.debug("DPoP Proof context path mismatch.");
             throw new IdentityOAuth2Exception(Constants.INVALID_DPOP_PROOF);
         }
@@ -316,11 +315,11 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
             ResultSet resultSet;
             String sql =
                     "SELECT token_binding_type,\n" +
-                    "       token_binding_value\n" +
-                    "FROM   idn_oauth2_token_binding\n" +
-                    "WHERE  token_binding_ref = (SELECT token_binding_ref\n" +
-                    "                            FROM   idn_oauth2_access_token\n" +
-                    "                            WHERE  refresh_token = ?) ";
+                            "       token_binding_value\n" +
+                            "FROM   idn_oauth2_token_binding\n" +
+                            "WHERE  token_binding_ref = (SELECT token_binding_ref\n" +
+                            "                            FROM   idn_oauth2_access_token\n" +
+                            "                            WHERE  refresh_token = ?) ";
             prepStmt = connection.prepareStatement(sql);
             prepStmt.setString(1, refreshToken);
             TokenBinding tokenBinding = new TokenBinding();
@@ -340,7 +339,6 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
             IdentityOAuth2Exception {
 
         OAuthAppDO oauthAppDO = OAuth2Util.getAppInformationByClientId(consumerKey);
-        String dPoPState = oauthAppDO.getDpopState();
-        return dPoPState != null ? DPoPState.valueOf(dPoPState) : DPoPState.DISABLED;
+        return DPoPState.valueOf(oauthAppDO.getDpopState().toUpperCase());
     }
 }
