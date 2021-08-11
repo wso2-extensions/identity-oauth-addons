@@ -77,6 +77,10 @@ import static org.wso2.carbon.identity.dpop.constant.Constants.SERVICE_PROVIDER;
 import static org.wso2.carbon.identity.dpop.constant.Constants.SERVICE_PROVIDER_TENANT_DOMAIN;
 import static org.wso2.carbon.identity.oauth2.OAuth2Constants.TokenBinderType.SSO_SESSION_BASED_TOKEN_BINDER;
 
+/**
+ * DPoPAuthenticationHandler is for authenticate the request based on Token.
+ * canHandle method will confirm whether this request can be handled by this authenticator or not.
+ */
 public class DPoPAuthenticationHandler extends AuthenticationHandler {
 
     private static final Log log = LogFactory.getLog(OAuth2AccessTokenHandler.class);
