@@ -69,34 +69,6 @@
                             </execution>
                         </executions>
                     </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-checkstyle-plugin</artifactId>
-                        <version>${maven.checkstyleplugin.version}</version>
-                        <executions>
-                            <execution>
-                                <id>validate</id>
-                                <phase>validate</phase>
-                                <configuration>
-                                    <configLocation>
-                                        https://raw.githubusercontent.com/wso2/code-quality-tools/master/checkstyle/checkstyle.xml
-                                    </configLocation>
-                                    <suppressionsLocation>
-                                        https://raw.githubusercontent.com/wso2/code-quality-tools/master/checkstyle/suppressions.xml
-                                    </suppressionsLocation>
-                                    <encoding>UTF-8</encoding>
-                                    <consoleOutput>true</consoleOutput>
-                                    <failsOnError>true</failsOnError>
-                                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
-                                    <!--Exclude sources-->
-                                    <excludes>${maven.checkstyleplugin.excludes}</excludes>
-                                </configuration>
-                                <goals>
-                                    <goal>check</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
                 </plugins>
             </build>
         </profile>
@@ -125,20 +97,16 @@
                 <artifactId>org.wso2.carbon.identity.event</artifactId>
                 <version>${carbon.identity.version}</version>
             </dependency>
-
-
             <dependency>
                 <groupId>org.wso2.carbon.identity.auth.rest</groupId>
                 <artifactId>org.wso2.carbon.identity.auth.service</artifactId>
                 <version>${identity.carbon.auth.rest.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>org.wso2.carbon.identity.framework</groupId>
                 <artifactId>org.wso2.carbon.identity.user.profile</artifactId>
                 <version>${carbon.identity.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>org.wso2.carbon.identity.framework</groupId>
                 <artifactId>org.wso2.carbon.identity.core</artifactId>
@@ -345,6 +313,62 @@
     </dependencyManagement>
 
     <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>${maven.checkstyleplugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>validate</id>
+                        <phase>validate</phase>
+                        <configuration>
+                            <configLocation>
+                                https://raw.githubusercontent.com/wso2/code-quality-tools/master/checkstyle/checkstyle.xml
+                            </configLocation>
+                            <suppressionsLocation>
+                                https://raw.githubusercontent.com/wso2/code-quality-tools/master/checkstyle/suppressions.xml
+                            </suppressionsLocation>
+                            <encoding>UTF-8</encoding>
+                            <consoleOutput>true</consoleOutput>
+                            <failsOnError>true</failsOnError>
+                            <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                            <!--Exclude sources-->
+                            <excludes>${maven.checkstyleplugin.excludes}</excludes>
+                        </configuration>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <configuration>
+                    <preparationGoals>clean install</preparationGoals>
+                    <autoVersionSubmodules>true</autoVersionSubmodules>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven.compiler.plugin}</version>
+                <inherited>true</inherited>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>buildnumber-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
         <pluginManagement>
             <plugins>
                 <plugin>
@@ -378,34 +402,6 @@
                 </plugin>
             </plugins>
         </pluginManagement>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
-                <configuration>
-                    <preparationGoals>clean install</preparationGoals>
-                    <autoVersionSubmodules>true</autoVersionSubmodules>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-deploy-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>${maven.compiler.plugin}</version>
-                <inherited>true</inherited>
-                <configuration>
-                    <encoding>UTF-8</encoding>
-                    <source>1.8</source>
-                    <target>1.8</target>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>buildnumber-maven-plugin</artifactId>
-            </plugin>
-        </plugins>
     </build>
     <pluginRepositories>
         <pluginRepository>
@@ -551,7 +547,7 @@
 
         <apache.catalina.version>1.7.0</apache.catalina.version>
 
-        <maven.checkstyleplugin.excludes>**/gen/**/*</maven.checkstyleplugin.excludes>
         <maven.checkstyleplugin.version>2.17</maven.checkstyleplugin.version>
+        <maven.checkstyleplugin.excludes>**/gen/**/*</maven.checkstyleplugin.excludes>
     </properties>
 </project>
