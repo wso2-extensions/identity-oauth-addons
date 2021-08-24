@@ -42,7 +42,6 @@ import org.wso2.carbon.identity.auth.service.AuthenticationRequest;
 import org.wso2.carbon.identity.auth.service.AuthenticationResult;
 import org.wso2.carbon.identity.auth.service.AuthenticationStatus;
 import org.wso2.carbon.identity.auth.service.handler.AuthenticationHandler;
-import org.wso2.carbon.identity.auth.service.handler.impl.OAuth2AccessTokenHandler;
 import org.wso2.carbon.identity.auth.service.util.AuthConfigurationUtil;
 import org.wso2.carbon.identity.auth.service.util.Constants;
 import org.wso2.carbon.identity.core.bean.context.MessageContext;
@@ -83,7 +82,7 @@ import static org.wso2.carbon.identity.oauth2.OAuth2Constants.TokenBinderType.SS
  */
 public class DPoPAuthenticationHandler extends AuthenticationHandler {
 
-    private static final Log log = LogFactory.getLog(OAuth2AccessTokenHandler.class);
+    private static final Log log = LogFactory.getLog(DPoPAuthenticationHandler.class);
 
     @Override
     protected AuthenticationResult doAuthenticate(MessageContext messageContext) {
@@ -277,13 +276,13 @@ public class DPoPAuthenticationHandler extends AuthenticationHandler {
         String tokenBindingValue = null;
         try {
             AccessTokenDO accessTokenDO = OAuth2Util.findAccessToken(accessToken, false);
-            if (accessTokenDO != null) {
-                if (accessTokenDO.getTokenBinding() != null &&
+
+                if (accessTokenDO != null && accessTokenDO.getTokenBinding() != null &&
                         StringUtils.isNotBlank(accessTokenDO.getTokenBinding().getBindingValue()) &&
                         isSSOSessionBasedTokenBinding(accessTokenDO.getTokenBinding().getBindingType())) {
                     tokenBindingValue = accessTokenDO.getTokenBinding().getBindingValue();
                 }
-            }
+
         } catch (IdentityOAuth2Exception e) {
             log.error("Error occurred while getting the access token from the token identifier", e);
         }
