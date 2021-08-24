@@ -78,7 +78,6 @@ import static org.wso2.carbon.identity.oauth2.OAuth2Constants.TokenBinderType.SS
 
 /**
  * DPoPAuthenticationHandler is for authenticate the request based on Token.
- * canHandle method will confirm whether this request can be handled by this authenticator or not.
  */
 public class DPoPAuthenticationHandler extends AuthenticationHandler {
 
