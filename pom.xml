@@ -22,11 +22,11 @@
     <parent>
         <groupId>org.wso2</groupId>
         <artifactId>wso2</artifactId>
-        <version>1.2</version>
+        <version>1.4</version>
     </parent>
     <groupId>org.wso2.carbon.extension.identity.oauth.addons</groupId>
     <artifactId>identity-oauth2-extenstions</artifactId>
-    <version>2.3.6-SNAPSHOT</version>
+    <version>2.4.3-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>WSO2 Carbon Extension - Identity OAuth Extensions Pom</name>
     <url>http://wso2.org</url>
@@ -35,6 +35,7 @@
         <module>component/client-handler</module>
         <!--this should be released after the required supplementary features are merged-->
         <module>component/org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls</module>
+        <module>component/org.wso2.carbon.identity.oauth2.token.handler.clientauth.tlswithidsecret</module>
         <module>component/org.wso2.carbon.identity.oauth2.validators.xacml</module>
         <module>features/org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.feature</module>
         <module>features/org.wso2.carbon.identity.oauth2.validators.xacml.server.feature</module>
@@ -237,13 +238,12 @@
                 <artifactId>org.wso2.balana.utils</artifactId>
                 <version>${balana.version}</version>
             </dependency>
-            <!--Test Dependencies-->
             <dependency>
-                <groupId>junit</groupId>
-                <artifactId>junit</artifactId>
-                <version>${junit.version}</version>
+                <groupId>org.wso2.carbon</groupId>
+                <artifactId>org.wso2.carbon.utils</artifactId>
+                <version>${carbon.kernel.version}</version>
             </dependency>
-
+            <!--Test Dependencies-->
             <dependency>
                 <groupId>org.testng</groupId>
                 <artifactId>testng</artifactId>
@@ -403,83 +403,15 @@
             </plugins>
         </pluginManagement>
     </build>
-    <pluginRepositories>
-        <pluginRepository>
-            <id>wso2.releases</id>
-            <name>WSO2 internal Repository</name>
-            <url>http://maven.wso2.org/nexus/content/repositories/releases/</url>
-            <releases>
-                <enabled>true</enabled>
-                <updatePolicy>daily</updatePolicy>
-                <checksumPolicy>ignore</checksumPolicy>
-            </releases>
-        </pluginRepository>
-        <pluginRepository>
-            <id>wso2.snapshots</id>
-            <name>Apache Snapshot Repository</name>
-            <url>http://maven.wso2.org/nexus/content/repositories/snapshots/</url>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>daily</updatePolicy>
-            </snapshots>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-        </pluginRepository>
-        <pluginRepository>
-            <id>wso2-nexus</id>
-            <name>WSO2 internal Repository</name>
-            <url>http://maven.wso2.org/nexus/content/groups/wso2-public/</url>
-            <releases>
-                <enabled>true</enabled>
-                <updatePolicy>daily</updatePolicy>
-                <checksumPolicy>ignore</checksumPolicy>
-            </releases>
-        </pluginRepository>
-    </pluginRepositories>
-    <repositories>
-        <repository>
-            <id>wso2-nexus</id>
-            <name>WSO2 internal Repository</name>
-            <url>http://maven.wso2.org/nexus/content/groups/wso2-public/</url>
-            <releases>
-                <enabled>true</enabled>
-                <updatePolicy>daily</updatePolicy>
-                <checksumPolicy>ignore</checksumPolicy>
-            </releases>
-        </repository>
-        <repository>
-            <id>wso2.releases</id>
-            <name>WSO2 internal Repository</name>
-            <url>http://maven.wso2.org/nexus/content/repositories/releases/</url>
-            <releases>
-                <enabled>true</enabled>
-                <updatePolicy>daily</updatePolicy>
-                <checksumPolicy>ignore</checksumPolicy>
-            </releases>
-        </repository>
-        <repository>
-            <id>wso2.snapshots</id>
-            <name>Apache Snapshot Repository</name>
-            <url>http://maven.wso2.org/nexus/content/repositories/snapshots/</url>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>daily</updatePolicy>
-            </snapshots>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-        </repository>
-    </repositories>
 
     <properties>
 
-        <carbon.identity.version>5.14.67</carbon.identity.version>
-        <identity.inbound.auth.oauth.version>6.4.2</identity.inbound.auth.oauth.version>
+
+        <carbon.identity.version>5.14.67</carbon.identity.version>    
+        <identity.inbound.auth.oauth.version>6.2.18</identity.inbound.auth.oauth.version>
         <identity.inbound.auth.oauth.imp.pkg.version>[6.2.18,7.0.0)</identity.inbound.auth.oauth.imp.pkg.version>
         <identity.carbon.auth.rest.version>1.4.0</identity.carbon.auth.rest.version>
         <identity.carbon.auth.rest.imp.pkg.version>[1.0.0,2.0.0)</identity.carbon.auth.rest.imp.pkg.version>
-
         <carbon.kernel.version>4.6.0</carbon.kernel.version>
         <carbon.kernel.feature.version>4.6.0</carbon.kernel.feature.version>
         <carbon.user.api.imp.pkg.version.range>[1.0.1, 2.0.0)</carbon.user.api.imp.pkg.version.range>
@@ -524,10 +456,12 @@
         <balana.import.version.range>[1.1.0, 2.0.0)</balana.import.version.range>
         <axiom.osgi.version.range>[1.2.11, 2.0.0)</axiom.osgi.version.range>
         <axiom.org.jaxen.imp.pkg.version.range>[1.1.1, 2.0.0)</axiom.org.jaxen.imp.pkg.version.range>
+        <axis2.osgi.version.range>[1.6.1.wso2v12, 2.0.0)</axis2.osgi.version.range>
+        <osgi.util.tracker.imp.pkg.version.range>[1.5.1, 2.0.0)</osgi.util.tracker.imp.pkg.version.range>
+        <carbon.user.api.imp.pkg.version.range>[1.0.1, 2.0.0)</carbon.user.api.imp.pkg.version.range>
 
         <!--Test Dependencies-->
         <commons.collections.version>3.2.2</commons.collections.version>
-        <junit.version>4.12</junit.version>
         <testng.version>6.9.10</testng.version>
         <jacoco.version>0.7.9</jacoco.version>
         <powermock.version>1.6.6</powermock.version>

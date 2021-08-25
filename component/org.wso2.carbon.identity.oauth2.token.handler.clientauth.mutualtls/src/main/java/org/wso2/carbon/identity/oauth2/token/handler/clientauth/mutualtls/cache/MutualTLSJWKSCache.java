@@ -18,13 +18,13 @@
 
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.cache;
 
-import org.wso2.carbon.identity.application.common.cache.BaseCache;
+import org.wso2.carbon.identity.application.authentication.framework.cache.AuthenticationBaseCache;
 import org.wso2.carbon.utils.CarbonUtils;
 
 /**
  * JWKS cache enables caching responses from JWK URIs
  */
-public class MutualTLSJWKSCache extends BaseCache<MutualTLSJWKSCacheKey, MutualTLSJWKSCacheEntry> {
+public class MutualTLSJWKSCache extends AuthenticationBaseCache<MutualTLSJWKSCacheKey, MutualTLSJWKSCacheEntry> {
 
     private static final String JWKS_CACHE_NAME = "MutualTLSJWKSCache";
 
