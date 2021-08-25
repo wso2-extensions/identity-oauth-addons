@@ -92,8 +92,7 @@ public class DPoPAuthenticationHandler extends AuthenticationHandler {
         if (authenticationRequest != null) {
 
             String authorizationHeader = authenticationRequest.getHeader(HttpHeaders.AUTHORIZATION);
-            if (StringUtils.isNotEmpty(authorizationHeader) && (authorizationHeader.startsWith(OAUTH_HEADER) ||
-                    authorizationHeader.startsWith(OAUTH_DPOP_HEADER))) {
+            if (StringUtils.isNotEmpty(authorizationHeader) && authorizationHeader.startsWith(OAUTH_DPOP_HEADER)) {
                 String accessToken = null;
                 String[] bearerToken = authorizationHeader.split(" ");
                 if (bearerToken.length == 2) {
@@ -216,7 +215,7 @@ public class DPoPAuthenticationHandler extends AuthenticationHandler {
     @Override
     public boolean canHandle(MessageContext messageContext) {
 
-        return isAuthHeaderMatch(messageContext, OAUTH_HEADER) || isAuthHeaderMatch(messageContext, "DPoP");
+        return  isAuthHeaderMatch(messageContext, OAUTH_DPOP_HEADER);
     }
 
     /**
