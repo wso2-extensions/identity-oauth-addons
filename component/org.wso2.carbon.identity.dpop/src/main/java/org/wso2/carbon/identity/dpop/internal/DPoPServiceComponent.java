@@ -30,7 +30,6 @@ import org.wso2.carbon.identity.dpop.token.binding.DPoPBasedTokenBinder;
 import org.wso2.carbon.identity.oauth.common.token.bindings.TokenBinderInfo;
 import org.wso2.carbon.identity.oauth.event.OAuthEventInterceptor;
 
-
 @Component(
         name = "org.wso2.carbon.identity.oauth.dpop.listener.oauth.dpopinterceptorhandler",
         immediate = true)
@@ -46,7 +45,8 @@ public class DPoPServiceComponent {
                     new OauthDPoPInterceptorHandlerProxy(), null);
             context.getBundleContext().registerService(AuthenticationHandler.class.getName(),
                     new DPoPAuthenticationHandler(), null);
-            context.getBundleContext().registerService(TokenBinderInfo.class.getName(), new DPoPBasedTokenBinder(), null);
+            context.getBundleContext().registerService(TokenBinderInfo.class.getName(),
+                    new DPoPBasedTokenBinder(), null);
             log.debug("DPoPService is activated.");
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
