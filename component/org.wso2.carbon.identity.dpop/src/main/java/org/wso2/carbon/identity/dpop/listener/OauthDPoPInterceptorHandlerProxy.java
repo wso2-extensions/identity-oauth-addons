@@ -39,6 +39,7 @@ import org.wso2.carbon.identity.core.model.IdentityEventListenerConfig;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.dpop.constant.Constants;
+import org.wso2.carbon.identity.dpop.token.binding.DPoPBasedTokenBinder;
 import org.wso2.carbon.identity.dpop.util.OuthTokenType;
 import org.wso2.carbon.identity.oauth.common.DPoPState;
 import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
@@ -46,10 +47,12 @@ import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
 import org.wso2.carbon.identity.oauth.event.AbstractOAuthEventInterceptor;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2AccessTokenReqDTO;
+import org.wso2.carbon.identity.oauth2.dto.OAuth2AccessTokenRespDTO;
 import org.wso2.carbon.identity.oauth2.model.HttpRequestHeader;
 import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
 import org.wso2.carbon.identity.oauth2.token.bindings.TokenBinding;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
+import org.wso2.carbon.identity.oauth2.util.TokenType;
 
 import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPublicKey;
@@ -203,10 +206,12 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
             ECKey ecKey = (ECKey) jwk;
             ECPublicKey ecPublicKey = ecKey.toECPublicKey();
             isValid = verifySignatureWithPublicKey(new ECDSAVerifier(ecPublicKey), signedJwt);
+
             if (isValid) {
                 String publicKey = computeThumbprintOfKey(ecKey);
                 tokenBinding.setBindingValue(publicKey);
                 tokenBinding.setBindingReference(DigestUtils.md5Hex(publicKey));
+                DPoPBasedTokenBinder.setTokenBindingValue(tokenBinding.getBindingValue());
             }
             // Using the RSA algorithm.
         } else if (Constants.RSA_ENCRYPTION.equalsIgnoreCase(jwk.getKeyType().toString())) {
@@ -217,6 +222,7 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
                 String publicKey = computeThumbprintOfKey(rsaKey);
                 tokenBinding.setBindingValue(publicKey);
                 tokenBinding.setBindingReference(DigestUtils.md5Hex(publicKey));
+                DPoPBasedTokenBinder.setTokenBindingValue(tokenBinding.getBindingValue());
             }
         } else {
             if (log.isDebugEnabled()) {
@@ -341,4 +347,17 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
         OAuthAppDO oauthAppDO = OAuth2Util.getAppInformationByClientId(consumerKey);
         return DPoPState.valueOf(oauthAppDO.getDpopState().toUpperCase());
     }
+
+    @Override
+   public void onPostTokenIssue(OAuth2AccessTokenReqDTO tokenReqDTO, OAuth2AccessTokenRespDTO tokenRespDTO,
+                          OAuthTokenReqMessageContext tokReqMsgCtx, Map<String, Object> params) {
+
+        if (tokReqMsgCtx.getTokenBinding() != null && (tokReqMsgCtx.getTokenBinding().getBindingType()).contains(
+                TokenType.DPOP.toString())) {
+            tokenRespDTO.setTokenType(TokenType.DPOP.toString());
+        } else {
+            tokenRespDTO.setTokenType(TokenType.BEARER.toString());
+        }
+    }
+
 }
