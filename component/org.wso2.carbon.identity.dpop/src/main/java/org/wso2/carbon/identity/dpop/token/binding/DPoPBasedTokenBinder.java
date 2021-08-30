@@ -18,8 +18,6 @@
 
 package org.wso2.carbon.identity.dpop.token.binding;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.oauth2.token.bindings.impl.AbstractTokenBinder;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2AccessTokenReqDTO;
@@ -41,16 +39,14 @@ import static org.wso2.carbon.identity.oauth.common.OAuthConstants.GrantTypes.RE
  */
 public class DPoPBasedTokenBinder extends AbstractTokenBinder {
 
-    private List<String> supportedGrantTypes = Arrays.asList(AUTHORIZATION_CODE, PASSWORD, CLIENT_CREDENTIALS,REFRESH_TOKEN);
+    private final List<String> supportedGrantTypes = Arrays.asList(AUTHORIZATION_CODE, PASSWORD, CLIENT_CREDENTIALS,REFRESH_TOKEN);
     private static final String BINDING_TYPE = "DPoP";
-    private  static Optional<String>  BINDING_VALUE = null;
-    private static final Log log = LogFactory.getLog(DPoPBasedTokenBinder.class);
-
+    private  static Optional<String>  tokenBindingValue;
 
     @Override
     public String getDisplayName() {
 
-        return BINDING_TYPE;
+        return "DPoP Based";
     }
 
     @Override
@@ -86,11 +82,13 @@ public class DPoPBasedTokenBinder extends AbstractTokenBinder {
     @Override
     public void setTokenBindingValueForResponse(HttpServletResponse response, String bindingValue) {
 
+        // Not required.
     }
 
     @Override
     public void clearTokenBindingElements(HttpServletRequest request, HttpServletResponse response) {
 
+        // Not required.
     }
 
     @Override
@@ -108,13 +106,11 @@ public class DPoPBasedTokenBinder extends AbstractTokenBinder {
     @Override
     public Optional<String> getTokenBindingValue(OAuth2AccessTokenReqDTO oAuth2AccessTokenReqDTO) {
 
-       return BINDING_VALUE;
-
+      return tokenBindingValue;
     }
 
     public static void setTokenBindingValue(String bindingValue){
 
-        BINDING_VALUE = Optional.ofNullable(bindingValue);
+        tokenBindingValue = Optional.ofNullable(bindingValue);
     }
-
 }
