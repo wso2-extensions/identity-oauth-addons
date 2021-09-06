@@ -39,6 +39,7 @@ import org.wso2.carbon.identity.core.model.IdentityEventListenerConfig;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.dpop.constant.Constants;
+import static org.wso2.carbon.identity.dpop.constant.Constants.DPOP_TOKEN_TYPE;
 import org.wso2.carbon.identity.dpop.token.binding.DPoPBasedTokenBinder;
 import org.wso2.carbon.identity.dpop.util.OuthTokenType;
 import org.wso2.carbon.identity.oauth.common.DPoPState;
@@ -95,7 +96,9 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
         String dPoPProof = getDPoPHeader(tokReqMsgCtx);
         try {
             DPoPState dPoPState = getApplicationDPoPState(tokenReqDTO.getClientId());
-            if (DPoPState.ENABLED.equals(dPoPState) || DPoPState.MANDATORY.equals(dPoPState)) {
+            String tokenBindingType = getApplicationBindingType(tokenReqDTO.getClientId());
+
+            if (DPOP_TOKEN_TYPE.equals(tokenBindingType) || DPoPState.MANDATORY.equals(dPoPState)) {
                 if (StringUtils.isNotBlank(dPoPProof)) {
                     // If the DPoP proof is provided, it will be handled as a DPoP token request.
                     if (!isValidDPoP(dPoPProof, tokenReqDTO, tokReqMsgCtx, false)) {
@@ -142,7 +145,7 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
         // Check if the Refresh token is of DPoP type.
         boolean isDPoPBinding = false;
         TokenBinding tokenBinding = getBindingFromRefreshToken(tokenReqDTO.getRefreshToken());
-        if (tokenBinding != null && Constants.DPOP_TOKEN_TYPE.equalsIgnoreCase(tokenBinding.getBindingType())) {
+        if (tokenBinding != null && DPOP_TOKEN_TYPE.equalsIgnoreCase(tokenBinding.getBindingType())) {
             isDPoPBinding = true;
         }
 
@@ -198,7 +201,7 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
 
         JWK jwk = JWK.parse(signedJwt.getHeader().getJWK().toString());
         TokenBinding tokenBinding = new TokenBinding();
-        tokenBinding.setBindingType(Constants.DPOP_TOKEN_TYPE);
+        tokenBinding.setBindingType(DPOP_TOKEN_TYPE);
         boolean isValid = false;
 
         // Using the EC algorithm.
@@ -348,9 +351,15 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
         return DPoPState.valueOf(oauthAppDO.getDpopState().toUpperCase());
     }
 
+    private String getApplicationBindingType(String consumerKey) throws InvalidOAuthClientException,
+            IdentityOAuth2Exception {
+        OAuthAppDO oauthAppDO = OAuth2Util.getAppInformationByClientId(consumerKey);
+        return oauthAppDO.getTokenBindingType();
+    }
+
     @Override
-   public void onPostTokenIssue(OAuth2AccessTokenReqDTO tokenReqDTO, OAuth2AccessTokenRespDTO tokenRespDTO,
-                          OAuthTokenReqMessageContext tokReqMsgCtx, Map<String, Object> params) {
+    public void onPostTokenIssue(OAuth2AccessTokenReqDTO tokenReqDTO, OAuth2AccessTokenRespDTO tokenRespDTO,
+                                 OAuthTokenReqMessageContext tokReqMsgCtx, Map<String, Object> params) {
 
         if (tokReqMsgCtx.getTokenBinding() != null && (tokReqMsgCtx.getTokenBinding().getBindingType()).contains(
                 TokenType.DPOP.toString())) {
