@@ -18,6 +18,9 @@
 
 package org.wso2.carbon.identity.dpop.constant;
 
+/**
+ * This class holds the OAthToken types
+ */
 public enum OAuthTokenType {
 
     BEARER("Bearer"),

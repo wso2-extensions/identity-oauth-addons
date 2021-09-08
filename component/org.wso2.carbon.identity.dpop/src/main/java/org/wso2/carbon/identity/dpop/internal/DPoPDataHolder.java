@@ -2,6 +2,9 @@ package org.wso2.carbon.identity.dpop.internal;
 
 import org.wso2.carbon.identity.dpop.dao.TokenBindingTypeManagerDao;
 
+/**
+ * DPoP data holder.
+ */
 public class DPoPDataHolder {
 
     private static final DPoPDataHolder dPoPDataHolder = new DPoPDataHolder();

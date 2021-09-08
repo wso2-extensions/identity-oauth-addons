@@ -26,10 +26,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
-import static org.wso2.carbon.identity.oauth.common.OAuthConstants.GrantTypes.AUTHORIZATION_CODE;
-import static org.wso2.carbon.identity.oauth.common.OAuthConstants.GrantTypes.CLIENT_CREDENTIALS;
-import static org.wso2.carbon.identity.oauth.common.OAuthConstants.GrantTypes.PASSWORD;
-import static org.wso2.carbon.identity.oauth.common.OAuthConstants.GrantTypes.REFRESH_TOKEN;
+import org.wso2.carbon.identity.oauth.common.OAuthConstants.GrantTypes;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2AccessTokenReqDTO;
 import org.wso2.carbon.identity.oauth2.token.bindings.impl.AbstractTokenBinder;
 
@@ -38,9 +35,15 @@ import org.wso2.carbon.identity.oauth2.token.bindings.impl.AbstractTokenBinder;
  */
 public class DPoPBasedTokenBinder extends AbstractTokenBinder {
 
-    private final List<String> supportedGrantTypes = Arrays.asList(AUTHORIZATION_CODE, PASSWORD, CLIENT_CREDENTIALS,REFRESH_TOKEN);
     private static final String BINDING_TYPE = "DPoP";
-    private  static Optional<String>  tokenBindingValue;
+    private static Optional<String> tokenBindingValue;
+    private final List<String> supportedGrantTypes = Arrays.asList(GrantTypes.AUTHORIZATION_CODE, GrantTypes.PASSWORD
+            , GrantTypes.CLIENT_CREDENTIALS, GrantTypes.REFRESH_TOKEN);
+
+    public static void setTokenBindingValue(String bindingValue) {
+
+        tokenBindingValue = Optional.ofNullable(bindingValue);
+    }
 
     @Override
     public String getDisplayName() {
@@ -105,11 +108,6 @@ public class DPoPBasedTokenBinder extends AbstractTokenBinder {
     @Override
     public Optional<String> getTokenBindingValue(OAuth2AccessTokenReqDTO oAuth2AccessTokenReqDTO) {
 
-      return tokenBindingValue;
-    }
-
-    public static void setTokenBindingValue(String bindingValue){
-
-        tokenBindingValue = Optional.ofNullable(bindingValue);
+        return tokenBindingValue;
     }
 }
