@@ -34,6 +34,10 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.wso2.carbon.utils</groupId>
+            <artifactId>org.wso2.carbon.database.utils</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.wso2.eclipse.osgi</groupId>
             <artifactId>org.eclipse.osgi.services</artifactId>
         </dependency>
@@ -113,7 +117,9 @@
                             version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.utils.multitenancy;
                             version="${carbon.kernel.package.import.version.range}",
-                            org.apache.catalina.*;version="${apache.catalina.version}"
+                            org.apache.catalina.*;version="${apache.catalina.version}",
+                            org.wso2.carbon.database.utils.*;
+                            version="${org.wso2.carbon.database.utils.version.range}"
                         </Import-Package>
                         <Export-Package>
                             !org.wso2.carbon.identity.dpop.internal,

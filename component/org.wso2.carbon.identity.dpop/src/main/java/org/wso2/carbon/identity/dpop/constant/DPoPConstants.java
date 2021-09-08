@@ -21,7 +21,7 @@ package org.wso2.carbon.identity.dpop.constant;
 /**
  * This class defines constants for Oauth2 DPoP validation.
  */
-public class Constants {
+public class DPoPConstants {
 
     public static final String DPOP_CONFIG_ELEMENT = "OAuth.DPoPConfig";
     public static final String HEADER_VALIDITY = "HeaderValidity";
@@ -41,5 +41,15 @@ public class Constants {
     public static final String CONSUMER_KEY = "consumer-key";
     public static final String SERVICE_PROVIDER = "serviceProvider";
     public static final String SERVICE_PROVIDER_TENANT_DOMAIN = "serviceProviderTenantDomain";
-    public static final String SCIM_ME_ENDPOINT_URI = "scim2/me";
+
+    /**
+     * This class defines SQLQueries.
+     */
+    public static class SQLQueries {
+
+        public static final String RETRIEVE_TOKEN_BINDING_BY_REFRESH_TOKEN =
+                "SELECT TOKEN_BINDING_TYPE,TOKEN_BINDING_VALUE FROM IDN_OAUTH2_TOKEN_BINDING " +
+                        "WHERE TOKEN_BINDING_REF = (SELECT TOKEN_BINDING_REF " +
+                        "FROM IDN_OAUTH2_ACCESS_TOKEN WHERE REFRESH_TOKEN = ?)";
+    }
 }
