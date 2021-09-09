@@ -95,10 +95,10 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
         String dPoPProof = getDPoPHeader(tokReqMsgCtx);
         try {
 
-            DPoPState dPoPState = getApplicationDPoPState(tokenReqDTO.getClientId());
+            String dPoPState = getApplicationDPoPState(tokenReqDTO.getClientId());
             String tokenBindingType = getApplicationBindingType(tokenReqDTO.getClientId());
 
-            if (DPoPConstants.DPOP_TOKEN_TYPE.equals(tokenBindingType) || DPoPState.MANDATORY.equals(dPoPState)) {
+            if (DPoPConstants.DPOP_TOKEN_TYPE.equals(tokenBindingType) || DPoPState.MANDATORY.equals(dPoPState.toUpperCase())) {
                 if (StringUtils.isNotBlank(dPoPProof)) {
 
                     boolean isValidDPoP = isValidDPoP(dPoPProof, tokenReqDTO, tokReqMsgCtx);
@@ -322,11 +322,11 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
         return null;
     }
 
-    private DPoPState getApplicationDPoPState(String consumerKey) throws InvalidOAuthClientException,
+    private String getApplicationDPoPState(String consumerKey) throws InvalidOAuthClientException,
             IdentityOAuth2Exception {
 
         OAuthAppDO oauthAppDO = OAuth2Util.getAppInformationByClientId(consumerKey);
-        return oauthAppDO != null ? DPoPState.valueOf(oauthAppDO.getDpopState().toUpperCase()) : null;
+        return oauthAppDO != null ? oauthAppDO.getDpopState() : null;
     }
 
     private String getApplicationBindingType(String consumerKey) throws InvalidOAuthClientException,
