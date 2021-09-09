@@ -81,5 +81,3 @@ public class Utils {
         return signedJwt.verify(jwsVerifier);
     }
 }
-
-
