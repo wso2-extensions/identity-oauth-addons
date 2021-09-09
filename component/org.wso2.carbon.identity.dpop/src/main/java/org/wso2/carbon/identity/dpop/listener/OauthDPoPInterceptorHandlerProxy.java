@@ -42,6 +42,7 @@ import org.wso2.carbon.identity.dpop.constant.DPoPConstants;
 import org.wso2.carbon.identity.dpop.constant.OAuthTokenType;
 import org.wso2.carbon.identity.dpop.dao.TokenBindingTypeManagerDao;
 import org.wso2.carbon.identity.dpop.internal.DPoPDataHolder;
+import org.wso2.carbon.identity.dpop.util.Utils;
 import org.wso2.carbon.identity.oauth.common.DPoPState;
 import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
 import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
@@ -193,9 +194,7 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
             validateDPoPHeader(header);
             validateDPoPPayload(tokenReqDTO, signedJwt.getJWTClaimsSet());
             return validateSignature(signedJwt, tokReqMsgCtx);
-        } catch (ParseException | JOSEException e) {
-            throw new IdentityOAuth2Exception(DPoPConstants.INVALID_DPOP_PROOF, e);
-        } catch (IdentityOAuth2Exception e) {
+        } catch (ParseException | JOSEException | IdentityOAuth2Exception e) {
             throw new IdentityOAuth2Exception(DPoPConstants.INVALID_DPOP_PROOF, e);
         }
     }
@@ -212,9 +211,9 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
         if (DPoPConstants.ECDSA_ENCRYPTION.equalsIgnoreCase(jwk.getKeyType().toString())) {
             ECKey ecKey = (ECKey) jwk;
             ECPublicKey ecPublicKey = ecKey.toECPublicKey();
-            isValid = verifySignatureWithPublicKey(new ECDSAVerifier(ecPublicKey), signedJwt);
+            isValid = Utils.verifySignatureWithPublicKey(new ECDSAVerifier(ecPublicKey), signedJwt);
             if (isValid) {
-                String thumbprint = computeThumbprintOfKey(ecKey);
+                String thumbprint = Utils.computeThumbprintOfECKey(ecKey);
                 tokenBinding.setBindingValue(thumbprint);
                 tokenBinding.setBindingReference(DigestUtils.md5Hex(thumbprint));
                 DPoPBasedTokenBinder.setTokenBindingValue(tokenBinding.getBindingValue());
@@ -224,9 +223,9 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
         } else if (DPoPConstants.RSA_ENCRYPTION.equalsIgnoreCase(jwk.getKeyType().toString())) {
             RSAKey rsaKey = (RSAKey) jwk;
             RSAPublicKey rsaPublicKey = rsaKey.toRSAPublicKey();
-            isValid = verifySignatureWithPublicKey(new RSASSAVerifier(rsaPublicKey), signedJwt);
+            isValid = Utils.verifySignatureWithPublicKey(new RSASSAVerifier(rsaPublicKey), signedJwt);
             if (isValid) {
-                String thumbprint = computeThumbprintOfKey(rsaKey);
+                String thumbprint = Utils.computeThumbprintOfRSAKey(rsaKey);
                 tokenBinding.setBindingValue(thumbprint);
                 tokenBinding.setBindingReference(DigestUtils.md5Hex(thumbprint));
                 DPoPBasedTokenBinder.setTokenBindingValue(tokenBinding.getBindingValue());
@@ -258,16 +257,6 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
             log.debug(" typ field value in the DPoP Proof header  is not equal to 'dpop+jwt'");
             throw new IdentityOAuth2Exception(DPoPConstants.INVALID_DPOP_PROOF);
         }
-    }
-
-    private String computeThumbprintOfKey(JWK rsaKey) throws JOSEException {
-
-        return rsaKey.computeThumbprint().toString();
-    }
-
-    private boolean verifySignatureWithPublicKey(JWSVerifier jwsVerifier, SignedJWT signedJwt) throws JOSEException {
-
-        return signedJwt.verify(jwsVerifier);
     }
 
     private void validateDPoPPayload(OAuth2AccessTokenReqDTO tokenReqDTO, JWTClaimsSet jwtClaimsSet)

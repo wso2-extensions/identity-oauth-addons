@@ -18,15 +18,6 @@
 
 package org.wso2.carbon.identity.dpop.handler;
 
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JWSHeader;
-import com.nimbusds.jose.JWSVerifier;
-import com.nimbusds.jose.crypto.ECDSAVerifier;
-import com.nimbusds.jose.crypto.RSASSAVerifier;
-import com.nimbusds.jose.jwk.ECKey;
-import com.nimbusds.jose.jwk.JWK;
-import com.nimbusds.jose.jwk.RSAKey;
-import com.nimbusds.jwt.SignedJWT;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -45,6 +36,7 @@ import org.wso2.carbon.identity.auth.service.util.AuthConfigurationUtil;
 import org.wso2.carbon.identity.auth.service.util.Constants;
 import org.wso2.carbon.identity.core.bean.context.MessageContext;
 import org.wso2.carbon.identity.dpop.constant.DPoPConstants;
+import org.wso2.carbon.identity.dpop.util.Utils;
 import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.OAuth2TokenValidationService;
@@ -55,10 +47,6 @@ import org.wso2.carbon.identity.oauth2.token.bindings.TokenBinding;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
-
-import java.security.interfaces.ECPublicKey;
-import java.security.interfaces.RSAPublicKey;
-import java.text.ParseException;
 
 import static org.wso2.carbon.identity.auth.service.util.AuthConfigurationUtil.isAuthHeaderMatch;
 
@@ -188,7 +176,7 @@ public class DPoPAuthenticationHandler extends AuthenticationHandler {
                 return authenticationResult;
             }
             try {
-                String thumbprintOfPublicKey = getThumbprintOfKeyFromDpopProof(dpopHeader);
+                String thumbprintOfPublicKey = Utils.getThumbprintOfKeyFromDpopProof(dpopHeader);
                 if (StringUtils.isBlank(thumbprintOfPublicKey) ||
                         !thumbprintOfPublicKey
                                 .equalsIgnoreCase(responseDTO.getTokenBinding().getBindingValue())) {
@@ -227,59 +215,6 @@ public class DPoPAuthenticationHandler extends AuthenticationHandler {
             provisioningServiceProvider.setServiceProviderType(ProvisioningServiceProviderType.OAUTH);
             provisioningServiceProvider.setTenantDomain(serviceProviderTenantDomain);
             IdentityApplicationManagementUtil.setThreadLocalProvisioningServiceProvider(provisioningServiceProvider);
-
         }
-    }
-
-    private String getThumbprintOfKeyFromDpopProof(String dPopProof)
-            throws IdentityOAuth2Exception {
-
-        try {
-            SignedJWT signedJwt = SignedJWT.parse(dPopProof);
-            JWSHeader header = signedJwt.getHeader();
-            return getKeyThumbprintOfKey(header.getJWK().toString(), signedJwt);
-        } catch (ParseException e) {
-            throw new IdentityOAuth2Exception("Invalid DPoP Header");
-        } catch (JOSEException e) {
-            throw new IdentityOAuth2Exception(e.getMessage());
-        }
-    }
-
-    private String getKeyThumbprintOfKey(String jwk, SignedJWT signedJwt)
-            throws ParseException, JOSEException {
-
-        JWK parseJwk = JWK.parse(jwk);
-        boolean validSignature;
-        if (DPoPConstants.ECDSA_ENCRYPTION.equalsIgnoreCase(String.valueOf(parseJwk.getKeyType()))) {
-            ECKey ecKey = (ECKey) parseJwk;
-            ECPublicKey ecPublicKey = ecKey.toECPublicKey();
-            validSignature = verifySignatureWithPublicKey(new ECDSAVerifier(ecPublicKey), signedJwt);
-            if (validSignature) {
-                return computeThumbprintOfECKey(ecKey);
-            }
-        } else if (DPoPConstants.RSA_ENCRYPTION.equalsIgnoreCase(String.valueOf(parseJwk.getKeyType()))) {
-            RSAKey rsaKey = (RSAKey) parseJwk;
-            RSAPublicKey rsaPublicKey = rsaKey.toRSAPublicKey();
-            validSignature = verifySignatureWithPublicKey(new RSASSAVerifier(rsaPublicKey), signedJwt);
-            if (validSignature) {
-                return computeThumbprintOfRSAKey(rsaKey);
-            }
-        }
-        return null;
-    }
-
-    private String computeThumbprintOfRSAKey(RSAKey rsaKey) throws JOSEException {
-
-        return rsaKey.computeThumbprint().toString();
-    }
-
-    private String computeThumbprintOfECKey(ECKey ecKey) throws JOSEException {
-
-        return ecKey.computeThumbprint().toString();
-    }
-
-    private boolean verifySignatureWithPublicKey(JWSVerifier jwsVerifier, SignedJWT signedJwt) throws JOSEException {
-
-        return signedJwt.verify(jwsVerifier);
     }
 }
