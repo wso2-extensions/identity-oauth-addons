@@ -100,7 +100,7 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
             if (DPoPConstants.DPOP_TOKEN_TYPE.equals(tokenBindingType) || DPoPState.MANDATORY.equals(dPoPState)) {
                 if (StringUtils.isNotBlank(dPoPProof)) {
 
-                    boolean isValidDPoP = isValidDPoP(dPoPProof, tokenReqDTO, tokReqMsgCtx, false);
+                    boolean isValidDPoP = isValidDPoP(dPoPProof, tokenReqDTO, tokReqMsgCtx);
                     // If the DPoP proof is provided, it will be handled as a DPoP token request.
                     if (!isValidDPoP) {
                         if (log.isDebugEnabled()) {
@@ -155,7 +155,7 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
         String dPoPProof = getDPoPHeader(tokReqMsgCtx);
         if (isDPoPBinding && StringUtils.isNotBlank(dPoPProof)) {
             // If DPoP proof is provided, then it will be handled as a DPoP token request.
-            if (!isValidDPoP(dPoPProof, tokenReqDTO, tokReqMsgCtx, true)) {
+            if (!isValidDPoP(dPoPProof, tokenReqDTO, tokReqMsgCtx)) {
                 if (log.isDebugEnabled()) {
                     log.debug(String.format("DPoP proof validation failed for the application Id : %s.",
                             consumerKey));
@@ -184,7 +184,7 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
     }
 
     private boolean isValidDPoP(String dPoPProof, OAuth2AccessTokenReqDTO tokenReqDTO,
-                                OAuthTokenReqMessageContext tokReqMsgCtx, boolean isRenewalRequest)
+                                OAuthTokenReqMessageContext tokReqMsgCtx)
             throws IdentityOAuth2Exception {
 
         try {
