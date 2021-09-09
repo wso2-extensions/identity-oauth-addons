@@ -218,6 +218,7 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
                 tokenBinding.setBindingValue(thumbprint);
                 tokenBinding.setBindingReference(DigestUtils.md5Hex(thumbprint));
                 DPoPBasedTokenBinder.setTokenBindingValue(tokenBinding.getBindingValue());
+                tokReqMsgCtx.setTokenBinding(tokenBinding);
             }
             // Using the RSA algorithm.
         } else if (DPoPConstants.RSA_ENCRYPTION.equalsIgnoreCase(jwk.getKeyType().toString())) {
@@ -229,6 +230,7 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
                 tokenBinding.setBindingValue(thumbprint);
                 tokenBinding.setBindingReference(DigestUtils.md5Hex(thumbprint));
                 DPoPBasedTokenBinder.setTokenBindingValue(tokenBinding.getBindingValue());
+                tokReqMsgCtx.setTokenBinding(tokenBinding);
             }
         } else {
             String msg = String.format("Invalid key algorithm : %s.", jwk.getKeyType().toString());
@@ -238,7 +240,6 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
             throw new IdentityOAuth2Exception(msg);
         }
         // Set certificate thumbprint as the token binding value.
-        tokReqMsgCtx.setTokenBinding(tokenBinding);
         return isValid;
     }
 
