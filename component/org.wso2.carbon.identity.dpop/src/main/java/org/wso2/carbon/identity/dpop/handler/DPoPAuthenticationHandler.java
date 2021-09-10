@@ -85,16 +85,14 @@ public class DPoPAuthenticationHandler extends AuthenticationHandler {
                 contextParam.setKey("dummy");
                 contextParam.setValue("dummy");
 
-                OAuth2TokenValidationRequestDTO.TokenValidationContextParam[] contextParams = {contextParam};
+                OAuth2TokenValidationRequestDTO.TokenValidationContextParam[] contextParams = { contextParam };
                 requestDTO.setContext(contextParams);
 
-                OAuth2ClientApplicationDTO clientApplicationDTO = oAuth2TokenValidationService
-                        .findOAuthConsumerIfTokenIsValid
-                                (requestDTO);
+                OAuth2ClientApplicationDTO clientApplicationDTO =
+                        oAuth2TokenValidationService.findOAuthConsumerIfTokenIsValid(requestDTO);
                 OAuth2TokenValidationResponseDTO responseDTO = clientApplicationDTO.getAccessTokenValidationResponse();
 
-                getAuthenticationResult(authenticationResult, responseDTO, authorizationHeader,
-                        authenticationRequest);
+                getAuthenticationResult(authenticationResult, responseDTO, authorizationHeader, authenticationRequest);
 
                 String consumerKey = clientApplicationDTO.getConsumerKey();
 
