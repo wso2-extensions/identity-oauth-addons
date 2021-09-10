@@ -98,7 +98,7 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
             String dPoPState = getApplicationDPoPState(tokenReqDTO.getClientId());
             String tokenBindingType = getApplicationBindingType(tokenReqDTO.getClientId());
 
-            if (DPoPConstants.DPOP_TOKEN_TYPE.equals(tokenBindingType) || DPoPState.MANDATORY.equals(dPoPState.toUpperCase())) {
+            if (DPoPConstants.DPOP_TOKEN_TYPE.equals(tokenBindingType) || DPoPState.MANDATORY.name().equalsIgnoreCase(dPoPState)) {
                 if (StringUtils.isNotBlank(dPoPProof)) {
 
                     boolean isValidDPoP = isValidDPoP(dPoPProof, tokenReqDTO, tokReqMsgCtx);
@@ -111,7 +111,7 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
                         throw new IdentityOAuth2Exception(DPoPConstants.INVALID_DPOP_PROOF);
                     }
                 } else {
-                    if (DPoPState.MANDATORY.equals(dPoPState)) {
+                    if (DPoPState.MANDATORY.name().equalsIgnoreCase(dPoPState)) {
                         throw new IdentityOAuth2Exception("DPoP header is required.");
                     }
                     if (log.isDebugEnabled()) {
