@@ -16,19 +16,20 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.dpop.binding;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+package org.wso2.carbon.identity.dpop.token.binder;
 
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.wso2.carbon.identity.oauth.common.OAuthConstants.GrantTypes;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2AccessTokenReqDTO;
 import org.wso2.carbon.identity.oauth2.token.bindings.impl.AbstractTokenBinder;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * This class provides the DPoP based token binder implementation.
@@ -37,8 +38,9 @@ public class DPoPBasedTokenBinder extends AbstractTokenBinder {
 
     private static final String BINDING_TYPE = "DPoP";
     private static Optional<String> tokenBindingValue;
-    private final List<String> supportedGrantTypes = Arrays.asList(GrantTypes.AUTHORIZATION_CODE, GrantTypes.PASSWORD
-            , GrantTypes.CLIENT_CREDENTIALS, GrantTypes.REFRESH_TOKEN);
+    private final List<String> supportedGrantTypes =
+            Arrays.asList(GrantTypes.AUTHORIZATION_CODE, GrantTypes.PASSWORD, GrantTypes.CLIENT_CREDENTIALS,
+                    GrantTypes.REFRESH_TOKEN);
 
     public static void setTokenBindingValue(String bindingValue) {
 
@@ -54,7 +56,7 @@ public class DPoPBasedTokenBinder extends AbstractTokenBinder {
     @Override
     public String getDescription() {
 
-        return "Bind token to the DPoP. Supported grant types: Code,Password,Client Credentials,Refresh";
+        return "Bind tokens as DPoP tokens.";
     }
 
     @Override

@@ -24,10 +24,10 @@ import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.wso2.carbon.identity.auth.service.handler.AuthenticationHandler;
-import org.wso2.carbon.identity.dpop.dao.TokenBindingTypeManagerDaoImpl;
+import org.wso2.carbon.identity.dpop.dao.DPoPTokenManagerDAOImpl;
 import org.wso2.carbon.identity.dpop.handler.DPoPAuthenticationHandler;
 import org.wso2.carbon.identity.dpop.listener.OauthDPoPInterceptorHandlerProxy;
-import org.wso2.carbon.identity.dpop.binding.DPoPBasedTokenBinder;
+import org.wso2.carbon.identity.dpop.token.binder.DPoPBasedTokenBinder;
 import org.wso2.carbon.identity.oauth.common.token.bindings.TokenBinderInfo;
 import org.wso2.carbon.identity.oauth.event.OAuthEventInterceptor;
 
@@ -42,7 +42,7 @@ public class DPoPServiceComponent {
     protected void activate(ComponentContext context) {
 
         try {
-            DPoPDataHolder.getInstance().setTokenBindingTypeManagerDao(new TokenBindingTypeManagerDaoImpl());
+            DPoPDataHolder.getInstance().setTokenBindingTypeManagerDao(new DPoPTokenManagerDAOImpl());
             context.getBundleContext().registerService(OAuthEventInterceptor.class,
                     new OauthDPoPInterceptorHandlerProxy(), null);
             context.getBundleContext().registerService(AuthenticationHandler.class.getName(),

@@ -48,11 +48,8 @@ import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
-import static org.wso2.carbon.identity.auth.service.util.AuthConfigurationUtil.isAuthHeaderMatch;
-
 /**
  * DPoPAuthenticationHandler is for authenticate the request based on Token.
- * canHandle method will confirm whether this request can be handled by this authenticator or not.
  */
 public class DPoPAuthenticationHandler extends AuthenticationHandler {
 
@@ -101,30 +98,15 @@ public class DPoPAuthenticationHandler extends AuthenticationHandler {
 
                 String consumerKey = clientApplicationDTO.getConsumerKey();
 
-                authenticationResult.setAuthenticationStatus(AuthenticationStatus.SUCCESS);
+                setAuthenticationContext(responseDTO, authenticationContext, consumerKey);
 
-                if (StringUtils.isNotEmpty(responseDTO.getAuthorizedUser())) {
-                    User user = new User();
-                    String tenantAwareUsername = MultitenantUtils.getTenantAwareUsername
-                            (responseDTO.getAuthorizedUser());
-                    user.setUserName(UserCoreUtil.removeDomainFromName(tenantAwareUsername));
-                    user.setUserStoreDomain(UserCoreUtil.extractDomainFromName(tenantAwareUsername));
-                    user.setTenantDomain(MultitenantUtils.getTenantDomain(responseDTO.getAuthorizedUser()));
-                    authenticationContext.setUser(user);
-                }
-
-                authenticationContext.addParameter(DPoPConstants.CONSUMER_KEY, consumerKey);
-                authenticationContext.addParameter(Constants.OAUTH2_ALLOWED_SCOPES, responseDTO.getScope());
-                authenticationContext.addParameter(Constants.OAUTH2_VALIDATE_SCOPE,
-                        AuthConfigurationUtil.getInstance().isScopeValidationEnabled());
                 String serviceProvider = null;
-
                 try {
                     serviceProvider =
                             OAuth2Util.getServiceProvider(consumerKey).getApplicationName();
                 } catch (IdentityOAuth2Exception e) {
                     String error = String.format("Error occurred while getting the Service Provider" +
-                            " by Consumer key: %s", consumerKey);
+                            " by Consumer key: %s.", consumerKey);
                     log.error(error, e);
                 }
 
@@ -135,7 +117,7 @@ public class DPoPAuthenticationHandler extends AuthenticationHandler {
                 } catch (InvalidOAuthClientException | IdentityOAuth2Exception e) {
 
                     String error = String.format("Error occurred while getting the OAuth App" +
-                            " tenantDomain by Consumer key: %s", consumerKey);
+                            " tenantDomain by Consumer key: %s.", consumerKey);
                     log.error(error, e);
                 }
 
@@ -154,6 +136,18 @@ public class DPoPAuthenticationHandler extends AuthenticationHandler {
             }
         }
         return authenticationResult;
+    }
+
+    @Override
+    public int getPriority(MessageContext messageContext) {
+
+        return getPriority(messageContext, 24);
+    }
+
+    @Override
+    public boolean canHandle(MessageContext messageContext) {
+
+        return AuthConfigurationUtil.isAuthHeaderMatch(messageContext, DPoPConstants.OAUTH_DPOP_HEADER);
     }
 
     private AuthenticationResult getAuthenticationResult(AuthenticationResult authenticationResult,
@@ -186,23 +180,26 @@ public class DPoPAuthenticationHandler extends AuthenticationHandler {
                 return authenticationResult;
             }
         }
-        else{
-            return authenticationResult;
-        }
+        authenticationResult.setAuthenticationStatus(AuthenticationStatus.SUCCESS);
         return authenticationResult;
     }
 
+    private void setAuthenticationContext(OAuth2TokenValidationResponseDTO responseDTO,
+                                          AuthenticationContext authenticationContext, String consumerKey) {
 
-    @Override
-    public int getPriority(MessageContext messageContext) {
+        if (StringUtils.isNotEmpty(responseDTO.getAuthorizedUser())) {
+            User user = new User();
+            String tenantAwareUsername = MultitenantUtils.getTenantAwareUsername(responseDTO.getAuthorizedUser());
+            user.setUserName(UserCoreUtil.removeDomainFromName(tenantAwareUsername));
+            user.setUserStoreDomain(UserCoreUtil.extractDomainFromName(tenantAwareUsername));
+            user.setTenantDomain(MultitenantUtils.getTenantDomain(responseDTO.getAuthorizedUser()));
+            authenticationContext.setUser(user);
+        }
 
-        return getPriority(messageContext, 24);
-    }
-
-    @Override
-    public boolean canHandle(MessageContext messageContext) {
-
-        return isAuthHeaderMatch(messageContext, DPoPConstants.OAUTH_DPOP_HEADER);
+        authenticationContext.addParameter(DPoPConstants.CONSUMER_KEY, consumerKey);
+        authenticationContext.addParameter(Constants.OAUTH2_ALLOWED_SCOPES, responseDTO.getScope());
+        authenticationContext.addParameter(Constants.OAUTH2_VALIDATE_SCOPE,
+                AuthConfigurationUtil.getInstance().isScopeValidationEnabled());
     }
 
     private void setProvisioningServiceProviderThreadLocal(String oauthAppConsumerKey,

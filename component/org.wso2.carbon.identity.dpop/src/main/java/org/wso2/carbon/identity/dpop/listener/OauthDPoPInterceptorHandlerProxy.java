@@ -21,7 +21,6 @@ package org.wso2.carbon.identity.dpop.listener;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
-import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.ECDSAVerifier;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
 import com.nimbusds.jose.jwk.ECKey;
@@ -37,11 +36,11 @@ import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.core.handler.AbstractIdentityHandler;
 import org.wso2.carbon.identity.core.model.IdentityEventListenerConfig;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
-import org.wso2.carbon.identity.dpop.binding.DPoPBasedTokenBinder;
 import org.wso2.carbon.identity.dpop.constant.DPoPConstants;
 import org.wso2.carbon.identity.dpop.constant.OAuthTokenType;
-import org.wso2.carbon.identity.dpop.dao.TokenBindingTypeManagerDao;
+import org.wso2.carbon.identity.dpop.dao.DPoPTokenManagerDAO;
 import org.wso2.carbon.identity.dpop.internal.DPoPDataHolder;
+import org.wso2.carbon.identity.dpop.token.binder.DPoPBasedTokenBinder;
 import org.wso2.carbon.identity.dpop.util.Utils;
 import org.wso2.carbon.identity.oauth.common.DPoPState;
 import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
@@ -56,13 +55,14 @@ import org.wso2.carbon.identity.oauth2.token.bindings.TokenBinding;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 import org.wso2.carbon.identity.oauth2.util.TokenType;
 
-import javax.servlet.http.HttpServletRequestWrapper;
 import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPublicKey;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.Map;
+
+import javax.servlet.http.HttpServletRequestWrapper;
 
 /**
  * This class extends {@link AbstractOAuthEventInterceptor} and listen to oauth token related events.
@@ -71,7 +71,7 @@ import java.util.Map;
 public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventInterceptor {
 
     private static final Log log = LogFactory.getLog(OauthDPoPInterceptorHandlerProxy.class);
-    private TokenBindingTypeManagerDao
+    private DPoPTokenManagerDAO
             tokenBindingTypeManagerDao = DPoPDataHolder.getInstance().getTokenBindingTypeManagerDao();
 
     /**
@@ -98,7 +98,8 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
             String dPoPState = getApplicationDPoPState(tokenReqDTO.getClientId());
             String tokenBindingType = getApplicationBindingType(tokenReqDTO.getClientId());
 
-            if (DPoPConstants.DPOP_TOKEN_TYPE.equals(tokenBindingType) || DPoPState.MANDATORY.name().equalsIgnoreCase(dPoPState)) {
+            if (DPoPConstants.DPOP_TOKEN_TYPE.equals(tokenBindingType) ||
+                    DPoPState.MANDATORY.name().equalsIgnoreCase(dPoPState)) {
                 if (StringUtils.isNotBlank(dPoPProof)) {
 
                     boolean isValidDPoP = isValidDPoP(dPoPProof, tokenReqDTO, tokReqMsgCtx);
@@ -149,6 +150,7 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
         boolean isDPoPBinding = false;
         TokenBinding tokenBinding =
                 tokenBindingTypeManagerDao.getBindingFromRefreshToken(tokenReqDTO.getRefreshToken());
+
         if (StringUtils.equalsIgnoreCase(DPoPConstants.DPOP_TOKEN_TYPE, tokenBinding.getBindingType())) {
             isDPoPBinding = true;
         }
