@@ -31,6 +31,7 @@ import org.wso2.carbon.identity.auth.service.AuthenticationContext;
 import org.wso2.carbon.identity.auth.service.AuthenticationRequest;
 import org.wso2.carbon.identity.auth.service.AuthenticationResult;
 import org.wso2.carbon.identity.auth.service.AuthenticationStatus;
+import org.wso2.carbon.identity.auth.service.exception.AuthenticationFailException;
 import org.wso2.carbon.identity.auth.service.handler.AuthenticationHandler;
 import org.wso2.carbon.identity.auth.service.util.AuthConfigurationUtil;
 import org.wso2.carbon.identity.auth.service.util.Constants;
@@ -56,7 +57,8 @@ public class DPoPAuthenticationHandler extends AuthenticationHandler {
     private static final Log log = LogFactory.getLog(DPoPAuthenticationHandler.class);
 
     @Override
-    protected AuthenticationResult doAuthenticate(MessageContext messageContext) {
+    protected AuthenticationResult doAuthenticate(MessageContext messageContext) throws
+            AuthenticationFailException {
 
         AuthenticationResult authenticationResult = new AuthenticationResult(AuthenticationStatus.FAILED);
         AuthenticationContext authenticationContext = (AuthenticationContext) messageContext;
@@ -70,66 +72,71 @@ public class DPoPAuthenticationHandler extends AuthenticationHandler {
                 String[] bearerToken = authorizationHeader.split(" ");
                 if (bearerToken.length == 2) {
                     accessToken = bearerToken[1];
-                }
+                    OAuth2TokenValidationService oAuth2TokenValidationService = new OAuth2TokenValidationService();
+                    OAuth2TokenValidationRequestDTO requestDTO = new OAuth2TokenValidationRequestDTO();
+                    OAuth2TokenValidationRequestDTO.OAuth2AccessToken token = requestDTO.new OAuth2AccessToken();
+                    token.setIdentifier(accessToken);
+                    token.setTokenType(DPoPConstants.OAUTH_HEADER);
+                    requestDTO.setAccessToken(token);
 
-                OAuth2TokenValidationService oAuth2TokenValidationService = new OAuth2TokenValidationService();
-                OAuth2TokenValidationRequestDTO requestDTO = new OAuth2TokenValidationRequestDTO();
-                OAuth2TokenValidationRequestDTO.OAuth2AccessToken token = requestDTO.new OAuth2AccessToken();
-                token.setIdentifier(accessToken);
-                token.setTokenType(DPoPConstants.OAUTH_HEADER);
-                requestDTO.setAccessToken(token);
+                    //TODO: If these values are not set, validation will fail giving an NPE. Need to see why that happens
+                    OAuth2TokenValidationRequestDTO.TokenValidationContextParam contextParam = requestDTO.new
+                            TokenValidationContextParam();
+                    contextParam.setKey("dummy");
+                    contextParam.setValue("dummy");
 
-                //TODO: If these values are not set, validation will fail giving an NPE. Need to see why that happens
-                OAuth2TokenValidationRequestDTO.TokenValidationContextParam contextParam = requestDTO.new
-                        TokenValidationContextParam();
-                contextParam.setKey("dummy");
-                contextParam.setValue("dummy");
+                    OAuth2TokenValidationRequestDTO.TokenValidationContextParam[] contextParams = { contextParam };
+                    requestDTO.setContext(contextParams);
 
-                OAuth2TokenValidationRequestDTO.TokenValidationContextParam[] contextParams = { contextParam };
-                requestDTO.setContext(contextParams);
+                    OAuth2ClientApplicationDTO clientApplicationDTO =
+                            oAuth2TokenValidationService.findOAuthConsumerIfTokenIsValid(requestDTO);
+                    OAuth2TokenValidationResponseDTO responseDTO =
+                            clientApplicationDTO.getAccessTokenValidationResponse();
 
-                OAuth2ClientApplicationDTO clientApplicationDTO =
-                        oAuth2TokenValidationService.findOAuthConsumerIfTokenIsValid(requestDTO);
-                OAuth2TokenValidationResponseDTO responseDTO = clientApplicationDTO.getAccessTokenValidationResponse();
+                    getAuthenticationResult(authenticationResult, responseDTO, authorizationHeader,
+                            authenticationRequest);
 
-                getAuthenticationResult(authenticationResult, responseDTO, authorizationHeader, authenticationRequest);
+                    String consumerKey = clientApplicationDTO.getConsumerKey();
 
-                String consumerKey = clientApplicationDTO.getConsumerKey();
+                    setAuthenticationContext(responseDTO, authenticationContext, consumerKey);
 
-                setAuthenticationContext(responseDTO, authenticationContext, consumerKey);
-
-                String serviceProvider = null;
-                try {
-                    serviceProvider =
-                            OAuth2Util.getServiceProvider(consumerKey).getApplicationName();
-                } catch (IdentityOAuth2Exception e) {
-                    String error = String.format("Error occurred while getting the Service Provider" +
-                            " by Consumer key: %s.", consumerKey);
-                    log.error(error, e);
-                }
-
-                String serviceProviderTenantDomain = null;
-                try {
-                    serviceProviderTenantDomain =
-                            OAuth2Util.getTenantDomainOfOauthApp(consumerKey);
-                } catch (InvalidOAuthClientException | IdentityOAuth2Exception e) {
-
-                    String error = String.format("Error occurred while getting the OAuth App" +
-                            " tenantDomain by Consumer key: %s.", consumerKey);
-                    log.error(error, e);
-                }
-
-                if (serviceProvider != null) {
-                    authenticationContext.addParameter(DPoPConstants.SERVICE_PROVIDER, serviceProvider);
-                    if (serviceProviderTenantDomain != null) {
-                        authenticationContext.addParameter(DPoPConstants.SERVICE_PROVIDER_TENANT_DOMAIN,
-                                serviceProviderTenantDomain);
+                    String serviceProvider;
+                    try {
+                        serviceProvider =
+                                OAuth2Util.getServiceProvider(consumerKey).getApplicationName();
+                    } catch (IdentityOAuth2Exception e) {
+                        String error = String.format("Error occurred while getting the Service Provider" +
+                                " by Consumer key: %s.", consumerKey);
+                        log.error(error, e);
+                        throw new AuthenticationFailException(error);
                     }
+
+                    String serviceProviderTenantDomain;
+                    try {
+                        serviceProviderTenantDomain =
+                                OAuth2Util.getTenantDomainOfOauthApp(consumerKey);
+                    } catch (InvalidOAuthClientException | IdentityOAuth2Exception e) {
+
+                        String error = String.format("Error occurred while getting the OAuth App" +
+                                " tenantDomain by Consumer key: %s.", consumerKey);
+                        log.error(error, e);
+                        throw new AuthenticationFailException(error);
+                    }
+
+                    authenticationContext.addParameter(DPoPConstants.SERVICE_PROVIDER, serviceProvider);
+                    authenticationContext.addParameter(DPoPConstants.SERVICE_PROVIDER_TENANT_DOMAIN,
+                            serviceProviderTenantDomain);
 
                     MDC.put(DPoPConstants.SERVICE_PROVIDER, serviceProvider);
                     // Set OAuth service provider details to be consumed by the provisioning framework.
                     setProvisioningServiceProviderThreadLocal(clientApplicationDTO.getConsumerKey(),
                             serviceProviderTenantDomain);
+
+                } else {
+                    String errorMessage = String.format("Error occurred while trying to authenticate." +
+                            "The %s header value is not defined correctly.", DPoPConstants.OAUTH_DPOP_HEADER);
+                    log.error(errorMessage);
+                    throw new AuthenticationFailException(errorMessage);
                 }
             }
         }
@@ -151,7 +158,8 @@ public class DPoPAuthenticationHandler extends AuthenticationHandler {
     private AuthenticationResult getAuthenticationResult(AuthenticationResult authenticationResult,
                                                          OAuth2TokenValidationResponseDTO responseDTO,
                                                          String authorizationHeader,
-                                                         AuthenticationRequest authenticationRequest) {
+                                                         AuthenticationRequest authenticationRequest)
+            throws AuthenticationFailException {
 
         if (!responseDTO.isValid()) {
             return authenticationResult;
@@ -170,12 +178,14 @@ public class DPoPAuthenticationHandler extends AuthenticationHandler {
             try {
                 String thumbprintOfPublicKey = Utils.getThumbprintOfKeyFromDpopProof(dpopHeader);
                 if (StringUtils.isBlank(thumbprintOfPublicKey) ||
-                        !thumbprintOfPublicKey
-                                .equalsIgnoreCase(responseDTO.getTokenBinding().getBindingValue())) {
+                        !thumbprintOfPublicKey.equalsIgnoreCase(responseDTO.getTokenBinding().getBindingValue())) {
                     return authenticationResult;
                 }
             } catch (IdentityOAuth2Exception e) {
-                return authenticationResult;
+                String errorMessage = "Error occurred while getting the thumbprint of the public key from the DPoP " +
+                        "proof";
+                log.error(errorMessage);
+                throw new AuthenticationFailException(errorMessage);
             }
         }
         authenticationResult.setAuthenticationStatus(AuthenticationStatus.SUCCESS);

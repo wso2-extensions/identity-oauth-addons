@@ -27,7 +27,7 @@ import org.wso2.carbon.identity.oauth2.token.bindings.TokenBinding;
 public interface DPoPTokenManagerDAO {
 
     /**
-     * Returns the binding type by using the refresh token.
+     * Returns the binding type using the refresh token.
      *
      * @param refreshToken Refresh token.
      * @return TokenBinding from the refresh token.

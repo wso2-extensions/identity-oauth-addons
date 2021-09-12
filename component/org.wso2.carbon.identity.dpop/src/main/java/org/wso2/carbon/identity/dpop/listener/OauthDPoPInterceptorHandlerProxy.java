@@ -150,8 +150,8 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
         boolean isDPoPBinding = false;
         TokenBinding tokenBinding =
                 tokenBindingTypeManagerDao.getBindingFromRefreshToken(tokenReqDTO.getRefreshToken());
-
-        if (StringUtils.equalsIgnoreCase(DPoPConstants.DPOP_TOKEN_TYPE, tokenBinding.getBindingType())) {
+        if (tokenBinding != null &&
+                StringUtils.equalsIgnoreCase(DPoPConstants.DPOP_TOKEN_TYPE, tokenBinding.getBindingType())) {
             isDPoPBinding = true;
         }
 
