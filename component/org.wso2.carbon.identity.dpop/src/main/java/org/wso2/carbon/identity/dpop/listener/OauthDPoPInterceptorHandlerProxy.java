@@ -299,14 +299,13 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
         boolean isExpired = (currentTimestamp.getTime() - issuedAt.getTime()) > getDPoPValidityPeriod();
         if (isExpired) {
             log.debug("DPoP Proof expired.");
-            throw new IdentityOAuth2Exception(DPoPConstants.INVALID_DPOP_PROOF);
+            throw new IdentityOAuth2Exception("Expired DPoP Proof");
         }
     }
 
     private int getDPoPValidityPeriod() {
 
-        String validityPeriod = IdentityUtil.getProperty(
-                DPoPConstants.DPOP_CONFIG_ELEMENT + DPoPConstants.HEADER_VALIDITY);
+        String validityPeriod = IdentityUtil.getProperty(DPoPConstants.HEADER_VALIDITY);
         return StringUtils.isNotBlank(validityPeriod) ? Integer.parseInt(validityPeriod.trim()) * 1000
                 : DPoPConstants.DEFAULT_HEADER_VALIDITY;
     }

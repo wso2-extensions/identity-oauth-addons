@@ -23,8 +23,7 @@ package org.wso2.carbon.identity.dpop.constant;
  */
 public class DPoPConstants {
 
-    public static final String DPOP_CONFIG_ELEMENT = "OAuth.DPoPConfig";
-    public static final String HEADER_VALIDITY = "HeaderValidity";
+    public static final String HEADER_VALIDITY = "OAuth.DPoPConfig.HeaderValidity";
     public static final int DEFAULT_HEADER_VALIDITY = 60000;
     public static final String DPOP_ISSUED_AT = "iat";
     public static final String DPOP_HTTP_URI = "htu";
