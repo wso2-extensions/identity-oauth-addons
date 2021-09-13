@@ -68,7 +68,7 @@ public class DPoPAuthenticationHandler extends AuthenticationHandler {
             String authorizationHeader = authenticationRequest.getHeader(HttpHeaders.AUTHORIZATION);
             if (StringUtils.isNotBlank(authorizationHeader) &&
                     authorizationHeader.startsWith(DPoPConstants.OAUTH_DPOP_HEADER)) {
-                String accessToken = null;
+                String accessToken;
                 String[] bearerToken = authorizationHeader.split(" ");
                 if (bearerToken.length == 2) {
                     accessToken = bearerToken[1];
@@ -79,11 +79,8 @@ public class DPoPAuthenticationHandler extends AuthenticationHandler {
                     token.setTokenType(DPoPConstants.OAUTH_HEADER);
                     requestDTO.setAccessToken(token);
 
-                    //TODO: If these values are not set, validation will fail giving an NPE. Need to see why that happens
                     OAuth2TokenValidationRequestDTO.TokenValidationContextParam contextParam = requestDTO.new
                             TokenValidationContextParam();
-                    contextParam.setKey("dummy");
-                    contextParam.setValue("dummy");
 
                     OAuth2TokenValidationRequestDTO.TokenValidationContextParam[] contextParams = { contextParam };
                     requestDTO.setContext(contextParams);

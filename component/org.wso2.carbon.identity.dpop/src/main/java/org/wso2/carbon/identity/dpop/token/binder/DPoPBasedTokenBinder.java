@@ -38,9 +38,8 @@ public class DPoPBasedTokenBinder extends AbstractTokenBinder {
 
     private static final String BINDING_TYPE = "DPoP";
     private static Optional<String> tokenBindingValue;
-    private final List<String> supportedGrantTypes =
-            Arrays.asList(GrantTypes.AUTHORIZATION_CODE, GrantTypes.PASSWORD, GrantTypes.CLIENT_CREDENTIALS,
-                    GrantTypes.REFRESH_TOKEN);
+    private final List<String> supportedGrantTypes = Arrays.asList(GrantTypes.AUTHORIZATION_CODE, GrantTypes.PASSWORD,
+            GrantTypes.CLIENT_CREDENTIALS, GrantTypes.REFRESH_TOKEN);
 
     public static void setTokenBindingValue(String bindingValue) {
 
