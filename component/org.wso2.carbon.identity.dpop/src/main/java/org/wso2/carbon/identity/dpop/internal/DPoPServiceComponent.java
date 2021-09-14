@@ -28,6 +28,7 @@ import org.wso2.carbon.identity.dpop.dao.DPoPTokenManagerDAOImpl;
 import org.wso2.carbon.identity.dpop.handler.DPoPAuthenticationHandler;
 import org.wso2.carbon.identity.dpop.listener.OauthDPoPInterceptorHandlerProxy;
 import org.wso2.carbon.identity.dpop.token.binder.DPoPBasedTokenBinder;
+import org.wso2.carbon.identity.dpop.util.Utils;
 import org.wso2.carbon.identity.oauth.common.token.bindings.TokenBinderInfo;
 import org.wso2.carbon.identity.oauth.event.OAuthEventInterceptor;
 
@@ -42,14 +43,17 @@ public class DPoPServiceComponent {
     protected void activate(ComponentContext context) {
 
         try {
-            DPoPDataHolder.getInstance().setTokenBindingTypeManagerDao(new DPoPTokenManagerDAOImpl());
-            context.getBundleContext().registerService(OAuthEventInterceptor.class,
-                    new OauthDPoPInterceptorHandlerProxy(), null);
-            context.getBundleContext().registerService(AuthenticationHandler.class.getName(),
-                    new DPoPAuthenticationHandler(), null);
-            context.getBundleContext().registerService(TokenBinderInfo.class.getName(),
-                    new DPoPBasedTokenBinder(), null);
-            log.debug("DPoPService is activated.");
+            boolean isDPoPEnabled = Utils.readConfigurations();
+            if (isDPoPEnabled) {
+                DPoPDataHolder.getInstance().setTokenBindingTypeManagerDao(new DPoPTokenManagerDAOImpl());
+                context.getBundleContext().registerService(TokenBinderInfo.class.getName(),
+                        new DPoPBasedTokenBinder(), null);
+                context.getBundleContext().registerService(OAuthEventInterceptor.class,
+                        new OauthDPoPInterceptorHandlerProxy(), null);
+                context.getBundleContext().registerService(AuthenticationHandler.class.getName(),
+                        new DPoPAuthenticationHandler(), null);
+                log.debug("DPoPService is activated.");
+            }
         } catch (Throwable e) {
             log.error("Error while activating DPoPServiceComponent.", e);
         }
