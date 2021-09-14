@@ -196,7 +196,7 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
             validateDPoPHeader(header);
             validateDPoPPayload(tokenReqDTO, signedJwt.getJWTClaimsSet());
             return validateSignature(signedJwt, tokReqMsgCtx);
-        } catch (ParseException | JOSEException | IdentityOAuth2Exception e) {
+        } catch (ParseException | JOSEException e) {
             throw new IdentityOAuth2Exception(DPoPConstants.INVALID_DPOP_PROOF, e);
         }
     }
@@ -298,8 +298,9 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
         }
         boolean isExpired = (currentTimestamp.getTime() - issuedAt.getTime()) > getDPoPValidityPeriod();
         if (isExpired) {
-            log.debug("DPoP Proof expired.");
-            throw new IdentityOAuth2Exception("Expired DPoP Proof");
+            String error = "Expired DPoP Proof";
+            log.debug(error);
+            throw new IdentityOAuth2Exception(error);
         }
     }
 
