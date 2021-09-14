@@ -23,6 +23,7 @@ package org.wso2.carbon.identity.dpop.constant;
  */
 public class DPoPConstants {
 
+    public static final String DPOP_ENABLED = "OAuth.DPoPConfig.Enable";
     public static final String HEADER_VALIDITY = "OAuth.DPoPConfig.HeaderValidity";
     public static final int DEFAULT_HEADER_VALIDITY = 60000;
     public static final String DPOP_ISSUED_AT = "iat";
@@ -47,8 +48,8 @@ public class DPoPConstants {
     public static class SQLQueries {
 
         public static final String RETRIEVE_TOKEN_BINDING_BY_REFRESH_TOKEN =
-                "SELECT TOKEN_BINDING_TYPE,TOKEN_BINDING_VALUE FROM IDN_OAUTH2_TOKEN_BINDING " +
-                        "WHERE TOKEN_BINDING_REF = (SELECT TOKEN_BINDING_REF " +
-                        "FROM IDN_OAUTH2_ACCESS_TOKEN WHERE REFRESH_TOKEN = ?)";
+                "SELECT BINDING.TOKEN_BINDING_TYPE,BINDING.TOKEN_BINDING_VALUE FROM IDN_OAUTH2_ACCESS_TOKEN TOKEN " +
+                        "LEFT JOIN IDN_OAUTH2_TOKEN_BINDING BINDING ON " +
+                        "TOKEN.TOKEN_BINDING_REF=BINDING.TOKEN_BINDING_REF WHERE TOKEN.REFRESH_TOKEN = ?";
     }
 }

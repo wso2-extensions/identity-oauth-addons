@@ -97,13 +97,13 @@ public class DPoPBasedTokenBinder extends AbstractTokenBinder {
     @Override
     public boolean isValidTokenBinding(Object request, String bindingReference) {
 
-        return false;
+        return true;
     }
 
     @Override
     public boolean isValidTokenBinding(OAuth2AccessTokenReqDTO oAuth2AccessTokenReqDTO, String bindingReference) {
 
-        return false;
+        return true;
     }
 
     @Override
