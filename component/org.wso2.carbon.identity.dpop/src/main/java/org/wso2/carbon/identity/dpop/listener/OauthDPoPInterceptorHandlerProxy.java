@@ -337,16 +337,4 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
         OAuthAppDO oauthAppDO = OAuth2Util.getAppInformationByClientId(consumerKey);
         return oauthAppDO.getTokenBindingType();
     }
-
-    @Override
-    public void onPostTokenIssue(OAuth2AccessTokenReqDTO tokenReqDTO, OAuth2AccessTokenRespDTO tokenRespDTO,
-                                 OAuthTokenReqMessageContext tokReqMsgCtx, Map<String, Object> params) {
-
-        if (tokReqMsgCtx.getTokenBinding() != null && (tokReqMsgCtx.getTokenBinding().getBindingType()).contains(
-                TokenType.DPOP.toString())) {
-            tokenRespDTO.setTokenType(TokenType.DPOP.toString());
-        } else {
-            tokenRespDTO.setTokenType(TokenType.BEARER.toString());
-        }
-    }
 }
