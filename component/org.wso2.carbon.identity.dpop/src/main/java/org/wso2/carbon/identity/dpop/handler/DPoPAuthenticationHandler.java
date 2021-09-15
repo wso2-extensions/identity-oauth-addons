@@ -50,7 +50,7 @@ import org.wso2.carbon.user.core.util.UserCoreUtil;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
 /**
- * DPoPAuthenticationHandler is for authenticate the request based on Token.
+ * DPoPAuthenticationHandler will validate the requests authorized with DPoP access tokens.
  */
 public class DPoPAuthenticationHandler extends AuthenticationHandler {
 
@@ -165,11 +165,13 @@ public class DPoPAuthenticationHandler extends AuthenticationHandler {
         TokenBinding binding = responseDTO.getTokenBinding();
         if (DPoPConstants.OAUTH_DPOP_HEADER.equals(binding.getBindingType())) {
             if (!authorizationHeader.startsWith(DPoPConstants.OAUTH_DPOP_HEADER)) {
+                log.debug("DPoP is not defined correctly in the Authorization header");
                 return authenticationResult;
             }
             String dpopHeader = authenticationRequest.getHeader(DPoPConstants.OAUTH_DPOP_HEADER);
 
             if (StringUtils.isBlank(dpopHeader)) {
+                log.debug("DPoP header is empty");
                 return authenticationResult;
             }
             try {
