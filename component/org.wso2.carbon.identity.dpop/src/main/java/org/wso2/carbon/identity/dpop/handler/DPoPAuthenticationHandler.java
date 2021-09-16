@@ -67,7 +67,8 @@ public class DPoPAuthenticationHandler extends AuthenticationHandler {
 
             String authorizationHeader = authenticationRequest.getHeader(HttpHeaders.AUTHORIZATION);
             if (StringUtils.isNotBlank(authorizationHeader) &&
-                    authorizationHeader.startsWith(DPoPConstants.OAUTH_DPOP_HEADER)) {
+                    authorizationHeader.startsWith(DPoPConstants.OAUTH_DPOP_HEADER) ||
+                    (authorizationHeader.startsWith(DPoPConstants.OAUTH_HEADER))) {
                 String accessToken;
                 String[] bearerToken = authorizationHeader.split(" ");
                 if (bearerToken.length == 2) {
@@ -149,7 +150,8 @@ public class DPoPAuthenticationHandler extends AuthenticationHandler {
     @Override
     public boolean canHandle(MessageContext messageContext) {
 
-        return AuthConfigurationUtil.isAuthHeaderMatch(messageContext, DPoPConstants.OAUTH_DPOP_HEADER);
+        return AuthConfigurationUtil.isAuthHeaderMatch(messageContext, DPoPConstants.OAUTH_DPOP_HEADER) ||
+                AuthConfigurationUtil.isAuthHeaderMatch(messageContext, DPoPConstants.OAUTH_HEADER);
     }
 
     private AuthenticationResult getAuthenticationResult(AuthenticationResult authenticationResult,
@@ -166,7 +168,7 @@ public class DPoPAuthenticationHandler extends AuthenticationHandler {
         TokenBinding binding = responseDTO.getTokenBinding();
         if (binding != null && DPoPConstants.OAUTH_DPOP_HEADER.equals(binding.getBindingType())) {
             if (!authorizationHeader.startsWith(DPoPConstants.OAUTH_DPOP_HEADER)) {
-                log.debug("DPoP is not defined correctly in the Authorization header.");
+                log.debug("DPoP prefix is not defined correctly in the Authorization header.");
                 return authenticationResult;
             }
             String dpopHeader = authenticationRequest.getHeader(DPoPConstants.OAUTH_DPOP_HEADER);
@@ -193,8 +195,9 @@ public class DPoPAuthenticationHandler extends AuthenticationHandler {
                 throw new AuthenticationFailException(errorMessage);
             }
         } else {
-            return authenticationResult;
-
+            if (!authorizationHeader.startsWith(DPoPConstants.OAUTH_HEADER)) {
+                return authenticationResult;
+            }
         }
         authenticationResult.setAuthenticationStatus(AuthenticationStatus.SUCCESS);
         return authenticationResult;
