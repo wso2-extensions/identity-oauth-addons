@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.dpop.handler;
 
+import org.apache.catalina.connector.Request;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -36,14 +37,18 @@ import org.wso2.carbon.identity.auth.service.handler.AuthenticationHandler;
 import org.wso2.carbon.identity.auth.service.util.AuthConfigurationUtil;
 import org.wso2.carbon.identity.auth.service.util.Constants;
 import org.wso2.carbon.identity.core.bean.context.MessageContext;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.dpop.constant.DPoPConstants;
 import org.wso2.carbon.identity.dpop.util.Utils;
 import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
+import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
+import org.wso2.carbon.identity.oauth2.OAuth2Constants.TokenBinderType;
 import org.wso2.carbon.identity.oauth2.OAuth2TokenValidationService;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2ClientApplicationDTO;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2TokenValidationRequestDTO;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2TokenValidationResponseDTO;
+import org.wso2.carbon.identity.oauth2.model.AccessTokenDO;
 import org.wso2.carbon.identity.oauth2.token.bindings.TokenBinding;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
@@ -91,10 +96,10 @@ public class DPoPAuthenticationHandler extends AuthenticationHandler {
                     OAuth2TokenValidationResponseDTO responseDTO =
                             clientApplicationDTO.getAccessTokenValidationResponse();
 
-                    getAuthenticationResult(authenticationResult, responseDTO, authorizationHeader,
-                            authenticationRequest);
-
                     String consumerKey = clientApplicationDTO.getConsumerKey();
+
+                    getAuthenticationResult(authenticationResult, responseDTO, authorizationHeader,
+                            authenticationRequest, messageContext, accessToken, consumerKey);
 
                     setAuthenticationContext(responseDTO, authenticationContext, consumerKey);
 
@@ -157,7 +162,9 @@ public class DPoPAuthenticationHandler extends AuthenticationHandler {
     private AuthenticationResult getAuthenticationResult(AuthenticationResult authenticationResult,
                                                          OAuth2TokenValidationResponseDTO responseDTO,
                                                          String authorizationHeader,
-                                                         AuthenticationRequest authenticationRequest)
+                                                         AuthenticationRequest authenticationRequest,
+                                                         MessageContext messageContext, String accessToken,
+                                                         String consumerKey)
             throws AuthenticationFailException {
 
         if (!responseDTO.isValid()) {
@@ -198,9 +205,109 @@ public class DPoPAuthenticationHandler extends AuthenticationHandler {
             if (!authorizationHeader.startsWith(DPoPConstants.OAUTH_HEADER)) {
                 return authenticationResult;
             }
+
+            if (!isTokenBindingValid(messageContext, binding,
+                    consumerKey, accessToken)) {
+                return authenticationResult;
+            }
         }
         authenticationResult.setAuthenticationStatus(AuthenticationStatus.SUCCESS);
         return authenticationResult;
+    }
+
+    /**
+     * Validate access token binding value.
+     *
+     * @param messageContext message context.
+     * @param tokenBinding   token binding.
+     * @param clientId       OAuth2 client id.
+     * @param accessToken    Bearer token from request.
+     * @return true if token binding is valid.
+     */
+    private boolean isTokenBindingValid(MessageContext messageContext, TokenBinding tokenBinding, String clientId,
+                                        String accessToken) {
+
+        if (tokenBinding == null || StringUtils.isBlank(tokenBinding.getBindingReference())) {
+            return true;
+        }
+
+        Request authenticationRequest =
+                ((AuthenticationContext) messageContext).getAuthenticationRequest().getRequest();
+        OAuthAppDO oAuthAppDO;
+        try {
+            oAuthAppDO = OAuth2Util.getAppInformationByClientId(clientId);
+        } catch (IdentityOAuth2Exception | InvalidOAuthClientException e) {
+            log.error("Failed to retrieve application information by client id: " + clientId, e);
+            return false;
+        }
+
+        if (!oAuthAppDO.isTokenBindingValidationEnabled()) {
+            if (authenticationRequest.getRequestURI().toLowerCase().endsWith(DPoPConstants.SCIM2_ME_ENDPOINT_URI) &&
+                    isSSOSessionBasedTokenBinding(tokenBinding.getBindingType())) {
+                setCurrentSessionIdThreadLocal(getTokenBindingValueFromAccessToken(accessToken));
+            }
+            return true;
+        }
+
+        if (OAuth2Util.isValidTokenBinding(tokenBinding, authenticationRequest)) {
+            if (authenticationRequest.getRequestURI().toLowerCase().endsWith(DPoPConstants.SCIM2_ME_ENDPOINT_URI) &&
+                    isSSOSessionBasedTokenBinding(tokenBinding.getBindingType())) {
+                setCurrentSessionIdThreadLocal(tokenBinding.getBindingValue());
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Get the token binding value which corresponds to the current session identifier from the token when
+     * SSO-session-based token binding is enabled.
+     *
+     * @param accessToken Bearer token from request.
+     * @return Token binding value.
+     */
+    private String getTokenBindingValueFromAccessToken(String accessToken) {
+
+        String tokenBindingValue = null;
+        try {
+            AccessTokenDO accessTokenDO = OAuth2Util.findAccessToken(accessToken, false);
+            if (accessTokenDO != null) {
+                if (accessTokenDO.getTokenBinding() != null &&
+                        StringUtils.isNotBlank(accessTokenDO.getTokenBinding().getBindingValue()) &&
+                        isSSOSessionBasedTokenBinding(accessTokenDO.getTokenBinding().getBindingType())) {
+                    tokenBindingValue = accessTokenDO.getTokenBinding().getBindingValue();
+                }
+            }
+        } catch (IdentityOAuth2Exception e) {
+            log.error("Error occurred while getting the access token from the token identifier", e);
+        }
+        return tokenBindingValue;
+    }
+
+    /**
+     * Set token binding value which corresponds to the current session id to a thread local to be used down the flow.
+     *
+     * @param tokenBindingValue Token Binding value.
+     */
+    private void setCurrentSessionIdThreadLocal(String tokenBindingValue) {
+
+        if (StringUtils.isNotBlank(tokenBindingValue)) {
+            IdentityUtil.threadLocalProperties.get().put(Constants.CURRENT_SESSION_IDENTIFIER, tokenBindingValue);
+            if (log.isDebugEnabled()) {
+                log.debug("Current session identifier: " + tokenBindingValue + " is added to thread local.");
+            }
+        }
+    }
+
+    /**
+     * Check whether the token binding type is 'sso-session'.
+     *
+     * @param tokenBindingType Type of the token binding.
+     * @return True if 'sso-session', false otherwise.
+     */
+    private boolean isSSOSessionBasedTokenBinding(String tokenBindingType) {
+
+        return TokenBinderType.SSO_SESSION_BASED_TOKEN_BINDER.equals(tokenBindingType);
     }
 
     private void setAuthenticationContext(OAuth2TokenValidationResponseDTO responseDTO,

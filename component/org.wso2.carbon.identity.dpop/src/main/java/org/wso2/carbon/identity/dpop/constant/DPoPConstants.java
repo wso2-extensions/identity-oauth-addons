@@ -43,6 +43,7 @@ public class DPoPConstants {
     public static final String CONSUMER_KEY = "consumer-key";
     public static final String SERVICE_PROVIDER = "serviceProvider";
     public static final String SERVICE_PROVIDER_TENANT_DOMAIN = "serviceProviderTenantDomain";
+    public static final String SCIM2_ME_ENDPOINT_URI = "scim2/me";
 
     /**
      * This class defines SQLQueries.

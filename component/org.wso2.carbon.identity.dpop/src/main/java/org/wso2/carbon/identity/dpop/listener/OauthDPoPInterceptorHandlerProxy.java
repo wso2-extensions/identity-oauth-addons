@@ -48,12 +48,10 @@ import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
 import org.wso2.carbon.identity.oauth.event.AbstractOAuthEventInterceptor;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2AccessTokenReqDTO;
-import org.wso2.carbon.identity.oauth2.dto.OAuth2AccessTokenRespDTO;
 import org.wso2.carbon.identity.oauth2.model.HttpRequestHeader;
 import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
 import org.wso2.carbon.identity.oauth2.token.bindings.TokenBinding;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
-import org.wso2.carbon.identity.oauth2.util.TokenType;
 
 import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPublicKey;
@@ -166,6 +164,8 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
                 throw new IdentityOAuth2Exception(DPoPConstants.INVALID_DPOP_PROOF);
             }
             if (!tokReqMsgCtx.getTokenBinding().getBindingValue().equalsIgnoreCase(tokenBinding.getBindingValue())) {
+                log.error("DPoP proof thumbprint value of the public key is not equal to binding value from" +
+                        " the refresh token.");
                 throw new IdentityOAuth2Exception(DPoPConstants.INVALID_DPOP_PROOF);
             }
         } else if (isDPoPBinding) {
