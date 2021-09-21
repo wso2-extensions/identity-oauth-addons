@@ -44,6 +44,9 @@ public class DPoPConstants {
     public static final String SERVICE_PROVIDER = "serviceProvider";
     public static final String SERVICE_PROVIDER_TENANT_DOMAIN = "serviceProviderTenantDomain";
     public static final String SCIM2_ME_ENDPOINT_URI = "scim2/me";
+    public static final String CNF = "cnf";
+    public static final String TOKEN_TYPE = "token_type";
+    public static final String JWK_THUMBPRINT = "jkt";
 
     /**
      * This class defines SQLQueries.
