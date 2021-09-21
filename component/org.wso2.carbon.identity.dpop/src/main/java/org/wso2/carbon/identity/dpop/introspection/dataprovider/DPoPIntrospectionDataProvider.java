@@ -50,7 +50,8 @@ public class DPoPIntrospectionDataProvider extends AbstractIdentityHandler imple
             accessTokenDO = OAuth2Util.findAccessToken(oAuth2TokenValidationRequestDTO.
                     getAccessToken().getIdentifier(), false);
 
-            if (DPoPConstants.DPOP_TOKEN_TYPE.equals(accessTokenDO.getTokenBinding().getBindingType())) {
+            if (accessTokenDO.getTokenBinding() != null &&
+                    DPoPConstants.DPOP_TOKEN_TYPE.equals(accessTokenDO.getTokenBinding().getBindingType())) {
                 introspectionData.put(DPoPConstants.TOKEN_TYPE, (DPoPConstants.DPOP_TOKEN_TYPE));
                 JSONObject cnf = new JSONObject();
                 cnf.put(DPoPConstants.JWK_THUMBPRINT, accessTokenDO.getTokenBinding().getBindingValue());
