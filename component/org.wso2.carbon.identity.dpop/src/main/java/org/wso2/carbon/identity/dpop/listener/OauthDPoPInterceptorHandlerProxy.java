@@ -344,7 +344,7 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
     private void setCnFValue( OAuthTokenReqMessageContext tokReqMsgCtx,String tokenBindingValue){
 
         JSONObject obj = new JSONObject();
-        obj.put(DPoPConstants.JWK_THUMBPRINT, tokReqMsgCtx.getTokenBinding().getBindingValue());
+        obj.put(DPoPConstants.JWK_THUMBPRINT, tokenBindingValue);
         tokReqMsgCtx.addProperty(DPoPConstants.CNF,obj);
     }
 }
