@@ -33,6 +33,7 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.json.simple.JSONObject;
 import org.wso2.carbon.identity.core.handler.AbstractIdentityHandler;
 import org.wso2.carbon.identity.core.model.IdentityEventListenerConfig;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
@@ -220,6 +221,7 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
                 tokenBinding.setBindingReference(DigestUtils.md5Hex(thumbprint));
                 DPoPBasedTokenBinder.setTokenBindingValue(tokenBinding.getBindingValue());
                 tokReqMsgCtx.setTokenBinding(tokenBinding);
+                setCnFValue(tokReqMsgCtx,tokenBinding.getBindingValue());
             }
             // Using the RSA algorithm.
         } else if (DPoPConstants.RSA_ENCRYPTION.equalsIgnoreCase(jwk.getKeyType().toString())) {
@@ -232,6 +234,7 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
                 tokenBinding.setBindingReference(DigestUtils.md5Hex(thumbprint));
                 DPoPBasedTokenBinder.setTokenBindingValue(tokenBinding.getBindingValue());
                 tokReqMsgCtx.setTokenBinding(tokenBinding);
+                setCnFValue(tokReqMsgCtx,tokenBinding.getBindingValue());
             }
         } else {
             String msg = String.format("Invalid key algorithm : %s.", jwk.getKeyType().toString());
@@ -336,5 +339,12 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
 
         OAuthAppDO oauthAppDO = OAuth2Util.getAppInformationByClientId(consumerKey);
         return oauthAppDO.getTokenBindingType();
+    }
+
+    private void setCnFValue( OAuthTokenReqMessageContext tokReqMsgCtx,String tokenBindingValue){
+
+        JSONObject obj = new JSONObject();
+        obj.put(DPoPConstants.JWK_THUMBPRINT, tokReqMsgCtx.getTokenBinding().getBindingValue());
+        tokReqMsgCtx.addProperty(DPoPConstants.CNF,obj);
     }
 }
