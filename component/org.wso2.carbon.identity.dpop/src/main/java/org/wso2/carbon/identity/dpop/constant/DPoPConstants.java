@@ -34,7 +34,7 @@ public class DPoPConstants {
     public static final String DPOP_JWT_TYPE = "dpop+jwt";
     public static final String DPOP_TOKEN_TYPE = "DPoP";
     public static final String INVALID_DPOP_PROOF = "invalid_dpop_proof";
-
+    public static final String INVALID_DPOP_ERROR = "Invalid DPoP Proof";
     public static final String ECDSA_ENCRYPTION = "EC";
     public static final String RSA_ENCRYPTION = "RSA";
 

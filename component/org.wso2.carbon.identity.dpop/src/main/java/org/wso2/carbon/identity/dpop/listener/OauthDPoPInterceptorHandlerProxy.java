@@ -43,12 +43,13 @@ import org.wso2.carbon.identity.dpop.dao.DPoPTokenManagerDAO;
 import org.wso2.carbon.identity.dpop.internal.DPoPDataHolder;
 import org.wso2.carbon.identity.dpop.token.binder.DPoPBasedTokenBinder;
 import org.wso2.carbon.identity.dpop.util.Utils;
-import org.wso2.carbon.identity.oauth.common.DPoPState;
 import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
 import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
 import org.wso2.carbon.identity.oauth.event.AbstractOAuthEventInterceptor;
+import org.wso2.carbon.identity.oauth2.IdentityOAuth2ClientException;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2AccessTokenReqDTO;
+import org.wso2.carbon.identity.oauth2.dto.OAuth2AccessTokenRespDTO;
 import org.wso2.carbon.identity.oauth2.model.HttpRequestHeader;
 import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
 import org.wso2.carbon.identity.oauth2.token.bindings.TokenBinding;
@@ -60,7 +61,6 @@ import java.sql.Timestamp;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.Map;
-
 import javax.servlet.http.HttpServletRequestWrapper;
 
 /**
@@ -87,43 +87,38 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
 
         String consumerKey = tokenReqDTO.getClientId();
         if (log.isDebugEnabled()) {
-            log.debug(String.format("DPoP proxy intercepted the token request from the client : %s.",
-                    consumerKey));
+            log.debug(String.format("DPoP proxy intercepted the token request from the client : %s.", consumerKey));
         }
 
         String dPoPProof = getDPoPHeader(tokReqMsgCtx);
         try {
 
-            String dPoPState = getApplicationDPoPState(tokenReqDTO.getClientId());
             String tokenBindingType = getApplicationBindingType(tokenReqDTO.getClientId());
 
-            if (DPoPConstants.DPOP_TOKEN_TYPE.equals(tokenBindingType) ||
-                    DPoPState.MANDATORY.name().equalsIgnoreCase(dPoPState)) {
+            if (DPoPConstants.DPOP_TOKEN_TYPE.equals(tokenBindingType)) {
+
                 if (StringUtils.isNotBlank(dPoPProof)) {
 
                     boolean isValidDPoP = isValidDPoP(dPoPProof, tokenReqDTO, tokReqMsgCtx);
-                    // If the DPoP proof is provided, it will be handled as a DPoP token request.
+
                     if (!isValidDPoP) {
                         if (log.isDebugEnabled()) {
-                            log.debug(String.format("DPoP proof validation failed, Application ID: %s.",
-                                    consumerKey));
+                            log.debug(String.format("DPoP proof validation failed, Application ID: %s.", consumerKey));
                         }
-                        throw new IdentityOAuth2Exception(DPoPConstants.INVALID_DPOP_PROOF);
+                        throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF,
+                                DPoPConstants.INVALID_DPOP_ERROR);
                     }
                 } else {
-                    if (DPoPState.MANDATORY.name().equalsIgnoreCase(dPoPState)) {
-                        throw new IdentityOAuth2Exception("DPoP header is required.");
-                    }
-                    if (log.isDebugEnabled()) {
-                        log.debug(String.format("Bearer access token request received from client: %s.",
-                                consumerKey));
-                    }
+                    throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF,
+                            "DPoP header is required.");
+                }
+            } else {
+                if (log.isDebugEnabled()) {
+                    log.debug(String.format("Bearer access token request received from client: %s.", consumerKey));
                 }
             }
         } catch (InvalidOAuthClientException e) {
-            throw new IdentityOAuth2Exception(
-                    String.format("Invalid OAuth client: %s.", consumerKey),
-                    e);
+            throw new IdentityOAuth2ClientException("invalid_client", "Invalid Client");
         }
     }
 
@@ -159,22 +154,24 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
             // If DPoP proof is provided, then it will be handled as a DPoP token request.
             if (!isValidDPoP(dPoPProof, tokenReqDTO, tokReqMsgCtx)) {
                 if (log.isDebugEnabled()) {
-                    log.debug(String.format("DPoP proof validation failed for the application Id : %s.",
-                            consumerKey));
+                    log.debug(String.format("DPoP proof validation failed for the application Id : %s.", consumerKey));
                 }
-                throw new IdentityOAuth2Exception(DPoPConstants.INVALID_DPOP_PROOF);
+                throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF,
+                        DPoPConstants.INVALID_DPOP_ERROR);
             }
             if (!tokReqMsgCtx.getTokenBinding().getBindingValue().equalsIgnoreCase(tokenBinding.getBindingValue())) {
                 log.error("DPoP proof thumbprint value of the public key is not equal to binding value from" +
                         " the refresh token.");
-                throw new IdentityOAuth2Exception(DPoPConstants.INVALID_DPOP_PROOF);
+                throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF,
+                        DPoPConstants.INVALID_DPOP_ERROR);
             }
         } else if (isDPoPBinding) {
             if (log.isDebugEnabled()) {
                 log.debug(String.format("Renewal request received without the DPoP proof from the application Id: %s.",
                         consumerKey));
             }
-            throw new IdentityOAuth2Exception("DPoP proof is required.");
+
+            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, "DPoP proof is required.");
         }
     }
 
@@ -185,6 +182,18 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
                 (AbstractIdentityHandler.class.getName(), this.getClass().getName());
         return identityEventListenerConfig == null ||
                 Boolean.parseBoolean(identityEventListenerConfig.getEnable());
+    }
+
+    @Override
+    public void onPostTokenIssue(OAuth2AccessTokenReqDTO tokenReqDTO, OAuth2AccessTokenRespDTO tokenRespDTO,
+                                 OAuthTokenReqMessageContext tokReqMsgCtx, Map<String, Object> params) {
+
+        if (tokReqMsgCtx.getTokenBinding() != null && (tokReqMsgCtx.getTokenBinding().getBindingType()).contains(
+                DPoPConstants.DPOP_TOKEN_TYPE)) {
+            tokenRespDTO.setTokenType(DPoPConstants.DPOP_TOKEN_TYPE);
+        } else {
+            tokenRespDTO.setTokenType(DPoPConstants.OAUTH_HEADER);
+        }
     }
 
     private boolean isValidDPoP(String dPoPProof, OAuth2AccessTokenReqDTO tokenReqDTO,
@@ -198,7 +207,7 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
             validateDPoPPayload(tokenReqDTO, signedJwt.getJWTClaimsSet());
             return validateSignature(signedJwt, tokReqMsgCtx);
         } catch (ParseException | JOSEException e) {
-            throw new IdentityOAuth2Exception(DPoPConstants.INVALID_DPOP_PROOF, e);
+            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
         }
     }
 
@@ -221,7 +230,7 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
                 tokenBinding.setBindingReference(DigestUtils.md5Hex(thumbprint));
                 DPoPBasedTokenBinder.setTokenBindingValue(tokenBinding.getBindingValue());
                 tokReqMsgCtx.setTokenBinding(tokenBinding);
-                setCnFValue(tokReqMsgCtx,tokenBinding.getBindingValue());
+                setCnFValue(tokReqMsgCtx, tokenBinding.getBindingValue());
             }
             // Using the RSA algorithm.
         } else if (DPoPConstants.RSA_ENCRYPTION.equalsIgnoreCase(jwk.getKeyType().toString())) {
@@ -234,16 +243,15 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
                 tokenBinding.setBindingReference(DigestUtils.md5Hex(thumbprint));
                 DPoPBasedTokenBinder.setTokenBindingValue(tokenBinding.getBindingValue());
                 tokReqMsgCtx.setTokenBinding(tokenBinding);
-                setCnFValue(tokReqMsgCtx,tokenBinding.getBindingValue());
+                setCnFValue(tokReqMsgCtx, tokenBinding.getBindingValue());
             }
         } else {
             String msg = String.format("Invalid key algorithm : %s.", jwk.getKeyType().toString());
             if (log.isDebugEnabled()) {
                 log.debug(msg);
             }
-            throw new IdentityOAuth2Exception(msg);
+            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
         }
-        // Set certificate thumbprint as the token binding value.
         return isValid;
     }
 
@@ -251,16 +259,16 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
 
         if (header.getJWK() == null) {
             log.debug("'jwk' is not presented in the DPoP Proof header");
-            throw new IdentityOAuth2Exception(DPoPConstants.INVALID_DPOP_PROOF);
+            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
         }
         JWSAlgorithm algorithm = header.getAlgorithm();
         if (algorithm == null) {
             log.debug("'algorithm' is not presented in the DPoP Proof header");
-            throw new IdentityOAuth2Exception(DPoPConstants.INVALID_DPOP_PROOF);
+            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
         }
         if (!DPoPConstants.DPOP_JWT_TYPE.equalsIgnoreCase(header.getType().toString())) {
             log.debug(" typ field value in the DPoP Proof header  is not equal to 'dpop+jwt'");
-            throw new IdentityOAuth2Exception(DPoPConstants.INVALID_DPOP_PROOF);
+            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
         }
     }
 
@@ -269,12 +277,11 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
 
         if (jwtClaimsSet == null) {
             log.debug("'jwtClaimsSet' is missing in the body of a DPoP proof.");
-            throw new IdentityOAuth2Exception(DPoPConstants.INVALID_DPOP_PROOF);
+            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
         }
         if (!jwtClaimsSet.getClaims().containsKey("jti")) {
             log.debug("'jti' is missing in the 'jwtClaimsSet' of the DPoP proof body.");
-            throw new IdentityOAuth2Exception(DPoPConstants.INVALID_DPOP_PROOF);
-
+            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
         }
         HttpServletRequestWrapper requestWrapper = tokenReqDTO.getHttpServletRequestWrapper();
         Object dPoPHttpMethod = jwtClaimsSet.getClaim(DPoPConstants.DPOP_HTTP_METHOD);
@@ -282,14 +289,14 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
         // Validate if the DPoP proof HTTP method matches that of the request.
         if (!requestWrapper.getMethod().equalsIgnoreCase(dPoPHttpMethod.toString())) {
             log.debug("DPoP Proof HTTP method mismatch.");
-            throw new IdentityOAuth2Exception(DPoPConstants.INVALID_DPOP_PROOF);
+            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
         }
 
         // Validate if the DPoP proof HTTP method matches that of the request.
         Object dPoPContextPath = jwtClaimsSet.getClaim(DPoPConstants.DPOP_HTTP_URI);
         if (!requestWrapper.getRequestURL().toString().equalsIgnoreCase(dPoPContextPath.toString())) {
             log.debug("DPoP Proof context path mismatch.");
-            throw new IdentityOAuth2Exception(DPoPConstants.INVALID_DPOP_PROOF);
+            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
         }
 
         // DPoP header validity check.
@@ -297,13 +304,14 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
         Date issuedAt = (Date) jwtClaimsSet.getClaim(DPoPConstants.DPOP_ISSUED_AT);
         if (issuedAt == null) {
             log.debug("DPoP Proof missing the 'iat' field.");
-            throw new IdentityOAuth2Exception(DPoPConstants.INVALID_DPOP_PROOF);
+            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
         }
+
         boolean isExpired = (currentTimestamp.getTime() - issuedAt.getTime()) > getDPoPValidityPeriod();
         if (isExpired) {
             String error = "Expired DPoP Proof";
             log.debug(error);
-            throw new IdentityOAuth2Exception(error);
+            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, error);
         }
     }
 
@@ -327,13 +335,6 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
         return null;
     }
 
-    private String getApplicationDPoPState(String consumerKey) throws InvalidOAuthClientException,
-            IdentityOAuth2Exception {
-
-        OAuthAppDO oauthAppDO = OAuth2Util.getAppInformationByClientId(consumerKey);
-        return oauthAppDO != null ? oauthAppDO.getDpopState() : null;
-    }
-
     private String getApplicationBindingType(String consumerKey) throws InvalidOAuthClientException,
             IdentityOAuth2Exception {
 
@@ -341,10 +342,10 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
         return oauthAppDO.getTokenBindingType();
     }
 
-    private void setCnFValue( OAuthTokenReqMessageContext tokReqMsgCtx,String tokenBindingValue){
+    private void setCnFValue(OAuthTokenReqMessageContext tokReqMsgCtx, String tokenBindingValue) {
 
         JSONObject obj = new JSONObject();
         obj.put(DPoPConstants.JWK_THUMBPRINT, tokenBindingValue);
-        tokReqMsgCtx.addProperty(DPoPConstants.CNF,obj);
+        tokReqMsgCtx.addProperty(DPoPConstants.CNF, obj);
     }
 }
