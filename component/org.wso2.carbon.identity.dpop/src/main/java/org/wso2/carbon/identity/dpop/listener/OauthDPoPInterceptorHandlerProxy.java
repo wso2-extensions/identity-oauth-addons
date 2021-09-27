@@ -194,6 +194,16 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
         }
     }
 
+    @Override
+    public void onPostTokenRenewal(OAuth2AccessTokenReqDTO tokenReqDTO, OAuth2AccessTokenRespDTO tokenRespDTO,
+                                   OAuthTokenReqMessageContext tokReqMsgCtx, Map<String, Object> params) {
+
+        if (tokReqMsgCtx.getTokenBinding() != null &&
+                DPoPConstants.DPOP_TOKEN_TYPE.equals(tokReqMsgCtx.getTokenBinding().getBindingType())) {
+            tokenRespDTO.setTokenType(DPoPConstants.DPOP_TOKEN_TYPE);
+        }
+    }
+
     private boolean isValidDPoP(String dPoPProof, OAuth2AccessTokenReqDTO tokenReqDTO,
                                 OAuthTokenReqMessageContext tokReqMsgCtx)
             throws IdentityOAuth2Exception {
