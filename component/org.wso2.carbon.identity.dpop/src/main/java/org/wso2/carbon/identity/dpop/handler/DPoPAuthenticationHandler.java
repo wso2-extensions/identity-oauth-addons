@@ -175,30 +175,37 @@ public class DPoPAuthenticationHandler extends AuthenticationHandler {
         TokenBinding binding = responseDTO.getTokenBinding();
         if (binding != null && DPoPConstants.OAUTH_DPOP_HEADER.equals(binding.getBindingType())) {
             if (!authorizationHeader.startsWith(DPoPConstants.OAUTH_DPOP_HEADER)) {
-                log.debug("DPoP prefix is not defined correctly in the Authorization header.");
+                if (log.isDebugEnabled()) {
+                    log.debug("DPoP prefix is not defined correctly in the Authorization header.");
+                }
                 return authenticationResult;
             }
             String dpopHeader = authenticationRequest.getHeader(DPoPConstants.OAUTH_DPOP_HEADER);
 
             if (StringUtils.isBlank(dpopHeader)) {
-                log.debug("DPoP header is empty.");
+                if (log.isDebugEnabled()) {
+                    log.debug("DPoP header is empty.");
+                }
                 return authenticationResult;
             }
             try {
                 String thumbprintOfPublicKey = Utils.getThumbprintOfKeyFromDpopProof(dpopHeader);
                 if (StringUtils.isBlank(thumbprintOfPublicKey)) {
-                    log.debug("Thumbprint value of the public key is empty in the DPoP Proof.");
+                    if (log.isDebugEnabled()) {
+                        log.debug("Thumbprint value of the public key is empty in the DPoP Proof.");
+                    }
                     return authenticationResult;
                 }
                 if (!thumbprintOfPublicKey.equalsIgnoreCase(responseDTO.getTokenBinding().getBindingValue())) {
-                    log.debug("Thumbprint value of the public key in the DPoP proof is not equal to binding value" +
-                            " of the responseDTO.");
+                    if (log.isDebugEnabled()) {
+                        log.debug("Thumbprint value of the public key in the DPoP proof is not equal to binding value" +
+                                " of the responseDTO.");
+                    }
                     return authenticationResult;
                 }
             } catch (IdentityOAuth2Exception e) {
                 String errorMessage = "Error occurred while getting the thumbprint of the public key from the DPoP " +
                         "proof.";
-                log.error(errorMessage);
                 throw new AuthenticationFailException(errorMessage);
             }
         } else {
