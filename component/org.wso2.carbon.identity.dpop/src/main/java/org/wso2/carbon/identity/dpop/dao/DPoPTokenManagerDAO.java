@@ -27,11 +27,20 @@ import org.wso2.carbon.identity.oauth2.token.bindings.TokenBinding;
 public interface DPoPTokenManagerDAO {
 
     /**
+     * Returns the binding type using the refresh token and checking Hash is enabled or not.
+     *
+     * @param refreshToken Refresh token.
+     * @return TokenBinding from the refresh token.
+     * @throws IdentityOAuth2Exception If an error occurs while retrieving the binding type.
+     */
+    TokenBinding getTokenBinding(String refreshToken, boolean isHashedToken) throws IdentityOAuth2Exception;
+
+    /**
      * Returns the binding type using the refresh token.
      *
      * @param refreshToken Refresh token.
      * @return TokenBinding from the refresh token.
      * @throws IdentityOAuth2Exception If an error occurs while retrieving the binding type.
      */
-    TokenBinding getBindingFromRefreshToken(String refreshToken) throws IdentityOAuth2Exception;
+    TokenBinding getBindingFromRefreshToken(String refreshToken,boolean isHashedToken) throws IdentityOAuth2Exception;
 }

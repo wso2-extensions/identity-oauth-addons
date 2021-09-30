@@ -22,6 +22,8 @@ import org.wso2.carbon.database.utils.jdbc.JdbcTemplate;
 import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.identity.dpop.constant.DPoPConstants;
 import org.wso2.carbon.identity.dpop.util.Utils;
+import org.wso2.carbon.identity.oauth.tokenprocessor.HashingPersistenceProcessor;
+import org.wso2.carbon.identity.oauth.tokenprocessor.TokenPersistenceProcessor;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.token.bindings.TokenBinding;
 
@@ -32,11 +34,32 @@ import java.util.List;
  */
 public class DPoPTokenManagerDAOImpl implements DPoPTokenManagerDAO {
 
+    private static TokenPersistenceProcessor hashingPersistenceProcessor;
+
+    public DPoPTokenManagerDAOImpl() {
+
+        hashingPersistenceProcessor = new HashingPersistenceProcessor();
+    }
+
     @Override
-    public TokenBinding getBindingFromRefreshToken(String refreshToken) throws IdentityOAuth2Exception {
+    public TokenBinding getTokenBinding(String refreshToken, boolean isTokenHashingEnabled) throws IdentityOAuth2Exception {
+
+        if (isTokenHashingEnabled) {
+            return getBindingFromRefreshToken(refreshToken, true);
+        } else {
+            return getBindingFromRefreshToken(refreshToken, false);
+        }
+    }
+
+    @Override
+    public TokenBinding getBindingFromRefreshToken(String refreshToken,boolean isTokenHashingEnabled) throws IdentityOAuth2Exception {
 
         JdbcTemplate jdbcTemplate = Utils.getNewTemplate();
+        if (isTokenHashingEnabled) {
+            refreshToken = hashingPersistenceProcessor.getProcessedRefreshToken(refreshToken);
+        }
         try {
+            String finalRefreshToken = refreshToken;
             List<TokenBinding> tokenBindingList = jdbcTemplate.executeQuery(
                     DPoPConstants.SQLQueries.RETRIEVE_TOKEN_BINDING_BY_REFRESH_TOKEN,
                     (resultSet, rowNumber) -> {
@@ -46,8 +69,7 @@ public class DPoPTokenManagerDAOImpl implements DPoPTokenManagerDAO {
 
                         return tokenBinding;
                     },
-                    preparedStatement ->
-                            preparedStatement.setString(1, refreshToken));
+                    preparedStatement -> preparedStatement.setString(1, finalRefreshToken));
 
             return tokenBindingList.isEmpty() ? null : tokenBindingList.get(0);
         } catch (DataAccessException e) {

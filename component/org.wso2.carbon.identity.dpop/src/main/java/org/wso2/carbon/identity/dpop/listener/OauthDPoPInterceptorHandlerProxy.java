@@ -38,7 +38,6 @@ import org.wso2.carbon.identity.core.handler.AbstractIdentityHandler;
 import org.wso2.carbon.identity.core.model.IdentityEventListenerConfig;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.dpop.constant.DPoPConstants;
-import org.wso2.carbon.identity.dpop.constant.OAuthTokenType;
 import org.wso2.carbon.identity.dpop.dao.DPoPTokenManagerDAO;
 import org.wso2.carbon.identity.dpop.internal.DPoPDataHolder;
 import org.wso2.carbon.identity.dpop.token.binder.DPoPBasedTokenBinder;
@@ -143,7 +142,7 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
         // Check if the Refresh token is of DPoP type.
         boolean isDPoPBinding = false;
         TokenBinding tokenBinding =
-                tokenBindingTypeManagerDao.getBindingFromRefreshToken(tokenReqDTO.getRefreshToken());
+                tokenBindingTypeManagerDao.getTokenBinding(tokenReqDTO.getRefreshToken(),OAuth2Util.isHashEnabled());
         if (tokenBinding != null &&
                 StringUtils.equalsIgnoreCase(DPoPConstants.DPOP_TOKEN_TYPE, tokenBinding.getBindingType())) {
             isDPoPBinding = true;
@@ -335,7 +334,7 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
         HttpRequestHeader[] httpRequestHeaders = tokReqMsgCtx.getOauth2AccessTokenReqDTO().getHttpRequestHeaders();
         if (httpRequestHeaders != null) {
             for (HttpRequestHeader header : httpRequestHeaders) {
-                if (header != null && OAuthTokenType.DPOP.name().equalsIgnoreCase(header.getName())) {
+                if (header != null && DPoPConstants.OAUTH_DPOP_HEADER.equalsIgnoreCase(header.getName())) {
                     return ArrayUtils.isNotEmpty(header.getValue()) ? header.getValue()[0] : null;
                 }
             }
