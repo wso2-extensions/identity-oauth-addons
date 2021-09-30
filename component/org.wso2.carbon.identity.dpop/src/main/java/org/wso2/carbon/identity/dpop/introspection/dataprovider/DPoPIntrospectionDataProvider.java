@@ -33,9 +33,10 @@ import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Introspection Data provider to include cnf  to introspection response.
+ */
 public class DPoPIntrospectionDataProvider extends AbstractIdentityHandler implements IntrospectionDataProvider {
-
-    private static final Log log = LogFactory.getLog(DPoPIntrospectionDataProvider.class);
 
     @Override
     public Map<String, Object> getIntrospectionData(OAuth2TokenValidationRequestDTO oAuth2TokenValidationRequestDTO,

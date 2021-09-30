@@ -38,11 +38,21 @@ public class DPoPDataHolder {
         return dPoPDataHolder;
     }
 
+    /**
+     * Get Token binding type manager dao.
+     *
+     * @return TokenBindingTypeManagerDao
+     */
     public DPoPTokenManagerDAO getTokenBindingTypeManagerDao() {
 
         return tokenBindingTypeManagerDao;
     }
 
+    /**
+     * Set Token binding type manager dao.
+     *
+     * @param tokenBindingTypeManagerDao TokenBindingTypeManagerDao
+     */
     public void setTokenBindingTypeManagerDao(
             DPoPTokenManagerDAO tokenBindingTypeManagerDao) {
 

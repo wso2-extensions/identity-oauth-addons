@@ -33,6 +33,7 @@ import org.wso2.carbon.identity.core.persistence.UmPersistenceManager;
 import org.wso2.carbon.identity.core.util.IdentityConfigParser;
 import org.wso2.carbon.identity.core.util.IdentityCoreConstants;
 import org.wso2.carbon.identity.dpop.constant.DPoPConstants;
+import org.wso2.carbon.identity.oauth2.IdentityOAuth2ClientException;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 
 import java.security.interfaces.ECPublicKey;
@@ -79,26 +80,10 @@ public class Utils {
             JWSHeader header = signedJwt.getHeader();
             return getKeyThumbprintOfKey(header.getJWK().toString(), signedJwt);
         } catch (ParseException e) {
-            throw new IdentityOAuth2Exception("Invalid DPoP Header");
+            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
         } catch (JOSEException e) {
-            throw new IdentityOAuth2Exception(e.getMessage());
+            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
         }
-    }
-
-    public static String computeThumbprintOfRSAKey(RSAKey rsaKey) throws JOSEException {
-
-        return rsaKey.computeThumbprint().toString();
-    }
-
-    public static String computeThumbprintOfECKey(ECKey ecKey) throws JOSEException {
-
-        return ecKey.computeThumbprint().toString();
-    }
-
-    public static boolean verifySignatureWithPublicKey(JWSVerifier jwsVerifier, SignedJWT signedJwt)
-            throws JOSEException {
-
-        return signedJwt.verify(jwsVerifier);
     }
 
     private static String getKeyThumbprintOfKey(String jwk, SignedJWT signedJwt)
@@ -124,6 +109,22 @@ public class Utils {
         return null;
     }
 
+    public static String computeThumbprintOfRSAKey(RSAKey rsaKey) throws JOSEException {
+
+        return rsaKey.computeThumbprint().toString();
+    }
+
+    public static String computeThumbprintOfECKey(ECKey ecKey) throws JOSEException {
+
+        return ecKey.computeThumbprint().toString();
+    }
+
+    public static boolean verifySignatureWithPublicKey(JWSVerifier jwsVerifier, SignedJWT signedJwt)
+            throws JOSEException {
+
+        return signedJwt.verify(jwsVerifier);
+    }
+    
     private static QName getQNameWithIdentityNS(String localPart) {
 
         return new QName(IdentityCoreConstants.IDENTITY_DEFAULT_NAMESPACE, localPart);

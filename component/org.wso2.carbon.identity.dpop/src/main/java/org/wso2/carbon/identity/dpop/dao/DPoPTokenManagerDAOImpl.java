@@ -51,8 +51,7 @@ public class DPoPTokenManagerDAOImpl implements DPoPTokenManagerDAO {
         }
     }
 
-    @Override
-    public TokenBinding getBindingFromRefreshToken(String refreshToken,boolean isTokenHashingEnabled) throws IdentityOAuth2Exception {
+    private TokenBinding getBindingFromRefreshToken(String refreshToken,boolean isTokenHashingEnabled) throws IdentityOAuth2Exception {
 
         JdbcTemplate jdbcTemplate = Utils.getNewTemplate();
         if (isTokenHashingEnabled) {
