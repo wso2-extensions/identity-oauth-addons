@@ -28,9 +28,6 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.simple.JSONObject;
-import org.wso2.carbon.identity.auth.service.AuthenticationRequest;
-import org.wso2.carbon.identity.auth.service.AuthenticationResult;
-import org.wso2.carbon.identity.auth.service.AuthenticationStatus;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.dpop.constant.DPoPConstants;
 import org.wso2.carbon.identity.dpop.token.binder.DPoPBasedTokenBinder;
@@ -40,7 +37,6 @@ import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2ClientException;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2AccessTokenReqDTO;
-import org.wso2.carbon.identity.oauth2.dto.OAuth2TokenValidationResponseDTO;
 import org.wso2.carbon.identity.oauth2.model.HttpRequestHeader;
 import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
 import org.wso2.carbon.identity.oauth2.token.bindings.TokenBinding;
@@ -54,30 +50,15 @@ import javax.servlet.http.HttpServletRequest;
 /**
  * DPoP Header  validator.
  */
-public class DPoPValidator {
+public class DPoPHeaderValidator {
 
-    static final Log log = LogFactory.getLog(DPoPValidator.class);
+    static final Log log = LogFactory.getLog(DPoPHeaderValidator.class);
 
-    public static AuthenticationResult validateDPoPHeaderandToken(AuthenticationResult authenticationResult,
-                                                                  OAuth2TokenValidationResponseDTO responseDTO,
-                                                                  AuthenticationRequest authenticationRequest) {
-
-        if (!responseDTO.isValid()) {
-            log.debug(responseDTO.getErrorMsg());
-            return authenticationResult;
-        }
-        DPoPBasedTokenBinder dPoPBasedTokenBinder = new DPoPBasedTokenBinder();
-        HttpServletRequest request = authenticationRequest.getRequest();
-        if (dPoPBasedTokenBinder.isValidTokenBinding(request, responseDTO.getTokenBinding())) {
-            authenticationResult.setAuthenticationStatus(AuthenticationStatus.SUCCESS);
-        }
-        return authenticationResult;
-    }
-
-    public static boolean isValidDPoP(Object request, String dPoPProof) throws ParseException, IdentityOAuth2Exception {
+    public static boolean isValidDPoPProof(Object request, String dPoPProof) throws ParseException, IdentityOAuth2Exception {
 
         SignedJWT signedJwt = SignedJWT.parse(dPoPProof);
         JWSHeader header = signedJwt.getHeader();
+
         if (validateDPoPPayload(request, signedJwt.getJWTClaimsSet()) && validateDPoPHeader(header)) {
             return true;
         }
@@ -90,11 +71,9 @@ public class DPoPValidator {
             throws IdentityOAuth2Exception {
 
         try {
-            SignedJWT signedJwt = SignedJWT.parse(dPoPProof);
-            JWSHeader header = signedJwt.getHeader();
             HttpServletRequest request = tokenReqDTO.getHttpServletRequestWrapper();
-            if (validateDPoPHeader(header) && validateDPoPPayload(request, signedJwt.getJWTClaimsSet()) &&
-                    (StringUtils.isNotBlank(Utils.getThumbprintOfKeyFromDpopProof(dPoPProof)))) {
+            if(isValidDPoPProof(request,dPoPProof) &&
+            (StringUtils.isNotBlank(Utils.getThumbprintOfKeyFromDpopProof(dPoPProof)))){
                 TokenBinding tokenBinding = new TokenBinding();
                 tokenBinding.setBindingType(DPoPConstants.DPOP_TOKEN_TYPE);
                 String thumbprint = Utils.getThumbprintOfKeyFromDpopProof(dPoPProof);
@@ -123,7 +102,7 @@ public class DPoPValidator {
             throws IdentityOAuth2Exception, ParseException {
 
         if (checkJwtClaimSet(jwtClaimsSet) && checkDPoPHeaderValidity(jwtClaimsSet) && checkJti(jwtClaimsSet) &&
-                checkHTTPMethod(request, jwtClaimsSet)) {
+                checkHTTPMethod(request, jwtClaimsSet) && checkHTTPURI(request, jwtClaimsSet)) {
             return true;
         }
         return false;
@@ -210,8 +189,12 @@ public class DPoPValidator {
             log.debug("DPoP Proof HTTP method mismatch.");
             throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
         }
+        return true;
+    }
 
-        // Validate if the DPoP proof HTTP method matches that of the request.
+    private static boolean checkHTTPURI(Object request, JWTClaimsSet jwtClaimsSet) throws IdentityOAuth2ClientException {
+
+        // Validate if the DPoP proof HTTP URI matches that of the request.
         Object dPoPContextPath = jwtClaimsSet.getClaim(DPoPConstants.DPOP_HTTP_URI);
         if (!((HttpServletRequest) request).getRequestURL().toString().equalsIgnoreCase(dPoPContextPath.toString())) {
             log.debug("DPoP Proof context path mismatch.");

@@ -133,7 +133,10 @@
                             org.apache.catalina.*;version="${apache.catalina.version}",
                             org.wso2.carbon.database.utils.*;
                             version="${org.wso2.carbon.database.utils.version.range}",
-                            org.apache.axiom.om.*; version="${axiom.osgi.version.range}"
+                            org.apache.axiom.om.*; version="${axiom.osgi.version.range}",
+                            org.wso2.carbon.idp.mgt;
+                            version="${carbon.identity.version}",
+                            org.wso2.carbon.context.*; version="${carbon.kernel.imp.pkg.version.range}"
                         </Import-Package>
                         <Export-Package>
                             !org.wso2.carbon.identity.dpop.internal,

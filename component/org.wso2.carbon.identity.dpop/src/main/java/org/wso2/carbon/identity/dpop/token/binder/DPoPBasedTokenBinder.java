@@ -24,7 +24,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.wso2.carbon.identity.dpop.constant.DPoPConstants;
 import org.wso2.carbon.identity.dpop.util.Utils;
-import org.wso2.carbon.identity.dpop.validators.DPoPValidator;
+import org.wso2.carbon.identity.dpop.validators.DPoPHeaderValidator;
 import org.wso2.carbon.identity.oauth.common.OAuthConstants.GrantTypes;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2AccessTokenReqDTO;
@@ -173,6 +173,6 @@ public class DPoPBasedTokenBinder extends AbstractTokenBinder {
             return false;
         }
 
-        return DPoPValidator.isValidDPoP(request, dpopHeader);
+        return DPoPHeaderValidator.isValidDPoPProof(request, dpopHeader);
     }
 }

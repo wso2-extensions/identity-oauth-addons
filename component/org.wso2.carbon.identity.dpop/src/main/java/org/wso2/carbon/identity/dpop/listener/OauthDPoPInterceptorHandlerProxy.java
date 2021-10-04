@@ -27,7 +27,7 @@ import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.dpop.constant.DPoPConstants;
 import org.wso2.carbon.identity.dpop.dao.DPoPTokenManagerDAO;
 import org.wso2.carbon.identity.dpop.internal.DPoPDataHolder;
-import org.wso2.carbon.identity.dpop.validators.DPoPValidator;
+import org.wso2.carbon.identity.dpop.validators.DPoPHeaderValidator;
 import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
 import org.wso2.carbon.identity.oauth.event.AbstractOAuthEventInterceptor;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2ClientException;
@@ -66,19 +66,16 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
         if (log.isDebugEnabled()) {
             log.debug(String.format("DPoP proxy intercepted the token request from the client : %s.", consumerKey));
         }
-
-        String dPoPProof = DPoPValidator.getDPoPHeader(tokReqMsgCtx);
         try {
-
-            String tokenBindingType = DPoPValidator.getApplicationBindingType(tokenReqDTO.getClientId());
-
+            String tokenBindingType = DPoPHeaderValidator.getApplicationBindingType(tokenReqDTO.getClientId());
             if (DPoPConstants.DPOP_TOKEN_TYPE.equals(tokenBindingType)) {
 
+                String dPoPProof = DPoPHeaderValidator.getDPoPHeader(tokReqMsgCtx);
                 if (StringUtils.isBlank(dPoPProof)) {
                     throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF,
                             "DPoP header is required.");
                 } else {
-                    boolean isValidDPoP = DPoPValidator.isValidDPoP(dPoPProof, tokenReqDTO, tokReqMsgCtx);
+                    boolean isValidDPoP = DPoPHeaderValidator.isValidDPoP(dPoPProof, tokenReqDTO, tokReqMsgCtx);
                     if (!isValidDPoP) {
                         if (log.isDebugEnabled()) {
                             log.debug(String.format("DPoP proof validation failed, Application ID: %s.", consumerKey));
@@ -118,16 +115,16 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
         // Check if the Refresh token is of DPoP type.
         boolean isDPoPBinding = false;
         TokenBinding tokenBinding =
-                tokenBindingTypeManagerDao.getTokenBinding(tokenReqDTO.getRefreshToken(),OAuth2Util.isHashEnabled());
+                tokenBindingTypeManagerDao.getTokenBinding(tokenReqDTO.getRefreshToken(), OAuth2Util.isHashEnabled());
         if (tokenBinding != null &&
                 StringUtils.equalsIgnoreCase(DPoPConstants.DPOP_TOKEN_TYPE, tokenBinding.getBindingType())) {
             isDPoPBinding = true;
         }
 
-        String dPoPProof = DPoPValidator.getDPoPHeader(tokReqMsgCtx);
+        String dPoPProof = DPoPHeaderValidator.getDPoPHeader(tokReqMsgCtx);
         if (isDPoPBinding && StringUtils.isNotBlank(dPoPProof)) {
             // If DPoP proof is provided, then it will be handled as a DPoP token request.
-            if (!DPoPValidator.isValidDPoP(dPoPProof, tokenReqDTO, tokReqMsgCtx)) {
+            if (!DPoPHeaderValidator.isValidDPoP(dPoPProof, tokenReqDTO, tokReqMsgCtx)) {
                 if (log.isDebugEnabled()) {
                     log.debug(String.format("DPoP proof validation failed for the application Id : %s.", consumerKey));
                 }

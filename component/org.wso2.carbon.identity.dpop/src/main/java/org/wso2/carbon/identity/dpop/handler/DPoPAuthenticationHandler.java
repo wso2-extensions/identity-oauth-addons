@@ -31,11 +31,13 @@ import org.wso2.carbon.identity.auth.service.handler.AuthenticationHandler;
 import org.wso2.carbon.identity.auth.service.util.AuthConfigurationUtil;
 import org.wso2.carbon.identity.core.bean.context.MessageContext;
 import org.wso2.carbon.identity.dpop.constant.DPoPConstants;
-import org.wso2.carbon.identity.dpop.validators.DPoPValidator;
+import org.wso2.carbon.identity.dpop.token.binder.DPoPBasedTokenBinder;
 import org.wso2.carbon.identity.oauth2.OAuth2TokenValidationService;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2ClientApplicationDTO;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2TokenValidationRequestDTO;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2TokenValidationResponseDTO;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * DPoPAuthenticationHandler will validate the requests authorized with DPoP access tokens.
@@ -69,7 +71,7 @@ public class DPoPAuthenticationHandler extends AuthenticationHandler {
                 OAuth2TokenValidationRequestDTO requestDTO = new OAuth2TokenValidationRequestDTO();
                 OAuth2TokenValidationRequestDTO.OAuth2AccessToken token = requestDTO.new OAuth2AccessToken();
                 token.setIdentifier(accessToken);
-                token.setTokenType(DPoPConstants.OAUTH_HEADER);
+                token.setTokenType(DPoPConstants.OAUTH_DPOP_HEADER);
                 requestDTO.setAccessToken(token);
 
                 OAuth2TokenValidationRequestDTO.TokenValidationContextParam contextParam = requestDTO.new
@@ -82,7 +84,7 @@ public class DPoPAuthenticationHandler extends AuthenticationHandler {
                         oAuth2TokenValidationService.findOAuthConsumerIfTokenIsValid(requestDTO);
                 OAuth2TokenValidationResponseDTO responseDTO = clientApplicationDTO.getAccessTokenValidationResponse();
 
-                DPoPValidator.validateDPoPHeaderandToken(authenticationResult,responseDTO, authenticationRequest);
+                validateDPoPHeaderandToken(authenticationResult,responseDTO, authenticationRequest);
 
             }
         }
@@ -99,5 +101,21 @@ public class DPoPAuthenticationHandler extends AuthenticationHandler {
     public boolean canHandle(MessageContext messageContext) {
 
         return AuthConfigurationUtil.isAuthHeaderMatch(messageContext, DPoPConstants.OAUTH_DPOP_HEADER);
+    }
+
+    public static AuthenticationResult validateDPoPHeaderandToken(AuthenticationResult authenticationResult,
+                                                                  OAuth2TokenValidationResponseDTO responseDTO,
+                                                                  AuthenticationRequest authenticationRequest) {
+
+        if (!responseDTO.isValid()) {
+            log.debug(responseDTO.getErrorMsg());
+            return authenticationResult;
+        }
+        DPoPBasedTokenBinder dPoPBasedTokenBinder = new DPoPBasedTokenBinder();
+        HttpServletRequest request = authenticationRequest.getRequest();
+        if (dPoPBasedTokenBinder.isValidTokenBinding(request, responseDTO.getTokenBinding())) {
+            authenticationResult.setAuthenticationStatus(AuthenticationStatus.SUCCESS);
+        }
+        return authenticationResult;
     }
 }
