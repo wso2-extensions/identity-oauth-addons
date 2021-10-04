@@ -79,9 +79,7 @@ public class Utils {
             SignedJWT signedJwt = SignedJWT.parse(dPopProof);
             JWSHeader header = signedJwt.getHeader();
             return getKeyThumbprintOfKey(header.getJWK().toString(), signedJwt);
-        } catch (ParseException e) {
-            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
-        } catch (JOSEException e) {
+        } catch (ParseException | JOSEException e) {
             throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
         }
     }

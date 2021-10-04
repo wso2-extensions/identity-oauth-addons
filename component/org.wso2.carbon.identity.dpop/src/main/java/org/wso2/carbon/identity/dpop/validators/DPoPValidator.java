@@ -78,11 +78,12 @@ public class DPoPValidator {
 
         SignedJWT signedJwt = SignedJWT.parse(dPoPProof);
         JWSHeader header = signedJwt.getHeader();
-        if (!validateDPoPPayload(request, signedJwt.getJWTClaimsSet()) && !validateDPoPHeader(header)) {
-            return false;
+        if (validateDPoPPayload(request, signedJwt.getJWTClaimsSet()) && validateDPoPHeader(header)) {
+            return true;
         }
-        return true;
+        return false;
     }
+
 
     public static boolean isValidDPoP(String dPoPProof, OAuth2AccessTokenReqDTO tokenReqDTO,
                                       OAuthTokenReqMessageContext tokReqMsgCtx)
@@ -148,7 +149,6 @@ public class DPoPValidator {
             }
             throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
         }
-
         return true;
     }
 

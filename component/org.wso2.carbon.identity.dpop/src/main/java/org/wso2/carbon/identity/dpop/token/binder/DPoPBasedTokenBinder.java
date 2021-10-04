@@ -120,7 +120,7 @@ public class DPoPBasedTokenBinder extends AbstractTokenBinder {
             log.error("Error while getting the token binding value", e);
             return false;
         }
-        return true;
+        return false;
     }
 
     @Override
