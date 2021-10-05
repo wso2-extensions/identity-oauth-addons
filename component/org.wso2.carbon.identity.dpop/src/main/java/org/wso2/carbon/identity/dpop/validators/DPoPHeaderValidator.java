@@ -72,6 +72,7 @@ public class DPoPHeaderValidator {
 
         try {
             HttpServletRequest request = tokenReqDTO.getHttpServletRequestWrapper();
+
             if(isValidDPoPProof(request,dPoPProof) &&
             (StringUtils.isNotBlank(Utils.getThumbprintOfKeyFromDpopProof(dPoPProof)))){
                 TokenBinding tokenBinding = new TokenBinding();
@@ -81,7 +82,7 @@ public class DPoPHeaderValidator {
                 tokenBinding.setBindingReference(DigestUtils.md5Hex(thumbprint));
                 DPoPBasedTokenBinder.setTokenBindingValue(tokenBinding.getBindingValue());
                 tokReqMsgCtx.setTokenBinding(tokenBinding);
-                setCnFValue(tokReqMsgCtx, tokenBinding.getBindingValue());
+                setCnFValue(tokReqMsgCtx, tokenBinding.getBindingReference());
                 return true;
             }
         } catch (ParseException e) {
@@ -230,10 +231,10 @@ public class DPoPHeaderValidator {
         return oauthAppDO.getTokenBindingType();
     }
 
-    private static void setCnFValue(OAuthTokenReqMessageContext tokReqMsgCtx, String tokenBindingValue) {
+    private static void setCnFValue(OAuthTokenReqMessageContext tokReqMsgCtx, String tokenBindingReference) {
 
         JSONObject obj = new JSONObject();
-        obj.put(DPoPConstants.JWK_THUMBPRINT, tokenBindingValue);
+        obj.put(DPoPConstants.JWK_THUMBPRINT, tokenBindingReference);
         tokReqMsgCtx.addProperty(DPoPConstants.CNF, obj);
     }
 }
