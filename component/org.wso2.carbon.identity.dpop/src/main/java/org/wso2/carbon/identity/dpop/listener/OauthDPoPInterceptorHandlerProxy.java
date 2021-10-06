@@ -52,11 +52,6 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
 
     /**
      * {@inheritdoc}
-     *
-     * @param tokenReqDTO  OAuth2AccessTokenReqDTO.
-     * @param tokReqMsgCtx OAuthTokenReqMessageContext.
-     * @param params       Map of parameters.
-     * @throws IdentityOAuth2Exception If an error occurs while validating DPoP proof.
      */
     @Override
     public void onPreTokenIssue(OAuth2AccessTokenReqDTO tokenReqDTO, OAuthTokenReqMessageContext tokReqMsgCtx,
@@ -74,15 +69,14 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
                 if (StringUtils.isBlank(dPoPProof)) {
                     throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF,
                             "DPoP header is required.");
-                } else {
-                    boolean isValidDPoP = DPoPHeaderValidator.isValidDPoP(dPoPProof, tokenReqDTO, tokReqMsgCtx);
-                    if (!isValidDPoP) {
-                        if (log.isDebugEnabled()) {
-                            log.debug(String.format("DPoP proof validation failed, Application ID: %s.", consumerKey));
-                        }
-                        throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF,
-                                DPoPConstants.INVALID_DPOP_ERROR);
+                }
+                boolean isValidDPoP = DPoPHeaderValidator.isValidDPoP(dPoPProof, tokenReqDTO, tokReqMsgCtx);
+                if (!isValidDPoP) {
+                    if (log.isDebugEnabled()) {
+                        log.debug(String.format("DPoP proof validation failed, Application ID: %s.", consumerKey));
                     }
+                    throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF,
+                            DPoPConstants.INVALID_DPOP_ERROR);
                 }
             } else {
                 if (log.isDebugEnabled()) {
@@ -90,17 +84,12 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
                 }
             }
         } catch (InvalidOAuthClientException e) {
-            throw new IdentityOAuth2ClientException("invalid_client", "Invalid Client");
+            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_CLIENT, DPoPConstants.INVALID_CLIENT_ERROR);
         }
     }
 
     /**
-     * This method handles DPoP proof validation during pre token renewal.
-     *
-     * @param tokenReqDTO  OAuth2AccessTokenReqDTO.
-     * @param tokReqMsgCtx OAuthTokenReqMessageContext.
-     * @param params       Map of parameters.
-     * @throws IdentityOAuth2Exception If an error occurs while validating DPoP proof.
+     * {@inheritdoc}
      */
     @Override
     public void onPreTokenRenewal(OAuth2AccessTokenReqDTO tokenReqDTO, OAuthTokenReqMessageContext tokReqMsgCtx,
@@ -111,39 +100,49 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
             log.debug(String.format("DPoP proxy intercepted the token renewal request from the client : %s.",
                     consumerKey));
         }
-
-        // Check if the Refresh token is of DPoP type.
-        boolean isDPoPBinding = false;
-        TokenBinding tokenBinding =
-                tokenBindingTypeManagerDao.getTokenBinding(tokenReqDTO.getRefreshToken(), OAuth2Util.isHashEnabled());
-        if (tokenBinding != null &&
-                StringUtils.equalsIgnoreCase(DPoPConstants.DPOP_TOKEN_TYPE, tokenBinding.getBindingType())) {
-            isDPoPBinding = true;
-        }
-
-        String dPoPProof = DPoPHeaderValidator.getDPoPHeader(tokReqMsgCtx);
-        if (isDPoPBinding && StringUtils.isNotBlank(dPoPProof)) {
-            // If DPoP proof is provided, then it will be handled as a DPoP token request.
-            if (!DPoPHeaderValidator.isValidDPoP(dPoPProof, tokenReqDTO, tokReqMsgCtx)) {
-                if (log.isDebugEnabled()) {
-                    log.debug(String.format("DPoP proof validation failed for the application Id : %s.", consumerKey));
+        try {
+            String tokenBindingType = DPoPHeaderValidator.getApplicationBindingType(tokenReqDTO.getClientId());
+            TokenBinding tokenBinding =
+                    tokenBindingTypeManagerDao.getTokenBinding(tokenReqDTO.getRefreshToken(), OAuth2Util.isHashEnabled());
+            if (tokenBinding != null) {
+                if (!DPoPConstants.DPOP_TOKEN_TYPE.equals(tokenBindingType)) {
+                    if (log.isDebugEnabled()) {
+                        log.debug(String.format("DPoP based token binding is not enabled  for the " +
+                                "application Id : %s.", consumerKey));
+                    }
+                    throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_CLIENT,
+                            DPoPConstants.INVALID_CLIENT_ERROR);
                 }
-                throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF,
-                        DPoPConstants.INVALID_DPOP_ERROR);
-            }
-            if (!tokReqMsgCtx.getTokenBinding().getBindingValue().equalsIgnoreCase(tokenBinding.getBindingValue())) {
-                log.error("DPoP proof thumbprint value of the public key is not equal to binding value from" +
-                        " the refresh token.");
-                throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF,
-                        DPoPConstants.INVALID_DPOP_ERROR);
-            }
-        } else if (isDPoPBinding) {
-            if (log.isDebugEnabled()) {
-                log.debug(String.format("Renewal request received without the DPoP proof from the application Id: %s.",
-                        consumerKey));
-            }
 
-            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, "DPoP proof is required.");
+                String dPoPProof = DPoPHeaderValidator.getDPoPHeader(tokReqMsgCtx);
+                if (StringUtils.isBlank(dPoPProof)) {
+                    if (log.isDebugEnabled()) {
+                        log.debug(String.format("Renewal request received without the DPoP proof from the " +
+                                "application Id: %s.", consumerKey));
+                    }
+                    throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF,
+                            "DPoP proof is required.");
+                }
+
+                if (!DPoPHeaderValidator.isValidDPoP(dPoPProof, tokenReqDTO, tokReqMsgCtx)) {
+                    if (log.isDebugEnabled()) {
+                        log.debug(String.format("DPoP proof validation failed for the application Id : %s.",
+                                consumerKey));
+                    }
+                    throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF,
+                            DPoPConstants.INVALID_DPOP_ERROR);
+                }
+                if (!tokReqMsgCtx.getTokenBinding().getBindingValue().equalsIgnoreCase(tokenBinding.getBindingValue())) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("DPoP proof thumbprint value of the public key is not equal to binding value from" +
+                                " the refresh token.");
+                    }
+                    throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF,
+                            DPoPConstants.INVALID_DPOP_ERROR);
+                }
+            }
+        } catch (InvalidOAuthClientException e) {
+            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_CLIENT, DPoPConstants.INVALID_CLIENT_ERROR);
         }
     }
 
@@ -156,6 +155,9 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
                 Boolean.parseBoolean(identityEventListenerConfig.getEnable());
     }
 
+    /**
+     * {@inheritdoc}
+     */
     @Override
     public void onPostTokenIssue(OAuth2AccessTokenReqDTO tokenReqDTO, OAuth2AccessTokenRespDTO tokenRespDTO,
                                  OAuthTokenReqMessageContext tokReqMsgCtx, Map<String, Object> params) {
@@ -163,6 +165,9 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
         setDPoPTokenType(tokReqMsgCtx,tokenRespDTO);
     }
 
+    /**
+     * {@inheritdoc}
+     */
     @Override
     public void onPostTokenRenewal(OAuth2AccessTokenReqDTO tokenReqDTO, OAuth2AccessTokenRespDTO tokenRespDTO,
                                    OAuthTokenReqMessageContext tokReqMsgCtx, Map<String, Object> params) {

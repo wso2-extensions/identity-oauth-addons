@@ -1,3 +1,21 @@
+/*
+ * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
+ *
+ * WSO2 Inc. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
 package org.wso2.carbon.identity.dpop.validators;
 
 import com.nimbusds.jose.JOSEException;
@@ -15,8 +33,11 @@ import org.wso2.carbon.identity.application.common.model.IdentityProvider;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationManagementUtil;
 import org.wso2.carbon.identity.dpop.constant.DPoPConstants;
+import org.wso2.carbon.identity.dpop.util.Utils;
 import org.wso2.carbon.identity.oauth.config.OAuthServerConfiguration;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
+import org.wso2.carbon.identity.oauth2.dto.OAuth2TokenValidationRequestDTO;
+import org.wso2.carbon.identity.oauth2.model.AccessTokenDO;
 import org.wso2.carbon.identity.oauth2.validators.OAuth2TokenValidationMessageContext;
 import org.wso2.carbon.identity.oauth2.validators.OAuth2TokenValidator;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementException;
@@ -40,27 +61,31 @@ public class DPoPTokenValidator implements OAuth2TokenValidator {
     private static final String DOT_SEPARATOR = ".";
     private static final Log log = LogFactory.getLog(DPoPTokenValidator.class);
     private static final String OIDC_IDP_ENTITY_ID = "IdPEntityId";
+    private static final String ACCESS_TOKEN_DO = "AccessTokenDO";
 
     @Override
-    public boolean validateAccessDelegation(OAuth2TokenValidationMessageContext messageContext) throws IdentityOAuth2Exception {
+    public boolean validateAccessDelegation(OAuth2TokenValidationMessageContext messageContext) {
 
         return true;
     }
 
     @Override
-    public boolean validateScope(OAuth2TokenValidationMessageContext messageContext) throws IdentityOAuth2Exception {
+    public boolean validateScope(OAuth2TokenValidationMessageContext messageContext) {
 
         return true;
     }
 
     @Override
-    public boolean validateAccessToken(OAuth2TokenValidationMessageContext validationReqDTO) throws IdentityOAuth2Exception {
-
-        if (!isJWT(validationReqDTO.getRequestDTO().getAccessToken().getIdentifier())) {
-            return true;
-        }
+    public boolean validateAccessToken(OAuth2TokenValidationMessageContext validationReqDTO)
+            throws IdentityOAuth2Exception {
 
         try {
+            if (!validateDPoP(validationReqDTO)) {
+                return false;
+            }
+            if (!isJWT(validationReqDTO.getRequestDTO().getAccessToken().getIdentifier())) {
+                return true;
+            }
             SignedJWT signedJWT = getSignedJWT(validationReqDTO);
             JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
 
@@ -68,7 +93,8 @@ public class DPoPTokenValidator implements OAuth2TokenValidator {
                 throw new IdentityOAuth2Exception("Claim values are empty in the given Token.");
             }
 
-            validateRequiredFields(claimsSet);
+            validateRequiredFields(validationReqDTO, claimsSet);
+
             IdentityProvider identityProvider = getResidentIDPForIssuer(claimsSet.getIssuer());
 
             if (!validateSignature(signedJWT, identityProvider)) {
@@ -77,6 +103,7 @@ public class DPoPTokenValidator implements OAuth2TokenValidator {
             if (!checkExpirationTime(claimsSet.getExpirationTime())) {
                 return false;
             }
+
             checkNotBeforeTime(claimsSet.getNotBeforeTime());
         } catch (JOSEException | ParseException e) {
             throw new IdentityOAuth2Exception("Error while validating Token.", e);
@@ -87,7 +114,7 @@ public class DPoPTokenValidator implements OAuth2TokenValidator {
     @Override
     public String getTokenType() {
 
-        return "DPoP";
+        return DPoPConstants.DPOP_TOKEN_TYPE;
     }
 
     private SignedJWT getSignedJWT(OAuth2TokenValidationMessageContext validationReqDTO) throws ParseException {
@@ -95,17 +122,25 @@ public class DPoPTokenValidator implements OAuth2TokenValidator {
         return SignedJWT.parse(validationReqDTO.getRequestDTO().getAccessToken().getIdentifier());
     }
 
-    private boolean validateRequiredFields(JWTClaimsSet claimsSet) throws IdentityOAuth2Exception {
+    private boolean validateRequiredFields(OAuth2TokenValidationMessageContext validationReqDTO, JWTClaimsSet claimsSet)
+            throws IdentityOAuth2Exception, ParseException {
 
+        AccessTokenDO accessTokenDO = (AccessTokenDO) validationReqDTO.getProperty(ACCESS_TOKEN_DO);
+        String bindingValue = accessTokenDO.getTokenBinding().getBindingValue();
         String subject = resolveSubject(claimsSet);
-        List<String> audience = claimsSet.getAudience();
 
         if (StringUtils.isBlank(String.valueOf(claimsSet.getClaims().containsKey(DPoPConstants.CNF)))
                 && StringUtils.isBlank(claimsSet.getClaim(DPoPConstants.CNF).toString())) {
             throw new IdentityOAuth2Exception("Mandatory field cnf is  empty in the given Token.");
         }
 
+        String jkt = claimsSet.getJSONObjectClaim(DPoPConstants.CNF).getAsString(DPoPConstants.JWK_THUMBPRINT);
+        if (StringUtils.isBlank(jkt) || !bindingValue.equalsIgnoreCase(jkt)) {
+            throw new IdentityOAuth2Exception("Mandatory field jkt is  empty or invalid in the cnf.");
+        }
+
         String jti = claimsSet.getJWTID();
+        List<String> audience = claimsSet.getAudience();
         if (StringUtils.isEmpty(claimsSet.getIssuer()) || StringUtils.isEmpty(subject) ||
                 claimsSet.getExpirationTime() == null || audience == null || jti == null) {
             throw new IdentityOAuth2Exception("Mandatory fields(Issuer, Subject, Expiration time," +
@@ -276,5 +311,70 @@ public class DPoPTokenValidator implements OAuth2TokenValidator {
     private boolean isJWT(String tokenIdentifier) {
         // JWT token contains 3 base64 encoded components separated by periods.
         return StringUtils.countMatches(tokenIdentifier, DOT_SEPARATOR) == 2;
+    }
+
+    private boolean validateDPoP(OAuth2TokenValidationMessageContext validationReqDTO) throws IdentityOAuth2Exception,
+            ParseException {
+
+        AccessTokenDO accessTokenDO = (AccessTokenDO) validationReqDTO.getProperty(ACCESS_TOKEN_DO);
+        if (accessTokenDO != null && accessTokenDO.getTokenBinding() != null &&
+                DPoPConstants.OAUTH_DPOP_HEADER.equalsIgnoreCase(accessTokenDO.getTokenBinding().getBindingType())) {
+            String dpopProof = getResourceFromMessageContext(validationReqDTO, DPoPConstants.OAUTH_DPOP_HEADER);
+            String httpMethod = getResourceFromMessageContext(validationReqDTO, DPoPConstants.HTTP_METHOD);
+            String httpUrl = getResourceFromMessageContext(validationReqDTO, DPoPConstants.HTTP_URL);
+
+            if (StringUtils.isBlank(dpopProof)) {
+                if (log.isDebugEnabled()) {
+                    log.debug("DPoP header is empty.");
+                }
+                return false;
+            }
+
+            if (!DPoPHeaderValidator.isValidDPoPProof(httpMethod, httpUrl, dpopProof)) {
+                return false;
+            }
+
+            String thumbprintOfPublicKey = Utils.getThumbprintOfKeyFromDpopProof(dpopProof);
+
+            if (StringUtils.isBlank(thumbprintOfPublicKey)) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Thumbprint value of the public key is empty in the DPoP Proof.");
+                }
+                return false;
+            }
+
+            if (!thumbprintOfPublicKey.equalsIgnoreCase(accessTokenDO.getTokenBinding().getBindingValue())) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Thumbprint value of the public key in the DPoP proof is not equal to binding value" +
+                            " of the responseDTO.");
+                }
+                return false;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Extract the passed parameter value from the access token validation request message
+     *
+     * @param messageContext Message context of the token validation request
+     * @return resource
+     */
+    private String getResourceFromMessageContext(OAuth2TokenValidationMessageContext messageContext, String param) {
+
+        String resource = null;
+        if (messageContext.getRequestDTO().getContext() != null) {
+            // Iterate the array of context params to find the 'resource' context param.
+            for (OAuth2TokenValidationRequestDTO.TokenValidationContextParam resourceParam :
+                    messageContext.getRequestDTO().getContext()) {
+                // If the context param is the resource that is being accessed
+                if (resourceParam != null && param.equals(resourceParam.getKey())) {
+                    resource = resourceParam.getValue();
+                    break;
+                }
+            }
+        }
+        return resource;
     }
 }

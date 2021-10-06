@@ -18,8 +18,6 @@
 
 package org.wso2.carbon.identity.dpop.introspection.dataprovider;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.json.simple.JSONObject;
 import org.wso2.carbon.identity.core.handler.AbstractIdentityHandler;
 import org.wso2.carbon.identity.dpop.constant.DPoPConstants;
@@ -55,7 +53,7 @@ public class DPoPIntrospectionDataProvider extends AbstractIdentityHandler imple
                     DPoPConstants.DPOP_TOKEN_TYPE.equals(accessTokenDO.getTokenBinding().getBindingType())) {
                 introspectionData.put(DPoPConstants.TOKEN_TYPE, (DPoPConstants.DPOP_TOKEN_TYPE));
                 JSONObject cnf = new JSONObject();
-                cnf.put(DPoPConstants.JWK_THUMBPRINT, accessTokenDO.getTokenBinding().getBindingReference());
+                cnf.put(DPoPConstants.JWK_THUMBPRINT, accessTokenDO.getTokenBinding().getBindingValue());
                 introspectionData.put(DPoPConstants.CNF, cnf);
             }
         }

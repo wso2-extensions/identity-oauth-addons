@@ -28,6 +28,7 @@ import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.axiom.om.OMElement;
+import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.database.utils.jdbc.JdbcTemplate;
 import org.wso2.carbon.identity.core.persistence.UmPersistenceManager;
 import org.wso2.carbon.identity.core.util.IdentityConfigParser;
@@ -39,7 +40,6 @@ import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
-
 import javax.xml.namespace.QName;
 
 /**
@@ -52,11 +52,16 @@ public class Utils {
         return new JdbcTemplate(UmPersistenceManager.getInstance().getDataSource());
     }
 
+    /**
+     * Check if dpop configuration is enabled.
+     *
+     * @return Returns true if the config is enabled.
+     */
     public static boolean readConfigurations() {
 
         IdentityConfigParser configParser = IdentityConfigParser.getInstance();
         OMElement oauthElem = configParser.getConfigElement(DPoPConstants.OAUTH_CONFIG_ELEMENT);
-        //Property to define dpop state
+
         OMElement dpopConfigElement = oauthElem
                 .getFirstChildWithName(getQNameWithIdentityNS(DPoPConstants
                         .DPOP_CONFIG_ELEMENT));
@@ -72,8 +77,14 @@ public class Utils {
         return false;
     }
 
-    public static String getThumbprintOfKeyFromDpopProof(String dPopProof)
-            throws IdentityOAuth2Exception {
+    /**
+     * Get thumbprint value from the  jwk header parameter in the dpop proof.
+     *
+     * @param dPopProof DPoP proof header.
+     * @return Thumbprint value.
+     * @throws IdentityOAuth2ClientException Error while getting the thumbprint value.
+     */
+    public static String getThumbprintOfKeyFromDpopProof(String dPopProof) throws IdentityOAuth2Exception {
 
         try {
             SignedJWT signedJwt = SignedJWT.parse(dPopProof);
@@ -104,25 +115,25 @@ public class Utils {
                 return computeThumbprintOfRSAKey(rsaKey);
             }
         }
-        return null;
+        return StringUtils.EMPTY;
     }
 
-    public static String computeThumbprintOfRSAKey(RSAKey rsaKey) throws JOSEException {
+    private static String computeThumbprintOfRSAKey(RSAKey rsaKey) throws JOSEException {
 
         return rsaKey.computeThumbprint().toString();
     }
 
-    public static String computeThumbprintOfECKey(ECKey ecKey) throws JOSEException {
+    private static String computeThumbprintOfECKey(ECKey ecKey) throws JOSEException {
 
         return ecKey.computeThumbprint().toString();
     }
 
-    public static boolean verifySignatureWithPublicKey(JWSVerifier jwsVerifier, SignedJWT signedJwt)
+    private static boolean verifySignatureWithPublicKey(JWSVerifier jwsVerifier, SignedJWT signedJwt)
             throws JOSEException {
 
         return signedJwt.verify(jwsVerifier);
     }
-    
+
     private static QName getQNameWithIdentityNS(String localPart) {
 
         return new QName(IdentityCoreConstants.IDENTITY_DEFAULT_NAMESPACE, localPart);

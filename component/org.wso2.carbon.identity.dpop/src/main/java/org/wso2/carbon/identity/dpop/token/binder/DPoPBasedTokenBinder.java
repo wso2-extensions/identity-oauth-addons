@@ -18,18 +18,22 @@
 
 package org.wso2.carbon.identity.dpop.token.binder;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.wso2.carbon.identity.dpop.constant.DPoPConstants;
+import org.wso2.carbon.identity.dpop.dao.DPoPTokenManagerDAO;
+import org.wso2.carbon.identity.dpop.internal.DPoPDataHolder;
 import org.wso2.carbon.identity.dpop.util.Utils;
 import org.wso2.carbon.identity.dpop.validators.DPoPHeaderValidator;
 import org.wso2.carbon.identity.oauth.common.OAuthConstants.GrantTypes;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2AccessTokenReqDTO;
+import org.wso2.carbon.identity.oauth2.model.HttpRequestHeader;
 import org.wso2.carbon.identity.oauth2.token.bindings.TokenBinding;
 import org.wso2.carbon.identity.oauth2.token.bindings.impl.AbstractTokenBinder;
+import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 
 import java.text.ParseException;
 import java.util.Arrays;
@@ -45,15 +49,11 @@ import javax.servlet.http.HttpServletResponse;
 public class DPoPBasedTokenBinder extends AbstractTokenBinder {
 
     private static final String BINDING_TYPE = "DPoP";
-    private static Optional<String> tokenBindingValue;
+    private static final Log log = LogFactory.getLog(DPoPBasedTokenBinder.class);
     private final List<String> supportedGrantTypes = Arrays.asList(GrantTypes.AUTHORIZATION_CODE, GrantTypes.PASSWORD,
             GrantTypes.CLIENT_CREDENTIALS, GrantTypes.REFRESH_TOKEN);
-    private static final Log log = LogFactory.getLog(DPoPBasedTokenBinder.class);
-
-    public static void setTokenBindingValue(String bindingValue) {
-
-        tokenBindingValue = Optional.ofNullable(bindingValue);
-    }
+    private DPoPTokenManagerDAO
+            tokenBindingTypeManagerDao = DPoPDataHolder.getInstance().getTokenBindingTypeManagerDao();
 
     @Override
     public String getDisplayName() {
@@ -80,15 +80,9 @@ public class DPoPBasedTokenBinder extends AbstractTokenBinder {
     }
 
     @Override
-    public String getOrGenerateTokenBindingValue(HttpServletRequest request) throws OAuthSystemException {
+    public String getOrGenerateTokenBindingValue(HttpServletRequest request) {
 
         return null;
-    }
-
-    @Override
-    public String getTokenBindingValue(HttpServletRequest request) throws OAuthSystemException {
-
-        return super.getTokenBindingValue(request);
     }
 
     @Override
@@ -126,13 +120,80 @@ public class DPoPBasedTokenBinder extends AbstractTokenBinder {
     @Override
     public boolean isValidTokenBinding(OAuth2AccessTokenReqDTO oAuth2AccessTokenReqDTO, String bindingReference) {
 
-        return true;
+        if (StringUtils.isBlank(bindingReference)) {
+            return false;
+        }
+
+        String refreshToken = oAuth2AccessTokenReqDTO.getRefreshToken();
+        try {
+            TokenBinding tokenBinding =
+                    tokenBindingTypeManagerDao.getTokenBinding(refreshToken, OAuth2Util.isHashEnabled());
+
+            if (tokenBinding != null && DPoPConstants.OAUTH_DPOP_HEADER.equals(tokenBinding.getBindingType())) {
+                return bindingReference.equalsIgnoreCase(tokenBinding.getBindingReference());
+            }
+            return false;
+        } catch (IdentityOAuth2Exception e) {
+            return false;
+        }
+    }
+
+    @Override
+    public String getTokenBindingValue(HttpServletRequest request) {
+
+        try {
+            String tokenBindingValue = retrieveTokenBindingValueFromDPoPHeader(request);
+
+            if (StringUtils.isNotBlank(tokenBindingValue)) {
+                return tokenBindingValue;
+            }
+            return null;
+        } catch (IdentityOAuth2Exception e) {
+            return null;
+        }
     }
 
     @Override
     public Optional<String> getTokenBindingValue(OAuth2AccessTokenReqDTO oAuth2AccessTokenReqDTO) {
 
-        return tokenBindingValue;
+        HttpRequestHeader[] httpRequestHeaders = oAuth2AccessTokenReqDTO.getHttpRequestHeaders();
+        if (ArrayUtils.isEmpty(httpRequestHeaders)) {
+            return Optional.empty();
+        }
+        for (HttpRequestHeader httpRequestHeader : httpRequestHeaders) {
+            if (DPoPConstants.OAUTH_DPOP_HEADER.equalsIgnoreCase(httpRequestHeader.getName())) {
+                if (ArrayUtils.isEmpty(httpRequestHeader.getValue())) {
+                    return Optional.empty();
+                }
+
+                String dpopProof = httpRequestHeader.getValue()[0];
+                if (StringUtils.isEmpty(dpopProof)) {
+                    return Optional.empty();
+                }
+
+                try {
+                    String thumbprintOfPublicKey = Utils.getThumbprintOfKeyFromDpopProof(dpopProof);
+                    return Optional.of(thumbprintOfPublicKey);
+                } catch (IdentityOAuth2Exception e) {
+                    return Optional.empty();
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    private String retrieveTokenBindingValueFromDPoPHeader(HttpServletRequest request) throws IdentityOAuth2Exception {
+
+        String dpopProof = request.getHeader(DPoPConstants.OAUTH_DPOP_HEADER);
+        if (StringUtils.isBlank(dpopProof)) {
+            return null;
+        }
+
+        String thumbprintOfPublicKey = Utils.getThumbprintOfKeyFromDpopProof(dpopProof);
+        if (StringUtils.isBlank(thumbprintOfPublicKey)) {
+            return null;
+        }
+        return thumbprintOfPublicKey;
     }
 
     private boolean validateDPoPHeader(Object request, TokenBinding tokenBinding) throws IdentityOAuth2Exception,
@@ -149,13 +210,19 @@ public class DPoPBasedTokenBinder extends AbstractTokenBinder {
         String dpopHeader = ((HttpServletRequest) request).getHeader(DPoPConstants.OAUTH_DPOP_HEADER);
 
         if (StringUtils.isBlank(dpopHeader)) {
-            if (StringUtils.isBlank(dpopHeader)) {
-                if (log.isDebugEnabled()) {
-                    log.debug("DPoP header is empty.");
-                }
-                return false;
+            if (log.isDebugEnabled()) {
+                log.debug("DPoP header is empty.");
             }
+            return false;
+
         }
+
+        String httpMethod = (((HttpServletRequest) request).getMethod());
+        String httpUrl = (((HttpServletRequest) request).getRequestURL().toString());
+        if (!DPoPHeaderValidator.isValidDPoPProof(httpMethod, httpUrl, dpopHeader)) {
+            return false;
+        }
+
         String thumbprintOfPublicKey = Utils.getThumbprintOfKeyFromDpopProof(dpopHeader);
 
         if (StringUtils.isBlank(thumbprintOfPublicKey)) {
@@ -172,7 +239,6 @@ public class DPoPBasedTokenBinder extends AbstractTokenBinder {
             }
             return false;
         }
-
-        return DPoPHeaderValidator.isValidDPoPProof(request, dpopHeader);
+        return true;
     }
 }

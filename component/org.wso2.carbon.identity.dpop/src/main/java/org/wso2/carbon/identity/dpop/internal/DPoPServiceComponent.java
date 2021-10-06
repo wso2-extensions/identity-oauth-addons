@@ -60,7 +60,9 @@ public class DPoPServiceComponent {
                         new DPoPIntrospectionDataProvider(), null);
                context.getBundleContext().registerService(OAuth2TokenValidator.class.getName(),
                         new DPoPTokenValidator(), null);
-                log.debug("DPoPService is activated.");
+                if (log.isDebugEnabled()) {
+                    log.debug("DPoPService is activated.");
+                }
             }
         } catch (Throwable e) {
             log.error("Error while activating DPoPServiceComponent.", e);

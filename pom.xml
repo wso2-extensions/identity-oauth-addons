@@ -388,13 +388,15 @@
 
     <properties>
 
-        <carbon.identity.version>5.20.66</carbon.identity.version>
-        <identity.inbound.auth.oauth.version>6.2.18</identity.inbound.auth.oauth.version>
+        <carbon.identity.version>5.20.234</carbon.identity.version>
+        <carbon.identity.framework.imp.pkg.version.range>[5.17.5, 6.0.0)
+        </carbon.identity.framework.imp.pkg.version.range>
+        <identity.inbound.auth.oauth.version>6.7.70</identity.inbound.auth.oauth.version>
         <org.wso2.carbon.database.utils.version>2.0.7</org.wso2.carbon.database.utils.version>
         <org.wso2.carbon.database.utils.version.range>[2.0.0,2.1.0)</org.wso2.carbon.database.utils.version.range>
 
         <identity.inbound.auth.oauth.imp.pkg.version>[6.2.18,7.0.0)</identity.inbound.auth.oauth.imp.pkg.version>
-        <identity.carbon.auth.rest.version>1.4.0</identity.carbon.auth.rest.version>
+        <identity.carbon.auth.rest.version>1.4.47</identity.carbon.auth.rest.version>
         <identity.carbon.auth.rest.imp.pkg.version>[1.0.0,2.0.0)</identity.carbon.auth.rest.imp.pkg.version>
 
         <carbon.kernel.version>4.6.0</carbon.kernel.version>

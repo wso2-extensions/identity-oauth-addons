@@ -119,7 +119,7 @@
                             org.wso2.carbon.identity.oauth2.*;
                             version="${identity.inbound.auth.oauth.imp.pkg.version}",
                             org.wso2.carbon.identity.auth.service.*;
-                            version="${identity.carbon.auth.rest.version}",
+                            version="${identity.carbon.auth.rest.imp.pkg.version}",
                             org.wso2.carbon.identity.base;
                             version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.core.*;
@@ -135,8 +135,9 @@
                             version="${org.wso2.carbon.database.utils.version.range}",
                             org.apache.axiom.om.*; version="${axiom.osgi.version.range}",
                             org.wso2.carbon.idp.mgt;
-                            version="${carbon.identity.version}",
-                            org.wso2.carbon.context.*; version="${carbon.kernel.imp.pkg.version.range}"
+                            version="${carbon.identity.framework.imp.pkg.version.range}",
+                            org.wso2.carbon.context.*; version="${carbon.kernel.imp.pkg.version.range}",
+                            net.minidev.json.*; version="${net.minidev.json.imp.pkg.version.range}"
                         </Import-Package>
                         <Export-Package>
                             !org.wso2.carbon.identity.dpop.internal,

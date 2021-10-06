@@ -30,7 +30,6 @@ import org.apache.commons.logging.LogFactory;
 import org.json.simple.JSONObject;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.dpop.constant.DPoPConstants;
-import org.wso2.carbon.identity.dpop.token.binder.DPoPBasedTokenBinder;
 import org.wso2.carbon.identity.dpop.util.Utils;
 import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
 import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
@@ -45,6 +44,7 @@ import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.util.Date;
+
 import javax.servlet.http.HttpServletRequest;
 
 /**
@@ -54,36 +54,86 @@ public class DPoPHeaderValidator {
 
     static final Log log = LogFactory.getLog(DPoPHeaderValidator.class);
 
-    public static boolean isValidDPoPProof(Object request, String dPoPProof) throws ParseException, IdentityOAuth2Exception {
+    /**
+     * Extract DPoP header from the headers.
+     *
+     * @param tokReqMsgCtx Message context of token request.
+     * @return DPoP header.
+     */
+    public static String getDPoPHeader(OAuthTokenReqMessageContext tokReqMsgCtx) {
+
+        HttpRequestHeader[] httpRequestHeaders = tokReqMsgCtx.getOauth2AccessTokenReqDTO().getHttpRequestHeaders();
+        if (httpRequestHeaders != null) {
+            for (HttpRequestHeader header : httpRequestHeaders) {
+                if (header != null && DPoPConstants.OAUTH_DPOP_HEADER.equalsIgnoreCase(header.getName())) {
+                    return ArrayUtils.isNotEmpty(header.getValue()) ? header.getValue()[0] : null;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Get Oauth application Access token binding type.
+     *
+     * @param consumerKey Consumer Key.
+     * @return Access token binding type of the oauth application.
+     * @throws InvalidOAuthClientException Error while getting the Oauth application information.
+     * @throws IdentityOAuth2Exception Error while getting the Oauth application information.
+     */
+    public static String getApplicationBindingType(String consumerKey) throws
+            IdentityOAuth2Exception, InvalidOAuthClientException {
+
+        OAuthAppDO oauthAppDO = OAuth2Util.getAppInformationByClientId(consumerKey);
+        return oauthAppDO.getTokenBindingType();
+    }
+
+    /**
+     * Validate dpop proof header.
+     *
+     * @param httpMethod HTTP method of the request.
+     * @param httpURL HTTP URL of the request,
+     * @param dPoPProof DPoP header of the request.
+     * @return
+     * @throws ParseException Error while retrieving the signedJwt.
+     * @throws IdentityOAuth2Exception Error while validating the dpop proof.
+     */
+    public static boolean isValidDPoPProof(String httpMethod, String httpURL, String dPoPProof)
+            throws ParseException, IdentityOAuth2Exception {
 
         SignedJWT signedJwt = SignedJWT.parse(dPoPProof);
         JWSHeader header = signedJwt.getHeader();
 
-        if (validateDPoPPayload(request, signedJwt.getJWTClaimsSet()) && validateDPoPHeader(header)) {
-            return true;
-        }
-        return false;
+        return validateDPoPPayload(httpMethod, httpURL, signedJwt.getJWTClaimsSet()) && validateDPoPHeader(header);
     }
 
-
+    /**
+     * Set token binder information if dpop proof is valid.
+     *
+     * @param dPoPProof DPoP proof header.
+     * @param tokenReqDTO Token request dto.
+     * @param tokReqMsgCtx Message context of token request.
+     * @return
+     * @throws IdentityOAuth2Exception Error while validating the dpop proof.
+     */
     public static boolean isValidDPoP(String dPoPProof, OAuth2AccessTokenReqDTO tokenReqDTO,
-                                      OAuthTokenReqMessageContext tokReqMsgCtx)
-            throws IdentityOAuth2Exception {
+                                      OAuthTokenReqMessageContext tokReqMsgCtx) throws IdentityOAuth2Exception {
 
         try {
             HttpServletRequest request = tokenReqDTO.getHttpServletRequestWrapper();
-
-            if(isValidDPoPProof(request,dPoPProof) &&
-            (StringUtils.isNotBlank(Utils.getThumbprintOfKeyFromDpopProof(dPoPProof)))){
-                TokenBinding tokenBinding = new TokenBinding();
-                tokenBinding.setBindingType(DPoPConstants.DPOP_TOKEN_TYPE);
+            String httpMethod = request.getMethod();
+            String httpURL = request.getRequestURL().toString();
+            if (isValidDPoPProof(httpMethod, httpURL, dPoPProof)) {
                 String thumbprint = Utils.getThumbprintOfKeyFromDpopProof(dPoPProof);
-                tokenBinding.setBindingValue(thumbprint);
-                tokenBinding.setBindingReference(DigestUtils.md5Hex(thumbprint));
-                DPoPBasedTokenBinder.setTokenBindingValue(tokenBinding.getBindingValue());
-                tokReqMsgCtx.setTokenBinding(tokenBinding);
-                setCnFValue(tokReqMsgCtx, tokenBinding.getBindingReference());
-                return true;
+                if (StringUtils.isNotBlank(thumbprint)) {
+                    TokenBinding tokenBinding = new TokenBinding();
+                    tokenBinding.setBindingType(DPoPConstants.DPOP_TOKEN_TYPE);
+                    tokenBinding.setBindingValue(thumbprint);
+                    tokenBinding.setBindingReference(DigestUtils.md5Hex(thumbprint));
+                    tokReqMsgCtx.setTokenBinding(tokenBinding);
+                    setCnFValue(tokReqMsgCtx, tokenBinding.getBindingValue());
+                    return true;
+                }
             }
         } catch (ParseException e) {
             throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
@@ -93,20 +143,14 @@ public class DPoPHeaderValidator {
 
     private static boolean validateDPoPHeader(JWSHeader header) throws IdentityOAuth2Exception {
 
-        if (checkJwk(header) && checkAlg(header) && checkHeaderType(header)) {
-            return true;
-        }
-        return false;
+        return checkJwk(header) && checkAlg(header) && checkHeaderType(header);
     }
 
-    private static boolean validateDPoPPayload(Object request, JWTClaimsSet jwtClaimsSet)
-            throws IdentityOAuth2Exception, ParseException {
+    private static boolean validateDPoPPayload(String httpMethod, String httpURL, JWTClaimsSet jwtClaimsSet)
+            throws IdentityOAuth2Exception {
 
-        if (checkJwtClaimSet(jwtClaimsSet) && checkDPoPHeaderValidity(jwtClaimsSet) && checkJti(jwtClaimsSet) &&
-                checkHTTPMethod(request, jwtClaimsSet) && checkHTTPURI(request, jwtClaimsSet)) {
-            return true;
-        }
-        return false;
+        return checkJwtClaimSet(jwtClaimsSet) && checkDPoPHeaderValidity(jwtClaimsSet) && checkJti(jwtClaimsSet) &&
+                checkHTTPMethod(httpMethod, jwtClaimsSet) && checkHTTPURI(httpURL, jwtClaimsSet);
     }
 
     private static boolean checkJwk(JWSHeader header) throws IdentityOAuth2ClientException {
@@ -147,7 +191,9 @@ public class DPoPHeaderValidator {
     private static boolean checkJwtClaimSet(JWTClaimsSet jwtClaimsSet) throws IdentityOAuth2ClientException {
 
         if (jwtClaimsSet == null) {
-            log.debug("'jwtClaimsSet' is missing in the body of a DPoP proof.");
+            if (log.isDebugEnabled()) {
+                log.debug("'jwtClaimsSet' is missing in the body of a DPoP proof.");
+            }
             throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
         }
         return true;
@@ -158,47 +204,56 @@ public class DPoPHeaderValidator {
         Timestamp currentTimestamp = new Timestamp(new Date().getTime());
         Date issuedAt = (Date) jwtClaimsSet.getClaim(DPoPConstants.DPOP_ISSUED_AT);
         if (issuedAt == null) {
-            log.debug("DPoP Proof missing the 'iat' field.");
+            if (log.isDebugEnabled()) {
+                log.debug("DPoP Proof missing the 'iat' field.");
+            }
             throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
         }
 
         boolean isExpired = (currentTimestamp.getTime() - issuedAt.getTime()) > getDPoPValidityPeriod();
         if (isExpired) {
             String error = "Expired DPoP Proof";
-            log.debug(error);
+            if (log.isDebugEnabled()) {
+                log.debug(error);
+            }
             throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, error);
         }
         return true;
-
     }
 
     private static boolean checkJti(JWTClaimsSet jwtClaimsSet) throws IdentityOAuth2ClientException {
 
         if (!jwtClaimsSet.getClaims().containsKey(DPoPConstants.JTI)) {
-            log.debug("'jti' is missing in the 'jwtClaimsSet' of the DPoP proof body.");
+            if (log.isDebugEnabled()) {
+                log.debug("'jti' is missing in the 'jwtClaimsSet' of the DPoP proof body.");
+            }
             throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
         }
         return true;
     }
 
-    private static boolean checkHTTPMethod(Object request, JWTClaimsSet jwtClaimsSet) throws IdentityOAuth2ClientException {
+    private static boolean checkHTTPMethod(String httpMethod, JWTClaimsSet jwtClaimsSet) throws IdentityOAuth2ClientException {
 
         Object dPoPHttpMethod = jwtClaimsSet.getClaim(DPoPConstants.DPOP_HTTP_METHOD);
 
         // Validate if the DPoP proof HTTP method matches that of the request.
-        if (!((HttpServletRequest) request).getMethod().equalsIgnoreCase(dPoPHttpMethod.toString())) {
-            log.debug("DPoP Proof HTTP method mismatch.");
+        if (!httpMethod.equalsIgnoreCase(dPoPHttpMethod.toString())) {
+            if (log.isDebugEnabled()) {
+                log.debug("DPoP Proof HTTP method mismatch.");
+            }
             throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
         }
         return true;
     }
 
-    private static boolean checkHTTPURI(Object request, JWTClaimsSet jwtClaimsSet) throws IdentityOAuth2ClientException {
+    private static boolean checkHTTPURI(String httpUrl, JWTClaimsSet jwtClaimsSet) throws IdentityOAuth2ClientException {
 
         // Validate if the DPoP proof HTTP URI matches that of the request.
         Object dPoPContextPath = jwtClaimsSet.getClaim(DPoPConstants.DPOP_HTTP_URI);
-        if (!((HttpServletRequest) request).getRequestURL().toString().equalsIgnoreCase(dPoPContextPath.toString())) {
-            log.debug("DPoP Proof context path mismatch.");
+        if (!httpUrl.equalsIgnoreCase(dPoPContextPath.toString())) {
+            if (log.isDebugEnabled()) {
+                log.debug("DPoP Proof context path mismatch.");
+            }
             throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
         }
         return true;
@@ -207,34 +262,23 @@ public class DPoPHeaderValidator {
     private static int getDPoPValidityPeriod() {
 
         String validityPeriod = IdentityUtil.getProperty(DPoPConstants.HEADER_VALIDITY);
-        return StringUtils.isNotBlank(validityPeriod) ? Integer.parseInt(validityPeriod.trim()) * 1000
-                : DPoPConstants.DEFAULT_HEADER_VALIDITY;
-    }
-
-    public static String getDPoPHeader(OAuthTokenReqMessageContext tokReqMsgCtx) {
-
-        HttpRequestHeader[] httpRequestHeaders = tokReqMsgCtx.getOauth2AccessTokenReqDTO().getHttpRequestHeaders();
-        if (httpRequestHeaders != null) {
-            for (HttpRequestHeader header : httpRequestHeaders) {
-                if (header != null && DPoPConstants.OAUTH_DPOP_HEADER.equalsIgnoreCase(header.getName())) {
-                    return ArrayUtils.isNotEmpty(header.getValue()) ? header.getValue()[0] : null;
+        if (StringUtils.isNotBlank(validityPeriod)) {
+            if (Integer.parseInt(validityPeriod.trim()) < 0) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Configured dpop validity period is set to a negative value.Hence the default validity " +
+                            "period will be used.");
                 }
+                return DPoPConstants.DEFAULT_HEADER_VALIDITY;
             }
+            return Integer.parseInt(validityPeriod.trim()) * 1000;
         }
-        return null;
+        return DPoPConstants.DEFAULT_HEADER_VALIDITY;
     }
 
-    public static String getApplicationBindingType(String consumerKey) throws InvalidOAuthClientException,
-            IdentityOAuth2Exception {
-
-        OAuthAppDO oauthAppDO = OAuth2Util.getAppInformationByClientId(consumerKey);
-        return oauthAppDO.getTokenBindingType();
-    }
-
-    private static void setCnFValue(OAuthTokenReqMessageContext tokReqMsgCtx, String tokenBindingReference) {
+    private static void setCnFValue(OAuthTokenReqMessageContext tokReqMsgCtx, String tokenBindingValue) {
 
         JSONObject obj = new JSONObject();
-        obj.put(DPoPConstants.JWK_THUMBPRINT, tokenBindingReference);
+        obj.put(DPoPConstants.JWK_THUMBPRINT, tokenBindingValue);
         tokReqMsgCtx.addProperty(DPoPConstants.CNF, obj);
     }
 }

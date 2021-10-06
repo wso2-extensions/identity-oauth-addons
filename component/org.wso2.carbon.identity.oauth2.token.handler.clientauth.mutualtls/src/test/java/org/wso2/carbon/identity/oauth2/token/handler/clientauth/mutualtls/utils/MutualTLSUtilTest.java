@@ -85,7 +85,7 @@ public class MutualTLSUtilTest extends PowerMockTestCase {
         X509Certificate Cert = (X509Certificate) factory.generateCertificate(
                 new ByteArrayInputStream(DatatypeConverter.parseBase64Binary(CERTIFICATE_CONTENT)));
         assertEquals(MutualTLSUtil.getThumbPrint(Cert, null),
-                "OTE2OWI4MzQ0MTQ5ZDMzMTk3ZmI2NjNjOGYyNjZhNTZhYzgxZWU5Zg");
+                "YTJkZTg5OGQ3NWUwMTQ2N2UwYTcwMGE1ZTFmMTcyMjE5ZGUwMDBiMDE2ZWVhOWI0NjY1OWQ4YTZlZjQ3YzJmMQ");
 
     }
 

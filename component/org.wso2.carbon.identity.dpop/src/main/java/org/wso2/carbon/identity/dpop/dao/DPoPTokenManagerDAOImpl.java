@@ -46,9 +46,8 @@ public class DPoPTokenManagerDAOImpl implements DPoPTokenManagerDAO {
 
         if (isTokenHashingEnabled) {
             return getBindingFromRefreshToken(refreshToken, true);
-        } else {
-            return getBindingFromRefreshToken(refreshToken, false);
         }
+        return getBindingFromRefreshToken(refreshToken, false);
     }
 
     private TokenBinding getBindingFromRefreshToken(String refreshToken,boolean isTokenHashingEnabled) throws IdentityOAuth2Exception {
@@ -65,10 +64,15 @@ public class DPoPTokenManagerDAOImpl implements DPoPTokenManagerDAO {
                         TokenBinding tokenBinding = new TokenBinding();
                         tokenBinding.setBindingType(resultSet.getString(1));
                         tokenBinding.setBindingValue(resultSet.getString(2));
+                        tokenBinding.setBindingReference(resultSet.getString(3));
 
                         return tokenBinding;
                     },
-                    preparedStatement -> preparedStatement.setString(1, finalRefreshToken));
+                    preparedStatement -> {
+                        int parameterIndex = 0;
+                        preparedStatement.setString(++parameterIndex, finalRefreshToken);
+                        preparedStatement.setString(++parameterIndex, DPoPConstants.DPOP_TOKEN_TYPE);
+                    });
 
             return tokenBindingList.isEmpty() ? null : tokenBindingList.get(0);
         } catch (DataAccessException e) {
