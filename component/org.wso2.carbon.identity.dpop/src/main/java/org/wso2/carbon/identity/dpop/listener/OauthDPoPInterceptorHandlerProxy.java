@@ -151,8 +151,7 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
 
         IdentityEventListenerConfig identityEventListenerConfig = IdentityUtil.readEventListenerProperty
                 (AbstractIdentityHandler.class.getName(), this.getClass().getName());
-        return identityEventListenerConfig == null ||
-                Boolean.parseBoolean(identityEventListenerConfig.getEnable());
+        return identityEventListenerConfig != null && Boolean.parseBoolean(identityEventListenerConfig.getEnable());
     }
 
     /**
