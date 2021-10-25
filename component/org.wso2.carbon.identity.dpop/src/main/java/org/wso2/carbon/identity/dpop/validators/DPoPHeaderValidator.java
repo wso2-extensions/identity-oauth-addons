@@ -70,7 +70,7 @@ public class DPoPHeaderValidator {
                 }
             }
         }
-        return null;
+        return StringUtils.EMPTY;
     }
 
     /**
@@ -264,10 +264,8 @@ public class DPoPHeaderValidator {
         String validityPeriod = IdentityUtil.getProperty(DPoPConstants.HEADER_VALIDITY);
         if (StringUtils.isNotBlank(validityPeriod)) {
             if (Integer.parseInt(validityPeriod.trim()) < 0) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Configured dpop validity period is set to a negative value.Hence the default validity " +
-                            "period will be used.");
-                }
+                log.info("Configured dpop validity period is set to a negative value.Hence the default validity " +
+                        "period will be used.");
                 return DPoPConstants.DEFAULT_HEADER_VALIDITY;
             }
             return Integer.parseInt(validityPeriod.trim()) * 1000;
