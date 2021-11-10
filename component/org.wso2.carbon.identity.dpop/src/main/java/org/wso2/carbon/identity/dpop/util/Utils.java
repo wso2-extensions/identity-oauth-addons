@@ -53,31 +53,6 @@ public class Utils {
     }
 
     /**
-     * Check if dpop configuration is enabled.
-     *
-     * @return Returns true if the config is enabled.
-     */
-    public static boolean readConfigurations() {
-
-        IdentityConfigParser configParser = IdentityConfigParser.getInstance();
-        OMElement oauthElem = configParser.getConfigElement(DPoPConstants.OAUTH_CONFIG_ELEMENT);
-
-        OMElement dpopConfigElement = oauthElem
-                .getFirstChildWithName(getQNameWithIdentityNS(DPoPConstants
-                        .DPOP_CONFIG_ELEMENT));
-
-        if (dpopConfigElement != null) {
-            OMElement dpopEnabled =
-                    dpopConfigElement.getFirstChildWithName(getQNameWithIdentityNS(DPoPConstants.DPOP_ENABLED));
-
-            if (dpopEnabled != null) {
-                return Boolean.parseBoolean(dpopEnabled.getText());
-            }
-        }
-        return false;
-    }
-
-    /**
      * Get thumbprint value from the  jwk header parameter in the dpop proof.
      *
      * @param dPopProof DPoP proof header.
@@ -132,10 +107,5 @@ public class Utils {
             throws JOSEException {
 
         return signedJwt.verify(jwsVerifier);
-    }
-
-    private static QName getQNameWithIdentityNS(String localPart) {
-
-        return new QName(IdentityCoreConstants.IDENTITY_DEFAULT_NAMESPACE, localPart);
     }
 }

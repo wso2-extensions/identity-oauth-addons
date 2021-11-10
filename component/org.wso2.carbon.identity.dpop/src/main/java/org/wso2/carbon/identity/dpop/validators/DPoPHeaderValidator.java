@@ -28,8 +28,10 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.simple.JSONObject;
+import org.wso2.carbon.identity.core.handler.AbstractIdentityHandler;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.dpop.constant.DPoPConstants;
+import org.wso2.carbon.identity.dpop.listener.OauthDPoPInterceptorHandlerProxy;
 import org.wso2.carbon.identity.dpop.util.Utils;
 import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
 import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
@@ -209,7 +211,6 @@ public class DPoPHeaderValidator {
             }
             throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
         }
-
         boolean isExpired = (currentTimestamp.getTime() - issuedAt.getTime()) > getDPoPValidityPeriod();
         if (isExpired) {
             String error = "Expired DPoP Proof";
@@ -261,14 +262,16 @@ public class DPoPHeaderValidator {
 
     private static int getDPoPValidityPeriod() {
 
-        String validityPeriod = IdentityUtil.getProperty(DPoPConstants.HEADER_VALIDITY);
-        if (StringUtils.isNotBlank(validityPeriod)) {
-            if (Integer.parseInt(validityPeriod.trim()) < 0) {
-                log.info("Configured dpop validity period is set to a negative value.Hence the default validity " +
-                        "period will be used.");
-                return DPoPConstants.DEFAULT_HEADER_VALIDITY;
+        String validityPeriodValue = IdentityUtil.readEventListenerProperty
+                (AbstractIdentityHandler.class.getName(), OauthDPoPInterceptorHandlerProxy.class.getName())
+                .getProperties().get(DPoPConstants.VALIDITY_PERIOD).toString();
+        if (StringUtils.isNotBlank(validityPeriodValue)) {
+            if (StringUtils.isNumeric(validityPeriodValue)) {
+                return Integer.parseInt(validityPeriodValue.trim()) * 1000;
             }
-            return Integer.parseInt(validityPeriod.trim()) * 1000;
+            log.info("Configured dpop validity period is set to a invalid value.Hence the default validity " +
+                    "period will be used.");
+            return DPoPConstants.DEFAULT_HEADER_VALIDITY;
         }
         return DPoPConstants.DEFAULT_HEADER_VALIDITY;
     }
