@@ -33,15 +33,14 @@ import org.wso2.carbon.identity.oauth2.dto.OAuth2AccessTokenReqDTO;
 import org.wso2.carbon.identity.oauth2.model.HttpRequestHeader;
 import org.wso2.carbon.identity.oauth2.token.bindings.TokenBinding;
 import org.wso2.carbon.identity.oauth2.token.bindings.impl.AbstractTokenBinder;
-import org.wso2.carbon.identity.oauth2.token.handlers.grant.AuthorizationGrantHandler;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -53,10 +52,10 @@ public class DPoPBasedTokenBinder extends AbstractTokenBinder {
 
     private static final String BINDING_TYPE = "DPoP";
     private static final Log log = LogFactory.getLog(DPoPBasedTokenBinder.class);
-    private Map<String, AuthorizationGrantHandler> authzGrantHandlers;
-    private List<String> supportedGrantTypes = new ArrayList<>();
+    static List<String> supportedGrantTypes = null;
     private DPoPTokenManagerDAO
             tokenBindingTypeManagerDao = DPoPDataHolder.getInstance().getTokenBindingTypeManagerDao();
+
 
     @Override
     public String getDisplayName() {
@@ -79,7 +78,7 @@ public class DPoPBasedTokenBinder extends AbstractTokenBinder {
     @Override
     public List<String> getSupportedGrantTypes() {
 
-        return Collections.unmodifiableList(getAllSupportedGrantTypes());
+        return new ArrayList<>(Arrays.asList(getAllGrantTypes()));
     }
 
     @Override
@@ -245,11 +244,17 @@ public class DPoPBasedTokenBinder extends AbstractTokenBinder {
         return true;
     }
 
-    private List<String> getAllSupportedGrantTypes() {
+    public String[] getAllGrantTypes() {
 
-        authzGrantHandlers = OAuthServerConfiguration.getInstance().getSupportedGrantTypes();
-        supportedGrantTypes.clear();
-        supportedGrantTypes.addAll(authzGrantHandlers.keySet());
-        return supportedGrantTypes;
+        if (supportedGrantTypes == null) {
+            synchronized (DPoPBasedTokenBinder.class) {
+                if (supportedGrantTypes == null) {
+                    Set<String> allowedGrantSet =
+                            OAuthServerConfiguration.getInstance().getSupportedGrantTypes().keySet();
+                    supportedGrantTypes = new ArrayList<>(allowedGrantSet);
+                }
+            }
+        }
+        return supportedGrantTypes.toArray(new String[supportedGrantTypes.size()]);
     }
 }
