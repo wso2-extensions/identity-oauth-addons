@@ -27,19 +27,22 @@ import org.wso2.carbon.identity.dpop.dao.DPoPTokenManagerDAO;
 import org.wso2.carbon.identity.dpop.internal.DPoPDataHolder;
 import org.wso2.carbon.identity.dpop.util.Utils;
 import org.wso2.carbon.identity.dpop.validators.DPoPHeaderValidator;
-import org.wso2.carbon.identity.oauth.common.OAuthConstants.GrantTypes;
+import org.wso2.carbon.identity.oauth.config.OAuthServerConfiguration;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2AccessTokenReqDTO;
 import org.wso2.carbon.identity.oauth2.model.HttpRequestHeader;
 import org.wso2.carbon.identity.oauth2.token.bindings.TokenBinding;
 import org.wso2.carbon.identity.oauth2.token.bindings.impl.AbstractTokenBinder;
+import org.wso2.carbon.identity.oauth2.token.handlers.grant.AuthorizationGrantHandler;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 
 import java.text.ParseException;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -50,8 +53,8 @@ public class DPoPBasedTokenBinder extends AbstractTokenBinder {
 
     private static final String BINDING_TYPE = "DPoP";
     private static final Log log = LogFactory.getLog(DPoPBasedTokenBinder.class);
-    private final List<String> supportedGrantTypes = Arrays.asList(GrantTypes.AUTHORIZATION_CODE, GrantTypes.PASSWORD,
-            GrantTypes.CLIENT_CREDENTIALS, GrantTypes.REFRESH_TOKEN);
+    private Map<String, AuthorizationGrantHandler> authzGrantHandlers;
+    private List<String> supportedGrantTypes = new ArrayList<>();
     private DPoPTokenManagerDAO
             tokenBindingTypeManagerDao = DPoPDataHolder.getInstance().getTokenBindingTypeManagerDao();
 
@@ -76,7 +79,7 @@ public class DPoPBasedTokenBinder extends AbstractTokenBinder {
     @Override
     public List<String> getSupportedGrantTypes() {
 
-        return Collections.unmodifiableList(supportedGrantTypes);
+        return Collections.unmodifiableList(getAllSupportedGrantTypes());
     }
 
     @Override
@@ -240,5 +243,13 @@ public class DPoPBasedTokenBinder extends AbstractTokenBinder {
             return false;
         }
         return true;
+    }
+
+    private List<String> getAllSupportedGrantTypes() {
+
+        authzGrantHandlers = OAuthServerConfiguration.getInstance().getSupportedGrantTypes();
+        supportedGrantTypes.clear();
+        supportedGrantTypes.addAll(authzGrantHandlers.keySet());
+        return supportedGrantTypes;
     }
 }
