@@ -52,7 +52,7 @@ public class DPoPBasedTokenBinder extends AbstractTokenBinder {
 
     private static final String BINDING_TYPE = "DPoP";
     private static final Log log = LogFactory.getLog(DPoPBasedTokenBinder.class);
-    static List<String> supportedGrantTypes = null;
+    static Set<String> supportedGrantTypesSet = null;
     private DPoPTokenManagerDAO
             tokenBindingTypeManagerDao = DPoPDataHolder.getInstance().getTokenBindingTypeManagerDao();
 
@@ -246,15 +246,13 @@ public class DPoPBasedTokenBinder extends AbstractTokenBinder {
 
     public String[] getAllGrantTypes() {
 
-        if (supportedGrantTypes == null) {
+        if (supportedGrantTypesSet == null) {
             synchronized (DPoPBasedTokenBinder.class) {
-                if (supportedGrantTypes == null) {
-                    Set<String> allowedGrantSet =
-                            OAuthServerConfiguration.getInstance().getSupportedGrantTypes().keySet();
-                    supportedGrantTypes = new ArrayList<>(allowedGrantSet);
+                if (supportedGrantTypesSet == null) {
+                    supportedGrantTypesSet = OAuthServerConfiguration.getInstance().getSupportedGrantTypes().keySet();
                 }
             }
         }
-        return supportedGrantTypes.toArray(new String[supportedGrantTypes.size()]);
+        return supportedGrantTypesSet.toArray(new String[supportedGrantTypesSet.size()]);
     }
 }
