@@ -38,6 +38,7 @@ import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -52,7 +53,7 @@ public class DPoPBasedTokenBinder extends AbstractTokenBinder {
 
     private static final String BINDING_TYPE = "DPoP";
     private static final Log log = LogFactory.getLog(DPoPBasedTokenBinder.class);
-    static Set<String> supportedGrantTypesSet = null;
+    static Set<String> supportedGrantTypesSet = Collections.emptySet();
     private DPoPTokenManagerDAO
             tokenBindingTypeManagerDao = DPoPDataHolder.getInstance().getTokenBindingTypeManagerDao();
 
@@ -246,9 +247,9 @@ public class DPoPBasedTokenBinder extends AbstractTokenBinder {
 
     public String[] getAllGrantTypes() {
 
-        if (supportedGrantTypesSet == null) {
+        if (supportedGrantTypesSet.isEmpty()) {
             synchronized (DPoPBasedTokenBinder.class) {
-                if (supportedGrantTypesSet == null) {
+                if (supportedGrantTypesSet.isEmpty()) {
                     supportedGrantTypesSet = OAuthServerConfiguration.getInstance().getSupportedGrantTypes().keySet();
                 }
             }
