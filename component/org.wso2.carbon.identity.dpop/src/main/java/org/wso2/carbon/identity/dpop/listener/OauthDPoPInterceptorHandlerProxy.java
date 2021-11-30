@@ -174,10 +174,13 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
 
     }
 
-    private void setDPoPTokenType(OAuthTokenReqMessageContext tokReqMsgCtx,OAuth2AccessTokenRespDTO tokenRespDTO){
+    private void setDPoPTokenType(OAuthTokenReqMessageContext tokReqMsgCtx, OAuth2AccessTokenRespDTO tokenRespDTO) {
+
         if (tokReqMsgCtx.getTokenBinding() != null &&
                 DPoPConstants.DPOP_TOKEN_TYPE.equals(tokReqMsgCtx.getTokenBinding().getBindingType())) {
-            tokenRespDTO.setTokenType(DPoPConstants.DPOP_TOKEN_TYPE);
+            if (tokenRespDTO != null) {
+                tokenRespDTO.setTokenType(DPoPConstants.DPOP_TOKEN_TYPE);
+            }
         }
     }
 }
