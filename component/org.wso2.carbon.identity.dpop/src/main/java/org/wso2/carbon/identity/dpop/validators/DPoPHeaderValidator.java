@@ -119,7 +119,7 @@ public class DPoPHeaderValidator {
      * @throws IdentityOAuth2Exception Error while validating the dpop proof.
      */
     public static boolean isValidDPoP(String dPoPProof, OAuth2AccessTokenReqDTO tokenReqDTO,
-                                      OAuthTokenReqMessageContext tokReqMsgCtx) throws IdentityOAuth2Exception {
+            OAuthTokenReqMessageContext tokReqMsgCtx) throws IdentityOAuth2Exception {
 
         try {
             HttpServletRequest request = tokenReqDTO.getHttpServletRequestWrapper();
@@ -237,6 +237,14 @@ public class DPoPHeaderValidator {
 
         Object dPoPHttpMethod = jwtClaimsSet.getClaim(DPoPConstants.DPOP_HTTP_METHOD);
 
+        // Check if the DPoP proof HTTP method is empty.
+        if (dPoPHttpMethod == null) {
+            if (log.isDebugEnabled()) {
+                log.debug("DPoP Proof HTTP method empty.");
+            }
+            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
+        }
+
         // Validate if the DPoP proof HTTP method matches that of the request.
         if (!httpMethod.equalsIgnoreCase(dPoPHttpMethod.toString())) {
             if (log.isDebugEnabled()) {
@@ -244,13 +252,22 @@ public class DPoPHeaderValidator {
             }
             throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
         }
+
         return true;
     }
 
     private static boolean checkHTTPURI(String httpUrl, JWTClaimsSet jwtClaimsSet) throws IdentityOAuth2ClientException {
 
-        // Validate if the DPoP proof HTTP URI matches that of the request.
         Object dPoPContextPath = jwtClaimsSet.getClaim(DPoPConstants.DPOP_HTTP_URI);
+
+        if (dPoPContextPath == null) {
+            if (log.isDebugEnabled()) {
+                log.debug("DPoP Proof context path empty.");
+            }
+            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
+        }
+
+        // Validate if the DPoP proof HTTP URI matches that of the request.
         if (!httpUrl.equalsIgnoreCase(dPoPContextPath.toString())) {
             if (log.isDebugEnabled()) {
                 log.debug("DPoP Proof context path mismatch.");
@@ -263,7 +280,7 @@ public class DPoPHeaderValidator {
     private static int getDPoPValidityPeriod() {
 
         String validityPeriodValue = IdentityUtil.readEventListenerProperty
-                (AbstractIdentityHandler.class.getName(), OauthDPoPInterceptorHandlerProxy.class.getName())
+                        (AbstractIdentityHandler.class.getName(), OauthDPoPInterceptorHandlerProxy.class.getName())
                 .getProperties().get(DPoPConstants.VALIDITY_PERIOD).toString();
         if (StringUtils.isNotBlank(validityPeriodValue)) {
             if (StringUtils.isNumeric(validityPeriodValue)) {
