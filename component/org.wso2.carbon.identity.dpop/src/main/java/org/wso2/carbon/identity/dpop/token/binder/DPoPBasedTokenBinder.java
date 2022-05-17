@@ -202,7 +202,7 @@ public class DPoPBasedTokenBinder extends AbstractTokenBinder {
     private boolean validateDPoPHeader(Object request, TokenBinding tokenBinding) throws IdentityOAuth2Exception,
             ParseException {
 
-        if (!((HttpServletRequest) request).getRequestURI().equals(("/oauth2/revoke")) &&
+        if (!((HttpServletRequest) request).getRequestURI().equals(DPoPConstants.OAUTH_REVOKE_ENDPOINT) &&
                 !((HttpServletRequest) request).getHeader(DPoPConstants.AUTHORIZATION_HEADER)
                         .startsWith(DPoPConstants.OAUTH_DPOP_HEADER)) {
             if (log.isDebugEnabled()) {
