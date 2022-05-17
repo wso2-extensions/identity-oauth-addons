@@ -50,7 +50,10 @@ retrieve_uma_permission_info_through_introspection = true
 
 ![Screenshot from 2021-10-25 23-08-05](https://user-images.githubusercontent.com/26603378/138743547-c6d71a23-e654-463b-9650-2cebdf37268d.png)
 
-Sample dpop token request :
+### Sample Usage Instructions
+
+1. Access Token from Password :
+
 ```
 curl --location --request POST 'https://localhost:9443/oauth2/token' \
 --header 'Content-Type: application/x-www-form-urlencoded' \
@@ -62,17 +65,48 @@ curl --location --request POST 'https://localhost:9443/oauth2/token' \
 --data-urlencode 'scope=openid internal_user_mgt_list'
 ```
 
-Response:
+&emsp;&ensp;Sample Response:
 
 ```
 {
-    "access_token": "fbf01348-3e34-3644-a6f3-eebace38fc1b",
-    "refresh_token": "408ee317-bd4a-388e-bc85-c558bdd7b578",
+    "access_token": "1ce0fc0a-c830-307a-aafc-d25fdc4063ee",
+    "refresh_token": "ff7a6adb-116d-3a6f-83ff-3f61c7fa8b2f",
     "scope": "internal_user_mgt_list openid",
-    "id_token": "eyJ4NXQiOiJNell4TW1Ga09HWXdNV0kwWldObU5EY3hOR1l3WW1NNFpUQTNNV0kyTkRBelpHUXpOR00wWkdSbE5qSmtPREZrWkRSaU9URmtNV0ZoTXpVMlpHVmxOZyIsImtpZCI6Ik16WXhNbUZrT0dZd01XSTBaV05tTkRjeE5HWXdZbU00WlRBM01XSTJOREF6WkdRek5HTTBaR1JsTmpKa09ERmtaRFJpT1RGa01XRmhNelUyWkdWbE5nX1JTMjU2IiwiYWxnIjoiUlMyNTYifQ.eyJhdF9oYXNoIjoiRHBUbjRYbjFYNjdkdGtES1JIeHFyQSIsImF1ZCI6Imo3Tzllam5qVElDdVRZeHBjMGpkODIyb1NhY2EiLCJzdWIiOiJhZG1pbiIsIm5iZiI6MTYzMjc1NDAzMSwiYXpwIjoiajdPOWVqbmpUSUN1VFl4cGMwamQ4MjJvU2FjYSIsImFtciI6WyJwYXNzd29yZCJdLCJpc3MiOiJodHRwczpcL1wvbG9jYWxob3N0Ojk0NDNcL29hdXRoMlwvdG9rZW4iLCJleHAiOjE2MzI3NTc2MzEsImlhdCI6MTYzMjc1NDAzMX0.COAX5moYElnEBl-KRd81GokgtCq8ENz4gHMqdupXff8TW1Xt2GEqahBDxwuk1kQA7Z-pRfIvm-UJ8_h0SHKjf3670FKt6oSwEAVLeJ_esdtFmAbrq-hbnPvp1SVAIfhUp9q3sGT_c6YsU8MTkyIz8BDfl0JHwU26364GO37tHXJ40kTxHVZ8pTHwZj-yVFY1OdPSCsioYd7f3ukh9YWxPrBYsPcvPzSrORfUpzY6U5OmSa4w4YVqLUzVCCZ1qEK2Zk1pPn_w6-vgYt2i7pMWcu3I4pSFfo9E1W89dp4Y2oVFB7rAiH4x0GNoPCmhCWYFIYHRKmcQ1n2sUNZSIn1KsQ",
+    "id_token": "eyJ4NXQiOiJNell4TW1Ga09HWXdNV0kwWldObU5EY3hOR1l3WW1NNFpUQTNNV0kyTkRBelpHUXpOR00wWkdSbE5qSmtPREZrWkRSaU9URmtNV0ZoTXpVMlpHVmxOZyIsImtpZCI6Ik16WXhNbUZrT0dZd01XSTBaV05tTkRjeE5HWXdZbU00WlRBM01XSTJOREF6WkdRek5HTTBaR1JsTmpKa09ERmtaRFJpT1RGa01XRmhNelUyWkdWbE5nX1JTMjU2IiwiYWxnIjoiUlMyNTYifQ.eyJhdF9oYXNoIjoiUGw2ZjJvdWNmY3RnQ2ZLazJZOEZ5USIsImF1ZCI6IjVEb09HWkFHQV9sQUdnSDB2WkJSRTgzTl9sQWEiLCJzdWIiOiJhZG1pbiIsIm5iZiI6MTY1Mjc2ODc5MiwiYXpwIjoiNURvT0daQUdBX2xBR2dIMHZaQlJFODNOX2xBYSIsImFtciI6WyJwYXNzd29yZCJdLCJpc3MiOiJodHRwczpcL1wvbG9jYWxob3N0Ojk0NDNcL29hdXRoMlwvdG9rZW4iLCJleHAiOjE2NTI3NzIzOTIsImlhdCI6MTY1Mjc2ODc5Mn0.dCwn5ln-iROxbVVOJicQFFqLse8NOYXc_HVnhCiQPoBLShaXKi-NbnTvXwoFL1NxQhv96YgyUhjrkLoQDEmzxQnFMkgq3hJV0MH68SBpsCaKIIzg3Z0KT_5VFSvDC-bQGHfmGS-Gxf5TWkKT7FGke-OYUw_x940qy_PMfZOM-q4A9gBiPTazjXbGo0dkIOINnEfz6TQvrE2opJxV7dj3bGV4NT-3Vqj3ooNbruQrK-c6ir_LLoyA71yuPJhkmtT8Ae_mXSDBjuH-TxcXp_htoGbCb_xDgA3zRyRmvc8OSlaHAO-OhtNK_d6x-wiUjM-n0hMdvGNS4oPn1yHyy5WEsg",
     "token_type": "DPoP",
-    "expires_in": 3477
+    "expires_in": 3600
 }
+```
+
+2. Access Token from Refresh Token :
+
+```
+curl --location --request POST 'https://localhost:9443/oauth2/token' \
+--header 'Content-Type: application/x-www-form-urlencoded' \
+--header 'dpop: eyJ0eXAiOiJkcG9wK2p3dCIsImFsZyI6IkVTMjU2IiwiandrIjp7Imt0eSI6IkVDIiwiY3J2IjoiUC0yNTYiLCJ4IjoibkNmX3lscldjMTVtejVJZWxSQmJ2TGhLbFV1em4zd1dDSW9ReHVOUThlVSIsInkiOiJhMmU3OTU3S2c3aTVxTUE5UHVpandmSE9nMk95QlRsZ0pVaEhzWGtNaGZnIn19.eyJodG0iOiJQT1NUIiwic3ViIjoic3ViIiwibmJmIjoxNjUyMzY5ODE5LCJpc3MiOiJpc3N1ZXIiLCJodHUiOiJodHRwczpcL1wvbG9jYWxob3N0Ojk0NDNcL29hdXRoMlwvdG9rZW4iLCJpYXQiOjE2NTIzNjk4MTksImp0aSI6IjVhOWY0NDI5LWU2ZDMtNGE3NS1iZTU4LTViOTZhZGY4MTcyZiJ9.DIwqvVuG_JZYM1dOGha6CANCM4RUC-5MQQkYsbTDKJfMpgR8akYoOSQigDpPMJqbrQFqXq6FXQoPOEJVqlMiqA' \
+--header 'Authorization: Basic NURvT0daQUdBX2xBR2dIMHZaQlJFODNOX2xBYTpaZjl5U3pCUzRPZ3M0eWtuMWJaZmxVZkExTXNh' \
+--data-urlencode 'grant_type=refresh_token' \
+--data-urlencode 'refresh_token=a8dcd0c4-7272-3901-ade2-d24cb8bae241'
+```
+
+3. Access Protected Resource :
+
+```
+curl --location --request GET 'https://localhost:9443/scim2/Users' \
+--header 'accept: application/scim+json' \
+--header 'DPoP: eyJ0eXAiOiJkcG9wK2p3dCIsImFsZyI6IkVTMjU2IiwiandrIjp7Imt0eSI6IkVDIiwiY3J2IjoiUC0yNTYiLCJ4IjoibkNmX3lscldjMTVtejVJZWxSQmJ2TGhLbFV1em4zd1dDSW9ReHVOUThlVSIsInkiOiJhMmU3OTU3S2c3aTVxTUE5UHVpandmSE9nMk95QlRsZ0pVaEhzWGtNaGZnIn19.eyJodG0iOiJHRVQiLCJzdWIiOiJzdWIiLCJuYmYiOjE2NTI3Njg4MzEsImlzcyI6Imlzc3VlciIsImh0dSI6Imh0dHBzOlwvXC9sb2NhbGhvc3Q6OTQ0M1wvc2NpbTJcL1VzZXJzIiwiaWF0IjoxNjUyNzY4ODMxLCJqdGkiOiJlYjExOWZhYS02OGM2LTQ2ZGYtYTE2Ny1iZDAwNTJhYzRhYWEifQ.h5oujqZugEANfOnEWM23z6AGpcckic4fphkcjGqrizy9_K7pybYtadGBxYlrU81d0bP5LKbkZCKXWtdvYXLqXg' \
+--header 'Authorization: DPoP 1ce0fc0a-c830-307a-aafc-d25fdc4063ee'
+```
+&emsp;&ensp;Here, **Authorization Header Value = DPoP {access-token}**
+4. Revoke Token :
+
+```
+curl --location --request POST 'https://localhost:9443/oauth2/revoke' \
+--header 'Content-Type: application/x-www-form-urlencoded;charset=UTF-8' \
+--header 'DPoP: eyJ0eXAiOiJkcG9wK2p3dCIsImFsZyI6IkVTMjU2IiwiandrIjp7Imt0eSI6IkVDIiwiY3J2IjoiUC0yNTYiLCJ4IjoibkNmX3lscldjMTVtejVJZWxSQmJ2TGhLbFV1em4zd1dDSW9ReHVOUThlVSIsInkiOiJhMmU3OTU3S2c3aTVxTUE5UHVpandmSE9nMk95QlRsZ0pVaEhzWGtNaGZnIn19.eyJodG0iOiJQT1NUIiwic3ViIjoic3ViIiwibmJmIjoxNjUyNzY4NjczLCJpc3MiOiJpc3N1ZXIiLCJodHUiOiJodHRwczpcL1wvbG9jYWxob3N0Ojk0NDNcL29hdXRoMlwvcmV2b2tlIiwiaWF0IjoxNjUyNzY4NjczLCJqdGkiOiI4OGIzNzBjNS1kYWVmLTQyOWItOTJjNS1iMGFhOTMzOGU1NTQifQ.6qa7IwHY1_xwykRSHRgxABOtBdPkp_nKDKSvCZ_C9GRWZaNtwKJsIwBmlFOYwnzh_yM3HsZj9HaGCBrNZfJ5fQ' \
+--header 'Authorization: Basic NURvT0daQUdBX2xBR2dIMHZaQlJFODNOX2xBYTpaZjl5U3pCUzRPZ3M0eWtuMWJaZmxVZkExTXNh' \
+--data-urlencode 'token=1ce0fc0a-c830-307a-aafc-d25fdc4063ee' \
+--data-urlencode 'token_type_hint=access_token'
 ```
 
 

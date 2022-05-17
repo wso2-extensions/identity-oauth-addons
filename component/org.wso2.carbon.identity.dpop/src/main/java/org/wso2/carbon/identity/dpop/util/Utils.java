@@ -33,6 +33,7 @@ import org.wso2.carbon.database.utils.jdbc.JdbcTemplate;
 import org.wso2.carbon.identity.core.persistence.UmPersistenceManager;
 import org.wso2.carbon.identity.core.util.IdentityConfigParser;
 import org.wso2.carbon.identity.core.util.IdentityCoreConstants;
+import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.dpop.constant.DPoPConstants;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2ClientException;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
@@ -49,7 +50,7 @@ public class Utils {
 
     public static JdbcTemplate getNewTemplate() {
 
-        return new JdbcTemplate(UmPersistenceManager.getInstance().getDataSource());
+        return new JdbcTemplate(IdentityDatabaseUtil.getDataSource());
     }
 
     /**

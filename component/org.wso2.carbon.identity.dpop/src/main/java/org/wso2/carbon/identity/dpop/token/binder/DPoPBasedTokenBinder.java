@@ -202,14 +202,14 @@ public class DPoPBasedTokenBinder extends AbstractTokenBinder {
     private boolean validateDPoPHeader(Object request, TokenBinding tokenBinding) throws IdentityOAuth2Exception,
             ParseException {
 
-        if (!((HttpServletRequest) request).getHeader(DPoPConstants.AUTHORIZATION_HEADER)
-                .startsWith(DPoPConstants.OAUTH_DPOP_HEADER)) {
+        if (!((HttpServletRequest) request).getRequestURI().equals(DPoPConstants.OAUTH_REVOKE_ENDPOINT) &&
+                !((HttpServletRequest) request).getHeader(DPoPConstants.AUTHORIZATION_HEADER)
+                        .startsWith(DPoPConstants.OAUTH_DPOP_HEADER)) {
             if (log.isDebugEnabled()) {
                 log.debug("DPoP prefix is not defined correctly in the Authorization header.");
             }
             return false;
         }
-
         String dpopHeader = ((HttpServletRequest) request).getHeader(DPoPConstants.OAUTH_DPOP_HEADER);
 
         if (StringUtils.isBlank(dpopHeader)) {

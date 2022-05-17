@@ -44,6 +44,7 @@ public class DPoPConstants {
     public static final String TOKEN_TYPE = "token_type";
     public static final String JWK_THUMBPRINT = "jkt";
     public static final String AUTHORIZATION_HEADER = "authorization";
+    public static final String OAUTH_REVOKE_ENDPOINT = "/oauth2/revoke";
 
     /**
      * This class defines SQLQueries.
