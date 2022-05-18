@@ -278,15 +278,21 @@ public class DPoPHeaderValidator {
     }
 
     private static int getDPoPValidityPeriod() {
+        Object validityPeriodObject = IdentityUtil.readEventListenerProperty
+                (AbstractIdentityHandler.class.getName(), OauthDPoPInterceptorHandlerProxy.class.getName())
+                .getProperties().get(DPoPConstants.VALIDITY_PERIOD);
 
-        String validityPeriodValue = IdentityUtil.readEventListenerProperty
-                        (AbstractIdentityHandler.class.getName(), OauthDPoPInterceptorHandlerProxy.class.getName())
-                .getProperties().get(DPoPConstants.VALIDITY_PERIOD).toString();
+        if (validityPeriodObject == null){
+            return DPoPConstants.DEFAULT_HEADER_VALIDITY;
+        }
+
+        String validityPeriodValue = validityPeriodObject.toString();
+
         if (StringUtils.isNotBlank(validityPeriodValue)) {
             if (StringUtils.isNumeric(validityPeriodValue)) {
                 return Integer.parseInt(validityPeriodValue.trim()) * 1000;
             }
-            log.info("Configured dpop validity period is set to a invalid value.Hence the default validity " +
+            log.info("Configured dpop validity period is set to an invalid value.Hence the default validity " +
                     "period will be used.");
             return DPoPConstants.DEFAULT_HEADER_VALIDITY;
         }
