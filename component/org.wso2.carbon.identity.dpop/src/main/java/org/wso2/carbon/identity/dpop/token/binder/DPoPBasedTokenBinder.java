@@ -277,7 +277,7 @@ public class DPoPBasedTokenBinder extends AbstractTokenBinder {
 
         String skipDPoPValidationInRevokeValue = skipDPoPValidationInRevokeObject.toString().trim();
 
-        if (!(skipDPoPValidationInRevokeValue.equals("true") || skipDPoPValidationInRevokeValue.equals("false"))) {
+        if (!("true".equals(skipDPoPValidationInRevokeValue) || "false".equals(skipDPoPValidationInRevokeValue))) {
             log.info("Configured, skip dpop validation in revoke value is set to an invalid value. Hence the " +
                     "default value will be used.");
             return DPoPConstants.DEFAULT_SKIP_DPOP_VALIDATION_IN_REVOKE_VALUE;
