@@ -292,7 +292,7 @@ public class DPoPHeaderValidator {
             if (StringUtils.isNumeric(validityPeriodValue)) {
                 return Integer.parseInt(validityPeriodValue.trim()) * 1000;
             }
-            log.info("Configured dpop validity period is set to an invalid value.Hence the default validity " +
+            log.info("Configured dpop validity period is set to an invalid value. Hence the default validity " +
                     "period will be used.");
             return DPoPConstants.DEFAULT_HEADER_VALIDITY;
         }
