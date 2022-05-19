@@ -46,7 +46,7 @@ public class DPoPConstants {
     public static final String AUTHORIZATION_HEADER = "authorization";
     public static final String OAUTH_REVOKE_ENDPOINT = "/oauth2/revoke";
     public static final String SKIP_DPOP_VALIDATION_IN_REVOKE = "skip_dpop_validation_in_revoke";
-    public static final boolean DEFAULT_SKIP_DPOP_VALIDATION_IN_REVOKE_VALUE = false;
+    public static final boolean DEFAULT_SKIP_DPOP_VALIDATION_IN_REVOKE_VALUE = true;
 
     /**
      * This class defines SQLQueries.

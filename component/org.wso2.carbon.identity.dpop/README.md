@@ -35,7 +35,7 @@ name="org.wso2.carbon.identity.dpop.listener.OauthDPoPInterceptorHandlerProxy"
 order = 13
 enable = true
 properties.header_validity_period = 90
-properties.skip_dpop_validation_in_revoke = "false"
+properties.skip_dpop_validation_in_revoke = "true"
 
 [[oauth.custom_token_validator]]
 type = "dpop"
