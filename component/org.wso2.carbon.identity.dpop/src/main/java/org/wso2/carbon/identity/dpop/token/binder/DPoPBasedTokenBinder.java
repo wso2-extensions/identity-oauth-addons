@@ -22,9 +22,12 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.identity.core.handler.AbstractIdentityHandler;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.dpop.constant.DPoPConstants;
 import org.wso2.carbon.identity.dpop.dao.DPoPTokenManagerDAO;
 import org.wso2.carbon.identity.dpop.internal.DPoPDataHolder;
+import org.wso2.carbon.identity.dpop.listener.OauthDPoPInterceptorHandlerProxy;
 import org.wso2.carbon.identity.dpop.util.Utils;
 import org.wso2.carbon.identity.dpop.validators.DPoPHeaderValidator;
 import org.wso2.carbon.identity.oauth.config.OAuthServerConfiguration;
@@ -202,6 +205,11 @@ public class DPoPBasedTokenBinder extends AbstractTokenBinder {
     private boolean validateDPoPHeader(Object request, TokenBinding tokenBinding) throws IdentityOAuth2Exception,
             ParseException {
 
+        if (((HttpServletRequest) request).getRequestURI().equals(DPoPConstants.OAUTH_REVOKE_ENDPOINT) &&
+                skipDPoPValidationInRevoke()){
+            return true;
+        }
+
         if (!((HttpServletRequest) request).getRequestURI().equals(DPoPConstants.OAUTH_REVOKE_ENDPOINT) &&
                 !((HttpServletRequest) request).getHeader(DPoPConstants.AUTHORIZATION_HEADER)
                         .startsWith(DPoPConstants.OAUTH_DPOP_HEADER)) {
@@ -255,5 +263,27 @@ public class DPoPBasedTokenBinder extends AbstractTokenBinder {
             }
         }
         return supportedGrantTypesSet.toArray(new String[supportedGrantTypesSet.size()]);
+    }
+
+    private static boolean skipDPoPValidationInRevoke() {
+
+        Object skipDPoPValidationInRevokeObject = IdentityUtil.readEventListenerProperty
+                        (AbstractIdentityHandler.class.getName(), OauthDPoPInterceptorHandlerProxy.class.getName())
+                .getProperties().get(DPoPConstants.SKIP_DPOP_VALIDATION_IN_REVOKE);
+
+        if (skipDPoPValidationInRevokeObject == null){
+            return DPoPConstants.DEFAULT_SKIP_DPOP_VALIDATION_IN_REVOKE_VALUE;
+        }
+
+        String skipDPoPValidationInRevokeValue = skipDPoPValidationInRevokeObject.toString().trim();
+
+        if (!("true".equals(skipDPoPValidationInRevokeValue) || "false".equals(skipDPoPValidationInRevokeValue))) {
+            log.info("Configured, skip dpop validation in revoke value is set to an invalid value. Hence the " +
+                    "default value will be used.");
+            return DPoPConstants.DEFAULT_SKIP_DPOP_VALIDATION_IN_REVOKE_VALUE;
+
+        }
+
+        return Boolean.parseBoolean(skipDPoPValidationInRevokeValue);
     }
 }

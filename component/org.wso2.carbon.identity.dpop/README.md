@@ -35,13 +35,11 @@ name="org.wso2.carbon.identity.dpop.listener.OauthDPoPInterceptorHandlerProxy"
 order = 13
 enable = true
 properties.header_validity_period = 90
+properties.skip_dpop_validation_in_revoke = "true"
 
 [[oauth.custom_token_validator]]
 type = "dpop"
 class = "org.wso2.carbon.identity.dpop.validators.DPoPTokenValidator"
-
-[oauth.grant_type.uma_ticket]
-retrieve_uma_permission_info_through_introspection = true
 ```
 4. Restart the Identity Server.
 5. Sign in to the Management Console and navigate to
@@ -98,6 +96,7 @@ curl --location --request GET 'https://localhost:9443/scim2/Users' \
 --header 'Authorization: DPoP 1ce0fc0a-c830-307a-aafc-d25fdc4063ee'
 ```
 &emsp;&ensp;Here, **Authorization Header Value = DPoP {access-token}**
+
 4. Revoke Token :
 
 ```
