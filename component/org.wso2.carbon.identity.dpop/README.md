@@ -24,7 +24,7 @@ PR : [wso2 /samples-is#302 ](https://github.com/wso2/samples-is/pull/302 )
 ### Deployment Instructions
 
 1. Build the project using mvn clean install.
-2. Add the  org.wso2.carbon.identity.dpop-2.4.3-SNAPSHOT.jar JAR into the <IS_HOME>/repository/components/droppings folder.
+2. Add the  org.wso2.carbon.identity.dpop-2.4.3-SNAPSHOT.jar JAR into the <IS_HOME>/repository/components/dropins folder.
 3. Add the below configuration to deployment.toml file.
 
  ```
