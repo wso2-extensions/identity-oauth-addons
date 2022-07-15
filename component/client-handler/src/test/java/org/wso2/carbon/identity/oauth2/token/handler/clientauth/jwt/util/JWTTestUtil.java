@@ -235,8 +235,8 @@ public class JWTTestUtil {
         } catch (NumberFormatException e) {
             rejectBeforePeriod = Constants.DEFAULT_VALIDITY_PERIOD_IN_MINUTES;
         }
-
-        return new JWTValidator(preventTokenReuse, validAudience, rejectBeforePeriod, validIssuer, mandatoryClaims
+        ArrayList<String> validAudiences = new ArrayList<>();
+        return new JWTValidator(preventTokenReuse, validAudiences, rejectBeforePeriod, validIssuer, mandatoryClaims
                 , cacheUsedJTI);
     }
 }

@@ -35,12 +35,16 @@ import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationManagementUtil;
+import org.wso2.carbon.identity.base.IdentityException;
+import org.wso2.carbon.identity.core.URLBuilderException;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.core.ServiceURLBuilder;
 import org.wso2.carbon.identity.oauth.common.OAuth2ErrorCodes;
 import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
 import org.wso2.carbon.identity.oauth.config.OAuthServerConfiguration;
 import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
+import org.wso2.carbon.identity.oauth2.bean.OAuthClientAuthnContext;
 import org.wso2.carbon.identity.oauth2.client.authentication.OAuthClientAuthnException;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.cache.JWTCache;
@@ -59,14 +63,19 @@ import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+
 import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.apache.commons.lang.StringUtils.isNotEmpty;
-import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.OAUTH_JWT_ASSERTION;
+import static org.wso2.carbon.identity.oauth.common.OAuthConstants.OAuth20Endpoints.OAUTH2_TOKEN_EP_URL;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.GRANT_TYPE;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.OAUTH_CIBA_GRANT_TYPE;
 
 /**
  * This class is used to validate the JWT which is coming along with the request.
@@ -82,7 +91,7 @@ public class JWTValidator {
     private static final String IDP_ENTITY_ID = "IdPEntityId";
     private static final String PROP_ID_TOKEN_ISSUER_ID = "OAuth.OpenIDConnect.IDTokenIssuerID";
     private boolean preventTokenReuse;
-    private String validAudience;
+    private ArrayList<String> validAudiences;
     private String validIssuer;
     private int rejectBeforeInMinutes;
     List<String> mandatoryClaims;
@@ -91,11 +100,11 @@ public class JWTValidator {
 
     private JWTStorageManager jwtStorageManager;
 
-    public JWTValidator(boolean preventTokenReuse, String validAudience, int rejectBefore, String validIssuer,
-                        List<String> mandatoryClaims, boolean enableJTICache) {
+    public JWTValidator(boolean preventTokenReuse, ArrayList<String> validAudiences, int rejectBefore
+            , String validIssuer, List<String> mandatoryClaims, boolean enableJTICache) {
 
         this.preventTokenReuse = preventTokenReuse;
-        this.validAudience = validAudience;
+        this.validAudiences = validAudiences;
         this.validIssuer = validIssuer;
         this.jwtStorageManager = new JWTStorageManager();
         this.mandatoryClaims = mandatoryClaims;
@@ -111,7 +120,8 @@ public class JWTValidator {
      * @return true if the jwt is valid.
      * @throws IdentityOAuth2Exception
      */
-    public boolean isValidAssertion(SignedJWT signedJWT) throws OAuthClientAuthnException {
+    public boolean isValidAssertion(SignedJWT signedJWT, OAuthClientAuthnContext oAuthClientAuthnContext,
+                                    boolean isBackchannelCall) throws OAuthClientAuthnException {
 
         String errorMessage;
 
@@ -149,7 +159,7 @@ public class JWTValidator {
             }
 
             // Get audience.
-            String validAud = getValidAudience(tenantDomain);
+            ArrayList<String> validAud = getValidAudience(tenantDomain, isBackchannelCall);
             long expTime = 0;
             long issuedTime = 0;
             if (expirationTime != null) {
@@ -164,7 +174,7 @@ public class JWTValidator {
                     !validateAudience(validAud, audience) || !validateJWTWithExpTime(expirationTime, currentTimeInMillis
                     , timeStampSkewMillis) || !validateNotBeforeClaim(currentTimeInMillis, timeStampSkewMillis, nbf) ||
                     !validateAgeOfTheToken(issuedAtTime, currentTimeInMillis, timeStampSkewMillis) || !isValidSignature
-                    (consumerKey, signedJWT, tenantDomain, jwtSubject)) {
+                    (consumerKey, signedJWT, tenantDomain, jwtSubject, oAuthClientAuthnContext)) {
                 return false;
             }
 
@@ -228,10 +238,10 @@ public class JWTValidator {
 
     // "The Audience SHOULD be the URL of the Authorization Server's Token Endpoint", if a valid audience is not
     // specified.
-    private boolean validateAudience(String expectedAudience, List<String> audience) throws OAuthClientAuthnException {
+    private boolean validateAudience(List<String> expectedAudience, List<String> audience) throws OAuthClientAuthnException {
 
-        for (String aud : audience) {
-            if (StringUtils.equals(expectedAudience, aud)) {
+        for (String aud : expectedAudience) {
+            if (StringUtils.equals(audience.get(0), aud)) {
                 return true;
             }
         }
@@ -364,7 +374,8 @@ public class JWTValidator {
     }
 
     private boolean isValidSignature(String clientId, SignedJWT signedJWT, String tenantDomain,
-                                     String alias) throws OAuthClientAuthnException {
+                                     String alias, OAuthClientAuthnContext oAuthClientAuthnContext)
+            throws OAuthClientAuthnException {
 
         X509Certificate cert = null;
         String jwksUri = "";
@@ -395,10 +406,22 @@ public class JWTValidator {
                     }
                     String jwtString = signedJWT.getParsedString();
                     String alg = signedJWT.getHeader().getAlgorithm().getName();
+                    if (OAuthServerConfiguration.getInstance().isFapiCiba()) {
+                        // FAPI mandates signing JWT with PS256 or ES256
+                        if (!(alg.contains(Constants.PS256_ALG) || alg.contains(Constants.ES256_ALG))){
+                            String message = "FAPI Unsupported signing algorithm "+ alg + " used to sign the JWT";
+                            if (log.isDebugEnabled()) {
+                                log.debug(message);
+                            }
+                            oAuthClientAuthnContext.setErrorCode(OAuth2ErrorCodes.INVALID_CLIENT);
+                            oAuthClientAuthnContext.setErrorMessage(message);
+                        }
+                    }
+
                     Map<String, Object> options = new HashMap<String, Object>();
                     isValidSignature = new JWKSBasedJWTValidator().validateSignature(jwtString, jwksUri, alg, options);
                 }
-            } catch (IdentityOAuth2Exception e) {
+            } catch (IdentityException e) {
                 String errorMessage = "Error occurred while validating signature using jwks ";
                 log.error(errorMessage, e);
                 return false;
@@ -420,12 +443,32 @@ public class JWTValidator {
         return isValidSignature;
     }
 
-    private String getValidAudience(String tenantDomain) throws OAuthClientAuthnException {
+    private ArrayList<String> getValidAudience(String tenantDomain, boolean isBackhannelCall)
+            throws OAuthClientAuthnException {
 
-        if (isNotEmpty(validAudience)) {
-            return validAudience;
+        if (validAudiences.size() > 0 && isNotEmpty(validAudiences.get(0))) {
+            return validAudiences;
         }
-        String audience = null;
+        ArrayList<String> audience = new ArrayList<>();
+
+        // Add Token endpoint and CIBA endpoint URLs as additional valid audiences for backchannel authentication calls
+        if (isBackhannelCall) {
+            try {
+                // Token endpoint
+                audience.add(ServiceURLBuilder.create().addPath(OAUTH2_TOKEN_EP_URL).build()
+                        .getAbsolutePublicURL());
+                // CIBA endpoint
+                audience.add(ServiceURLBuilder.create().addPath(Constants.OAUTH2_CIBA_ENDPOINT).build()
+                        .getAbsolutePublicURL());
+            } catch (URLBuilderException e) {
+                String message = "Failed to build audience URLs for CIBA" ;
+                if (log.isDebugEnabled()) {
+                    log.debug(message);
+                }
+                throw new OAuthClientAuthnException(message, OAuth2ErrorCodes.SERVER_ERROR, e);
+            }
+        }
+
         IdentityProvider residentIdP;
         try {
             residentIdP = IdentityProviderManager.getInstance()
@@ -436,7 +479,7 @@ public class JWTValidator {
             Property idpEntityId = IdentityApplicationManagementUtil.getProperty(oidcFedAuthn.getProperties(),
                     IDP_ENTITY_ID);
             if (idpEntityId != null) {
-                audience = idpEntityId.getValue();
+                audience.add(idpEntityId.getValue());
             }
         } catch (IdentityProviderManagementException e) {
             String message = "Error while loading OAuth2TokenEPUrl of the resident IDP of tenant: " + tenantDomain;
@@ -446,9 +489,10 @@ public class JWTValidator {
             throw new OAuthClientAuthnException(message, OAuth2ErrorCodes.INVALID_REQUEST);
         }
 
-        if (isEmpty(audience)) {
-            audience = IdentityUtil.getProperty(PROP_ID_TOKEN_ISSUER_ID);
+        if (audience.size() == 0) {
+            audience.add(IdentityUtil.getProperty(PROP_ID_TOKEN_ISSUER_ID));
         }
+
         return audience;
     }
 
