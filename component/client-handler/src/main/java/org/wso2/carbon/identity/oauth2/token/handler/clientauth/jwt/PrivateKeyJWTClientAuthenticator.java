@@ -43,10 +43,8 @@ import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Const
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.DEFAULT_AUDIENCE;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.DEFAULT_VALIDITY_PERIOD_IN_MINUTES;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.EXPIRATION_TIME_CLAIM;
-import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.GRANT_TYPE;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.ISSUER_CLAIM;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.JWT_ID_CLAIM;
-import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.OAUTH_CIBA_GRANT_TYPE;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.OAUTH_JWT_ASSERTION;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.OAUTH_JWT_ASSERTION_TYPE;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.OAUTH_JWT_BEARER_GRANT_TYPE;
@@ -203,7 +201,7 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
      * @param httpServletRequest Request
      * @return Whether the call is CIBA specific
      */
-    private boolean isBackchannelCall(HttpServletRequest httpServletRequest) {
+    protected boolean isBackchannelCall(HttpServletRequest httpServletRequest) {
         // Although CIBA call uses jwt-bearer grant type, special audience values should be set
         return Constants.OAUTH2_CIBA_ENDPOINT.equals(httpServletRequest.getContextPath() +
                 httpServletRequest.getPathInfo());

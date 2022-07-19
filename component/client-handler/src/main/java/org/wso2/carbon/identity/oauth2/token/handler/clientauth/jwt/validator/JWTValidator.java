@@ -69,13 +69,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
-
 import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.apache.commons.lang.StringUtils.isNotEmpty;
 import static org.wso2.carbon.identity.oauth.common.OAuthConstants.OAuth20Endpoints.OAUTH2_TOKEN_EP_URL;
-import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.GRANT_TYPE;
-import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.OAUTH_CIBA_GRANT_TYPE;
 
 /**
  * This class is used to validate the JWT which is coming along with the request.

@@ -71,7 +71,7 @@ import static org.testng.Assert.assertTrue;
         AuthorizationGrantCache.class})
 @PowerMockIgnore({"javax.xml.*"})
 @WithCarbonHome
-public class XACMLScopeValidatorTest extends IdentityBaseTest {
+public class XACMLScopeValidatorTest {
 
     private static final String ADMIN_USER = "admin_user";
     private static final String APP_NAME = "SP_APP";

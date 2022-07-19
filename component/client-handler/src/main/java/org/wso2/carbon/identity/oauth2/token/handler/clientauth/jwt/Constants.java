@@ -42,8 +42,6 @@ public class Constants {
     public static final String JWKS_URI = "jwksURI";
     public static final String PS256_ALG = "PS256";
     public static final String ES256_ALG = "ES256";
-    public static final String GRANT_TYPE = "grant_type";
-    public static final String OAUTH_CIBA_GRANT_TYPE = "urn:openid:params:grant-type:ciba";
     public static final String OAUTH2_CIBA_ENDPOINT = "/oauth2/ciba";
 
     public static class SQLQueries {

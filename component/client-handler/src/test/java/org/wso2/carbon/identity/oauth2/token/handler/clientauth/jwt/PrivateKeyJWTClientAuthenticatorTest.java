@@ -19,6 +19,8 @@
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt;
 
 import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.powermock.api.mockito.PowerMockito;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.wso2.carbon.base.CarbonBaseConstants;
@@ -31,7 +33,6 @@ import org.wso2.carbon.identity.common.testng.WithRealmService;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.bean.OAuthClientAuthnContext;
-import org.wso2.carbon.identity.oauth2.client.authentication.OAuthClientAuthnException;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceComponent;
 
 import java.security.Key;
@@ -64,10 +65,11 @@ public class PrivateKeyJWTClientAuthenticatorTest {
     @Mock
     HttpServletRequest httpServletRequest;
 
-    @Mock
-    OAuthClientAuthnContext oAuthClientAuthnContext;
+    OAuthClientAuthnContext oAuthClientAuthnContext = new OAuthClientAuthnContext();
     KeyStore clientKeyStore;
+
     Key key1;
+    
     String audience;
 
     @BeforeClass
@@ -94,7 +96,7 @@ public class PrivateKeyJWTClientAuthenticatorTest {
     }
 
     @Test
-    public void testcanAuthenticate() throws IdentityOAuth2Exception {
+    public void testCanAuthenticate() throws IdentityOAuth2Exception {
 
         Map<String, List> bodyContent = new HashMap<>();
         List<String> assertion = new ArrayList<>();
@@ -107,6 +109,17 @@ public class PrivateKeyJWTClientAuthenticatorTest {
         boolean received = privateKeyJWTClientAuthenticator.canAuthenticate(httpServletRequest, bodyContent,
                 oAuthClientAuthnContext);
         assertEquals(received, true, "A valid request refused to authenticate.");
+
+    }
+
+    @Test
+    public void testIsBackchannelCall(){
+
+        HttpServletRequest httpServletRequest = PowerMockito.mock(HttpServletRequest.class);
+        Mockito.when(httpServletRequest.getContextPath()).thenReturn("/oauth2");
+        Mockito.when(httpServletRequest.getPathInfo()).thenReturn("/ciba");
+        boolean isBackchannelCall = privateKeyJWTClientAuthenticator.isBackchannelCall(httpServletRequest);
+        assertEquals(isBackchannelCall, true, "A valid backchannel call identified");
 
     }
 }

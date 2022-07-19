@@ -37,6 +37,7 @@ import org.wso2.carbon.identity.common.testng.WithKeyStore;
 import org.wso2.carbon.identity.common.testng.WithRealmService;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.oauth2.bean.OAuthClientAuthnContext;
 import org.wso2.carbon.identity.oauth2.client.authentication.OAuthClientAuthnException;
 import org.wso2.carbon.identity.oauth2.internal.OAuth2ServiceComponentHolder;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants;
@@ -209,45 +210,48 @@ public class JWTValidatorTest {
                 "RSA265", key1, 0);
         String jsonWebToken17 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3010", audience, "RSA265", key1, 0);
         String jsonWebToken18 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3011", audience, "RSA265", key1, 0);
+        String jsonWebToken19 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3012", audience, "RSA265", key1, 0);
 
         return new Object[][]{
-                {jsonWebToken0, properties8, false, "Correct authentication request is failed."},
-                {jsonWebToken1, properties1, true, "Correct authentication request is failed."},
-                {jsonWebToken2, properties1, false, "JWT replay with preventTokenReuse enabled is not " +
+                {jsonWebToken0, properties8, false, false, "Correct authentication request is failed."},
+                {jsonWebToken1, properties1, true, false, "Correct authentication request is failed."},
+                {jsonWebToken2, properties1, false, false,  "JWT replay with preventTokenReuse enabled is not " +
                         "failed. "},
-                {jsonWebToken3, properties3, false, "JWT with Invalid field Issuer must be fail."},
-                {jsonWebToken4, properties3, false, "Request with non existing SP client-id should fail."},
-                {jsonWebToken5, properties5, true, "JWT replay with preventTokenReuse disabled but " +
+                {jsonWebToken3, properties3, false, false, "JWT with Invalid field Issuer must be fail."},
+                {jsonWebToken4, properties3, false, false, "Request with non existing SP client-id should fail."},
+                {jsonWebToken5, properties5, true, false, "JWT replay with preventTokenReuse disabled but " +
                         "not-expired is not failed"},
-                {jsonWebToken6, properties2, true, "Valid JWT token with custom issuer validation should pass."},
-                {jsonWebToken7, properties3, false, "JWT persisted in database with preventTokenReuse " +
+                {jsonWebToken6, properties2, true, false, "Valid JWT token with custom issuer validation should pass."},
+                {jsonWebToken7, properties3, false, false, "JWT persisted in database with preventTokenReuse " +
                         "enabled is not failed."},
-                {jsonWebToken9, properties1, false, "JWT persisted in database with preventTokenReuse " +
+                {jsonWebToken9, properties1, false, false, "JWT persisted in database with preventTokenReuse " +
                         "disabled is not failed."},
-                {jsonWebToken10, properties4, true, "Valid JWT token with custom audience validation should pass" +
+                {jsonWebToken10, properties4, false, false, "Valid JWT token with unallowed audience validation should fail" +
                         "."},
-                {jsonWebToken11, properties1, false, ""},
-                {jsonWebToken12, properties5, true, ""},
-                {jsonWebToken12, properties5, false, ""},
-                {jsonWebToken13, properties1, false, ""},
-                {jsonWebToken15, properties1, false, ""},
-                {jsonWebToken16, properties4, false, ""},
-                {jsonWebToken17, properties6, false, ""},
-                {jsonWebToken18, properties7, false, ""},
+                {jsonWebToken11, properties1, false, false, ""},
+                {jsonWebToken12, properties5, true, false, ""},
+                {jsonWebToken12, properties5, false, false, ""},
+                {jsonWebToken13, properties1, false, false, ""},
+                {jsonWebToken15, properties1, false, false, ""},
+                {jsonWebToken16, properties4, false, false, ""},
+                {jsonWebToken17, properties6, false, false, ""},
+                {jsonWebToken18, properties7, false, false, ""},
+                {jsonWebToken19, properties5, true, true, ""},
         };
     }
 
     @Test(dataProvider = "provideJWT")
-    public void testValidateToken(String jwt, Object properties, boolean expected,
+    public void testValidateToken(String jwt, Object properties, boolean expected, boolean isBackchannelCall,
                                   String errorMsg) throws Exception {
 
         try {
             JWTValidator jwtValidator = getJWTValidator((Properties) properties);
             SignedJWT signedJWT = SignedJWT.parse(jwt);
-            assertEquals(jwtValidator.isValidAssertion(signedJWT, false),
+            OAuthClientAuthnContext oAuthClientAuthnContext = new OAuthClientAuthnContext();
+            assertEquals(jwtValidator.isValidAssertion(signedJWT, oAuthClientAuthnContext, isBackchannelCall),
                     expected, errorMsg);
             if (((Properties) properties).getProperty(MANDATORY) != null) {
-                assertEquals(jwtValidator.isValidAssertion(null, false),
+                assertEquals(jwtValidator.isValidAssertion(null, oAuthClientAuthnContext, isBackchannelCall),
                         expected, errorMsg);
             }
 
@@ -262,7 +266,8 @@ public class JWTValidatorTest {
 
         try {
             JWTValidator jwtValidator = getJWTValidator(new Properties());
-            jwtValidator.isValidAssertion(null, false);
+            OAuthClientAuthnContext oAuthClientAuthnContext = new OAuthClientAuthnContext();
+            jwtValidator.isValidAssertion(null, oAuthClientAuthnContext, false);
         } catch (OAuthClientAuthnException e) {
             assertFalse(false, "Validation should fail when token is null");
         }
