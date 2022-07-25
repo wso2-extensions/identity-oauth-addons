@@ -188,7 +188,7 @@ public class JWTTestUtil {
 
         int rejectBeforePeriod;
         boolean cacheUsedJTI = true;
-        String validAudience = null;
+        ArrayList<String> validAudience = new ArrayList<>();
         String validIssuer = null;
         boolean preventTokenReuse = true;
         List<String> mandatoryClaims = new ArrayList<>();
@@ -210,9 +210,7 @@ public class JWTTestUtil {
 
             String validAudienceConfigVal = properties.getProperty("ValidAudience");
             if (StringUtils.isNotEmpty(validAudienceConfigVal)) {
-                validAudience = validAudienceConfigVal;
-            } else {
-                validAudience = null;
+                validAudience.add(validAudienceConfigVal);
             }
 
             String validIssuerConfigVal = properties.getProperty("ValidIssuer");

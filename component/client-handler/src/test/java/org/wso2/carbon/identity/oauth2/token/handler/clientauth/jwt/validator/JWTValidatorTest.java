@@ -244,10 +244,10 @@ public class JWTValidatorTest {
         try {
             JWTValidator jwtValidator = getJWTValidator((Properties) properties);
             SignedJWT signedJWT = SignedJWT.parse(jwt);
-            assertEquals(jwtValidator.isValidAssertion(signedJWT),
+            assertEquals(jwtValidator.isValidAssertion(signedJWT, false),
                     expected, errorMsg);
             if (((Properties) properties).getProperty(MANDATORY) != null) {
-                assertEquals(jwtValidator.isValidAssertion(null),
+                assertEquals(jwtValidator.isValidAssertion(null, false),
                         expected, errorMsg);
             }
 
@@ -262,7 +262,7 @@ public class JWTValidatorTest {
 
         try {
             JWTValidator jwtValidator = getJWTValidator(new Properties());
-            jwtValidator.isValidAssertion(null);
+            jwtValidator.isValidAssertion(null, false);
         } catch (OAuthClientAuthnException e) {
             assertFalse(false, "Validation should fail when token is null");
         }

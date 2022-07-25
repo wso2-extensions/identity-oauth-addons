@@ -68,6 +68,7 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
         int rejectBeforePeriod = DEFAULT_VALIDITY_PERIOD_IN_MINUTES;
         boolean preventTokenReuse = true;
         String tokenEPAlias = DEFAULT_AUDIENCE;
+        ArrayList<String> validAudiences = new ArrayList<>();
         try {
             if (isNotEmpty(properties.getProperty(TOKEN_ENDPOINT_ALIAS))) {
                 tokenEPAlias = properties.getProperty(TOKEN_ENDPOINT_ALIAS);
@@ -78,7 +79,8 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
             if (isNotEmpty(properties.getProperty(REJECT_BEFORE_IN_MINUTES))) {
                 rejectBeforePeriod = Integer.parseInt(properties.getProperty(REJECT_BEFORE_IN_MINUTES));
             }
-            jwtValidator = createJWTValidator(tokenEPAlias, preventTokenReuse, rejectBeforePeriod);
+            validAudiences.add(tokenEPAlias);
+            jwtValidator = createJWTValidator(validAudiences, preventTokenReuse, rejectBeforePeriod);
         } catch (NumberFormatException e) {
             log.warn("Invalid PrivateKeyJWT Validity period found in the configuration. Using default value: " +
                     rejectBeforePeriod);
@@ -98,7 +100,8 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
     public boolean authenticateClient(HttpServletRequest httpServletRequest, Map<String, List> bodyParameters,
                                       OAuthClientAuthnContext oAuthClientAuthnContext) throws OAuthClientAuthnException {
 
-        return jwtValidator.isValidAssertion(getSignedJWT(bodyParameters, oAuthClientAuthnContext));
+        return jwtValidator.isValidAssertion(getSignedJWT(bodyParameters, oAuthClientAuthnContext),
+                isBackchannelCall(httpServletRequest));
     }
 
     /**
@@ -175,10 +178,11 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
         return OAUTH_JWT_BEARER_GRANT_TYPE.equals(clientAssertionType) && isNotEmpty(clientAssertion);
     }
 
-    private JWTValidator createJWTValidator(String tokenEPAlias, boolean preventTokenReuse, int rejectBefore) {
+    private JWTValidator createJWTValidator(ArrayList<String> validAudiences, boolean preventTokenReuse,
+                                            int rejectBefore) {
 
-        return new JWTValidator(preventTokenReuse, tokenEPAlias, rejectBefore, null, populateMandatoryClaims(),
-                DEFAULT_ENABLE_JTI_CACHE);
+        return new JWTValidator(preventTokenReuse, validAudiences, rejectBefore, null,
+                populateMandatoryClaims(), DEFAULT_ENABLE_JTI_CACHE);
     }
 
     private List<String> populateMandatoryClaims() {
@@ -190,5 +194,16 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
         mandatoryClaims.add(EXPIRATION_TIME_CLAIM);
         mandatoryClaims.add(JWT_ID_CLAIM);
         return mandatoryClaims;
+    }
+
+    /**
+     * Check if the request is CIBA specific
+     * @param httpServletRequest Request
+     * @return Whether the call is CIBA specific
+     */
+    private boolean isBackchannelCall(HttpServletRequest httpServletRequest) {
+        // Although CIBA call uses jwt-bearer grant type, special audience values should be set
+        return Constants.OAUTH2_CIBA_EP.equals(httpServletRequest.getContextPath() +
+                httpServletRequest.getPathInfo());
     }
 }

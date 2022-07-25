@@ -59,6 +59,7 @@ import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -66,7 +67,6 @@ import java.util.Map;
 
 import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.apache.commons.lang.StringUtils.isNotEmpty;
-import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.OAUTH_JWT_ASSERTION;
 
 /**
  * This class is used to validate the JWT which is coming along with the request.
@@ -82,7 +82,7 @@ public class JWTValidator {
     private static final String IDP_ENTITY_ID = "IdPEntityId";
     private static final String PROP_ID_TOKEN_ISSUER_ID = "OAuth.OpenIDConnect.IDTokenIssuerID";
     private boolean preventTokenReuse;
-    private String validAudience;
+    ArrayList<String> validAudience;
     private String validIssuer;
     private int rejectBeforeInMinutes;
     List<String> mandatoryClaims;
@@ -91,7 +91,7 @@ public class JWTValidator {
 
     private JWTStorageManager jwtStorageManager;
 
-    public JWTValidator(boolean preventTokenReuse, String validAudience, int rejectBefore, String validIssuer,
+    public JWTValidator(boolean preventTokenReuse, ArrayList<String> validAudience, int rejectBefore, String validIssuer,
                         List<String> mandatoryClaims, boolean enableJTICache) {
 
         this.preventTokenReuse = preventTokenReuse;
@@ -109,9 +109,9 @@ public class JWTValidator {
      *
      * @param signedJWT Validate the token
      * @return true if the jwt is valid.
-     * @throws IdentityOAuth2Exception
+     * @throws OAuthClientAuthnException
      */
-    public boolean isValidAssertion(SignedJWT signedJWT) throws OAuthClientAuthnException {
+    public boolean isValidAssertion(SignedJWT signedJWT, boolean isBackchannelCall) throws OAuthClientAuthnException {
 
         String errorMessage;
 
@@ -149,7 +149,7 @@ public class JWTValidator {
             }
 
             // Get audience.
-            String validAud = getValidAudience(tenantDomain);
+            ArrayList<String> validAud = getValidAudience(tenantDomain, isBackchannelCall);
             long expTime = 0;
             long issuedTime = 0;
             if (expirationTime != null) {
@@ -228,12 +228,10 @@ public class JWTValidator {
 
     // "The Audience SHOULD be the URL of the Authorization Server's Token Endpoint", if a valid audience is not
     // specified.
-    private boolean validateAudience(String expectedAudience, List<String> audience) throws OAuthClientAuthnException {
+    private boolean validateAudience(ArrayList<String> expectedAudience, List<String> audience) throws OAuthClientAuthnException {
 
-        for (String aud : audience) {
-            if (StringUtils.equals(expectedAudience, aud)) {
-                return true;
-            }
+        if (expectedAudience.contains(audience.get(0))) {
+            return true;
         }
         if (log.isDebugEnabled()) {
             log.debug("None of the audience values matched the tokenEndpoint Alias :" + expectedAudience);
@@ -420,12 +418,17 @@ public class JWTValidator {
         return isValidSignature;
     }
 
-    private String getValidAudience(String tenantDomain) throws OAuthClientAuthnException {
+    private ArrayList<String> getValidAudience(String tenantDomain, boolean isBackchannelCall)
+            throws OAuthClientAuthnException {
 
-        if (isNotEmpty(validAudience)) {
+        if (validAudience.size() > 0 && isNotEmpty(validAudience.get(0))) {
             return validAudience;
         }
-        String audience = null;
+        ArrayList<String> audience = new ArrayList<>();
+        if (isBackchannelCall) {
+            audience.add(IdentityUtil.getServerURL(Constants.OAUTH2_TOKEN_EP, false, false));
+            audience.add(IdentityUtil.getServerURL(Constants.OAUTH2_CIBA_EP, false, false));
+        }
         IdentityProvider residentIdP;
         try {
             residentIdP = IdentityProviderManager.getInstance()
@@ -436,7 +439,7 @@ public class JWTValidator {
             Property idpEntityId = IdentityApplicationManagementUtil.getProperty(oidcFedAuthn.getProperties(),
                     IDP_ENTITY_ID);
             if (idpEntityId != null) {
-                audience = idpEntityId.getValue();
+                audience.add(idpEntityId.getValue());
             }
         } catch (IdentityProviderManagementException e) {
             String message = "Error while loading OAuth2TokenEPUrl of the resident IDP of tenant: " + tenantDomain;
@@ -446,8 +449,8 @@ public class JWTValidator {
             throw new OAuthClientAuthnException(message, OAuth2ErrorCodes.INVALID_REQUEST);
         }
 
-        if (isEmpty(audience)) {
-            audience = IdentityUtil.getProperty(PROP_ID_TOKEN_ISSUER_ID);
+        if (audience.size() == 0) {
+            audience.add(IdentityUtil.getProperty(PROP_ID_TOKEN_ISSUER_ID));
         }
         return audience;
     }
