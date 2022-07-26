@@ -68,7 +68,7 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
         int rejectBeforePeriod = DEFAULT_VALIDITY_PERIOD_IN_MINUTES;
         boolean preventTokenReuse = true;
         String tokenEPAlias = DEFAULT_AUDIENCE;
-        ArrayList<String> validAudiences = new ArrayList<>();
+        List<String> validAudiences = new ArrayList<>();
         try {
             if (isNotEmpty(properties.getProperty(TOKEN_ENDPOINT_ALIAS))) {
                 tokenEPAlias = properties.getProperty(TOKEN_ENDPOINT_ALIAS);
@@ -178,7 +178,7 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
         return OAUTH_JWT_BEARER_GRANT_TYPE.equals(clientAssertionType) && isNotEmpty(clientAssertion);
     }
 
-    private JWTValidator createJWTValidator(ArrayList<String> validAudiences, boolean preventTokenReuse,
+    private JWTValidator createJWTValidator(List<String> validAudiences, boolean preventTokenReuse,
                                             int rejectBefore) {
 
         return new JWTValidator(preventTokenReuse, validAudiences, rejectBefore, null,

@@ -188,7 +188,7 @@ public class JWTTestUtil {
 
         int rejectBeforePeriod;
         boolean cacheUsedJTI = true;
-        ArrayList<String> validAudience = new ArrayList<>();
+        List<String> validAudience = new ArrayList<>();
         String validIssuer = null;
         boolean preventTokenReuse = true;
         List<String> mandatoryClaims = new ArrayList<>();

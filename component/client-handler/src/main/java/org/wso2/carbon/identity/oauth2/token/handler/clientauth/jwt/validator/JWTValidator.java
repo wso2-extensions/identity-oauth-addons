@@ -82,7 +82,7 @@ public class JWTValidator {
     private static final String IDP_ENTITY_ID = "IdPEntityId";
     private static final String PROP_ID_TOKEN_ISSUER_ID = "OAuth.OpenIDConnect.IDTokenIssuerID";
     private boolean preventTokenReuse;
-    ArrayList<String> validAudience;
+    List<String> validAudience;
     private String validIssuer;
     private int rejectBeforeInMinutes;
     List<String> mandatoryClaims;
@@ -91,7 +91,7 @@ public class JWTValidator {
 
     private JWTStorageManager jwtStorageManager;
 
-    public JWTValidator(boolean preventTokenReuse, ArrayList<String> validAudience, int rejectBefore, String validIssuer,
+    public JWTValidator(boolean preventTokenReuse, List<String> validAudience, int rejectBefore, String validIssuer,
                         List<String> mandatoryClaims, boolean enableJTICache) {
 
         this.preventTokenReuse = preventTokenReuse;
@@ -149,7 +149,7 @@ public class JWTValidator {
             }
 
             // Get audience.
-            ArrayList<String> validAud = getValidAudience(tenantDomain, isBackchannelCall);
+            List<String> validAud = getValidAudience(tenantDomain, isBackchannelCall);
             long expTime = 0;
             long issuedTime = 0;
             if (expirationTime != null) {
@@ -228,7 +228,8 @@ public class JWTValidator {
 
     // "The Audience SHOULD be the URL of the Authorization Server's Token Endpoint", if a valid audience is not
     // specified.
-    private boolean validateAudience(ArrayList<String> expectedAudience, List<String> audience) throws OAuthClientAuthnException {
+    private boolean validateAudience(List<String> expectedAudience, List<String> audience)
+            throws OAuthClientAuthnException {
 
         if (expectedAudience.contains(audience.get(0))) {
             return true;
@@ -418,13 +419,13 @@ public class JWTValidator {
         return isValidSignature;
     }
 
-    private ArrayList<String> getValidAudience(String tenantDomain, boolean isBackchannelCall)
+    private List<String> getValidAudience(String tenantDomain, boolean isBackchannelCall)
             throws OAuthClientAuthnException {
 
         if (validAudience.size() > 0 && isNotEmpty(validAudience.get(0))) {
             return validAudience;
         }
-        ArrayList<String> audience = new ArrayList<>();
+        List<String> audience = new ArrayList<>();
         if (isBackchannelCall) {
             audience.add(IdentityUtil.getServerURL(Constants.OAUTH2_TOKEN_EP, false, false));
             audience.add(IdentityUtil.getServerURL(Constants.OAUTH2_CIBA_EP, false, false));
