@@ -235,7 +235,7 @@ public class JWTValidator {
             return true;
         }
         if (log.isDebugEnabled()) {
-            log.debug("None of the audience values matched the tokenEndpoint Alias :" + expectedAudience);
+            log.debug("None of the audience values matched the expected audience values");
         }
         throw new OAuthClientAuthnException("Failed to match audience values.", OAuth2ErrorCodes.INVALID_REQUEST);
     }
@@ -426,10 +426,6 @@ public class JWTValidator {
             return validAudience;
         }
         List<String> audience = new ArrayList<>();
-        if (isBackchannelCall) {
-            audience.add(IdentityUtil.getServerURL(Constants.OAUTH2_TOKEN_EP, false, false));
-            audience.add(IdentityUtil.getServerURL(Constants.OAUTH2_CIBA_EP, false, false));
-        }
         IdentityProvider residentIdP;
         try {
             residentIdP = IdentityProviderManager.getInstance()
@@ -453,7 +449,15 @@ public class JWTValidator {
         if (audience.size() == 0) {
             audience.add(IdentityUtil.getProperty(PROP_ID_TOKEN_ISSUER_ID));
         }
-        return audience;
+
+        if (isBackchannelCall) {
+            audience.add(IdentityUtil.getServerURL(Constants.OAUTH2_TOKEN_EP, false, false));
+            audience.add(IdentityUtil.getServerURL(Constants.OAUTH2_CIBA_EP, false, false));
+            return audience;
+        } else {
+            // If this is not a backcahnnel call, return only issuer identifier as the audience
+            return audience.subList(0,1);
+        }
     }
 
     /**
