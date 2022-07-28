@@ -66,6 +66,7 @@ import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Const
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.buildJWT;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.getJWTValidator;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.getKeyStoreFromFile;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.getMultiAudienceJWTValidator;
 import static org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
 import static org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENANT_ID;
 
@@ -237,12 +238,141 @@ public class JWTValidatorTest {
         };
     }
 
+    @DataProvider(name = "provideJWTForMultiAudience")
+    public Object[][] createJWTForMultiAudience() throws Exception {
+
+        Properties properties1 = new Properties();
+        Properties properties2 = new Properties();
+        Properties properties3 = new Properties();
+        Properties properties4 = new Properties();
+        Properties properties5 = new Properties();
+        Properties properties6 = new Properties();
+        Properties properties7 = new Properties();
+        Properties properties8 = new Properties();
+        Properties properties9 = new Properties();
+
+        properties1.setProperty(ENABLE_CACHE_FOR_JTI, "true");
+        properties1.setProperty(JWT_VALIDITY_PERIOD, "30");
+        properties1.setProperty(PREVENT_TOKEN_REUSE, "true");
+        properties2.setProperty(VALID_ISSUER, VALID_ISSUER_VAL);
+        properties4.setProperty(VALID_AUDIENCE, SOME_VALID_AUDIENCE);
+        properties5.setProperty(PREVENT_TOKEN_REUSE, "false");
+        properties6.setProperty(ENABLE_CACHE_FOR_JTI, "false");
+        properties6.setProperty(PREVENT_TOKEN_REUSE, "false");
+        properties6.setProperty(REJECT_BEFORE_IN_MINUTES, "1");
+        properties7.setProperty(MANDATORY, "some_claim");
+        properties8.setProperty(VALID_ISSUER, "some_issuer");
+        properties9.setProperty(ENABLE_CACHE_FOR_JTI, "false");
+        properties9.setProperty(PREVENT_TOKEN_REUSE, "false");
+        properties9.setProperty(REJECT_BEFORE_IN_MINUTES, "1");
+
+
+        Key key1 = clientKeyStore.getKey("wso2carbon", "wso2carbon".toCharArray());
+        String audience = ID_TOKEN_ISSUER_ID;
+        String jsonWebToken0 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "7000", audience, "RSA265", key1, 0);
+        String jsonWebToken1 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "6000", audience, "RSA265", key1, 0);
+        String jsonWebToken2 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "6000", audience, "RSA265", key1,
+                6000000);
+        String jsonWebToken3 = buildJWT("some-issuer", TEST_CLIENT_ID_1, "6001", audience, "RSA265", key1,
+                6000000);
+        String jsonWebToken4 = buildJWT(TEST_CLIENT_ID_1, "some-client-id", "6002", audience, "RSA265", key1, 0);
+        String jsonWebToken5 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "6002", audience, "RSA265", key1, 0);
+        String jsonWebToken6 = buildJWT(VALID_ISSUER_VAL, TEST_CLIENT_ID_1, "6003", audience, "RSA265", key1, 0);
+        String jsonWebToken7 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "2002", audience, "RSA265", key1, 0);
+        String jsonWebToken9 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "6002", audience, "RSA265", key1,
+                Calendar.getInstance().getTimeInMillis());
+        String jsonWebToken10 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "6004", SOME_VALID_AUDIENCE,
+                "RSA265", key1, 0);
+        String jsonWebToken11 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "6005", audience, "RSA265", key1,
+                0, 0, Calendar.getInstance().getTimeInMillis() - (1000L * 60 * 2 *
+                        Constants.DEFAULT_VALIDITY_PERIOD_IN_MINUTES));
+
+        String jsonWebToken12 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "6006", audience, "RSA265", key1, 0);
+        String jsonWebToken13 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "2001", audience, "RSA265", key1, 0);
+        String jsonWebToken15 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "6007", audience, "RSA265", key1,
+                600000000);
+
+        String jsonWebToken16 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "6008", "some_audience",
+                "RSA265", key1, 0);
+        String jsonWebToken17 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "6010", audience, "RSA265", key1, 0);
+        String jsonWebToken18 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "6011", audience, "RSA265", key1, 0);
+
+        return new Object[][]{
+                {jsonWebToken0, properties8, false, "Correct authentication request is failed."},
+                {jsonWebToken1, properties1, true, "Correct authentication request is failed."},
+                {jsonWebToken2, properties1, false, "JWT replay with preventTokenReuse enabled is not " +
+                        "failed. "},
+                {jsonWebToken3, properties3, false, "JWT with Invalid field Issuer must be fail."},
+                {jsonWebToken4, properties3, false, "Request with non existing SP client-id should fail."},
+                {jsonWebToken5, properties5, true, "JWT replay with preventTokenReuse disabled but " +
+                        "not-expired is not failed"},
+                {jsonWebToken6, properties2, true, "Valid JWT token with custom issuer validation should pass."},
+                {jsonWebToken7, properties3, false, "JWT persisted in database with preventTokenReuse " +
+                        "enabled is not failed."},
+                {jsonWebToken9, properties1, false, "JWT persisted in database with preventTokenReuse " +
+                        "disabled is not failed."},
+                {jsonWebToken10, properties4, true, "Valid JWT token with custom audience validation should pass" +
+                        "."},
+                {jsonWebToken11, properties1, false, ""},
+                {jsonWebToken12, properties5, true, ""},
+                {jsonWebToken12, properties5, false, ""},
+                {jsonWebToken13, properties1, false, ""},
+                {jsonWebToken15, properties1, false, ""},
+                {jsonWebToken16, properties4, false, ""},
+                {jsonWebToken17, properties6, false, ""},
+                {jsonWebToken18, properties7, false, ""},
+        };
+    }
+
     @Test(dataProvider = "provideJWT")
     public void testValidateToken(String jwt, Object properties, boolean expected,
                                   String errorMsg) throws Exception {
 
         try {
             JWTValidator jwtValidator = getJWTValidator((Properties) properties);
+            SignedJWT signedJWT = SignedJWT.parse(jwt);
+            assertEquals(jwtValidator.isValidAssertion(signedJWT),
+                    expected, errorMsg);
+            if (((Properties) properties).getProperty(MANDATORY) != null) {
+                assertEquals(jwtValidator.isValidAssertion(null),
+                        expected, errorMsg);
+            }
+
+        } catch (OAuthClientAuthnException e) {
+            assertFalse(expected);
+
+        }
+    }
+
+    @Test
+    public void testValidateNullToken() throws Exception {
+
+        try {
+            JWTValidator jwtValidator = getJWTValidator(new Properties());
+            jwtValidator.isValidAssertion(null);
+        } catch (OAuthClientAuthnException e) {
+            assertFalse(false, "Validation should fail when token is null");
+        }
+
+    }
+
+    @Test(dependsOnMethods = "testValidateToken")
+    public void testValidateTokenSignedByHmac() throws Exception {
+
+        JWTValidator jwtValidator = getJWTValidator(new Properties());
+        String hsSignedJWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9" +
+                ".eyJzdWIiOiJLclZMb3Y0QmwzbmF0VWtzRjJIbVdzZHc2ODRhIiwibmFtZSI6IkpvaG4gRG9lIiwiaXNzdWVyIjoiS3JWTG92NEJsM2" +
+                "5hdFVrc0YySG1Xc2R3Njg0YSIsImp0aSI6MTAwOCwiZXhwIjoiMjU1NDQ0MDEzMjAwMCIsImF1ZCI6WyJzb21lLWF1ZGllbmNlIl19." +
+                "m0RrVUrZHr1M7R4I_4dzpoWD8jNA2fKkOadEsFg9Wj4";
+        SignedJWT signedJWT = SignedJWT.parse(hsSignedJWT);
+    }
+
+    @Test(dataProvider = "provideJWTForMultiAudience")
+    public void testValidateTokenWithMultiAudience(String jwt, Object properties, boolean expected,
+                                  String errorMsg) throws Exception {
+
+        try {
+            JWTValidator jwtValidator = getMultiAudienceJWTValidator((Properties) properties);
             SignedJWT signedJWT = SignedJWT.parse(jwt);
             assertEquals(jwtValidator.isValidAssertion(signedJWT, false),
                     expected, errorMsg);
@@ -258,10 +388,10 @@ public class JWTValidatorTest {
     }
 
     @Test
-    public void testValidateNullToken() throws Exception {
+    public void testValidateNullTokenWithMultiAudience() throws Exception {
 
         try {
-            JWTValidator jwtValidator = getJWTValidator(new Properties());
+            JWTValidator jwtValidator = getMultiAudienceJWTValidator(new Properties());
             jwtValidator.isValidAssertion(null, false);
         } catch (OAuthClientAuthnException e) {
             assertFalse(false, "Validation should fail when token is null");
@@ -270,9 +400,9 @@ public class JWTValidatorTest {
     }
 
     @Test(dependsOnMethods = "testValidateToken")
-    public void testValidateTokenSignedByHmac() throws Exception {
+    public void testValidateTokenSignedByHmacWithMultiAudience() throws Exception {
 
-        JWTValidator jwtValidator = getJWTValidator(new Properties());
+        JWTValidator jwtValidator = getMultiAudienceJWTValidator(new Properties());
         String hsSignedJWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9" +
                 ".eyJzdWIiOiJLclZMb3Y0QmwzbmF0VWtzRjJIbVdzZHc2ODRhIiwibmFtZSI6IkpvaG4gRG9lIiwiaXNzdWVyIjoiS3JWTG92NEJsM2" +
                 "5hdFVrc0YySG1Xc2R3Njg0YSIsImp0aSI6MTAwOCwiZXhwIjoiMjU1NDQ0MDEzMjAwMCIsImF1ZCI6WyJzb21lLWF1ZGllbmNlIl19." +
