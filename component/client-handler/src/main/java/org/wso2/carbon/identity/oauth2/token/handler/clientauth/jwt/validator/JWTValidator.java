@@ -59,6 +59,7 @@ import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -66,7 +67,6 @@ import java.util.Map;
 
 import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.apache.commons.lang.StringUtils.isNotEmpty;
-import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.OAUTH_JWT_ASSERTION;
 
 /**
  * This class is used to validate the JWT which is coming along with the request.
@@ -107,11 +107,26 @@ public class JWTValidator {
     /**
      * To validate the JWT assertion.
      *
+     * @deprecated Use the method {@link #isValidAssertion(SignedJWT, boolean)} which includes backchannel call check
      * @param signedJWT Validate the token
      * @return true if the jwt is valid.
-     * @throws IdentityOAuth2Exception
+     * @throws OAuthClientAuthnException
      */
+    @Deprecated
     public boolean isValidAssertion(SignedJWT signedJWT) throws OAuthClientAuthnException {
+
+        return isValidAssertion(signedJWT, false);
+
+    }
+
+    /**
+     * To validate the JWT assertion.
+     *
+     * @param signedJWT Validate the token
+     * @return true if the jwt is valid.
+     * @throws OAuthClientAuthnException
+     */
+    public boolean isValidAssertion(SignedJWT signedJWT, boolean isBackchannelCall) throws OAuthClientAuthnException {
 
         String errorMessage;
 
@@ -149,7 +164,7 @@ public class JWTValidator {
             }
 
             // Get audience.
-            String validAud = getValidAudience(tenantDomain);
+            List<String> validAud = getValidAudience(tenantDomain, isBackchannelCall);
             long expTime = 0;
             long issuedTime = 0;
             if (expirationTime != null) {
@@ -227,16 +242,18 @@ public class JWTValidator {
     }
 
     // "The Audience SHOULD be the URL of the Authorization Server's Token Endpoint", if a valid audience is not
-    // specified.
-    private boolean validateAudience(String expectedAudience, List<String> audience) throws OAuthClientAuthnException {
+    // specified for a non CIBA call
+    // For a CIBA call audience should be issuer identifier, token endpoint or CIBA endpoint
+    private boolean validateAudience(List<String> expectedAudience, List<String> audience)
+            throws OAuthClientAuthnException {
 
         for (String aud : audience) {
-            if (StringUtils.equals(expectedAudience, aud)) {
+            if (expectedAudience.contains(aud)) {
                 return true;
             }
         }
         if (log.isDebugEnabled()) {
-            log.debug("None of the audience values matched the tokenEndpoint Alias :" + expectedAudience);
+            log.debug("None of the audience values matched the expected audience values");
         }
         throw new OAuthClientAuthnException("Failed to match audience values.", OAuth2ErrorCodes.INVALID_REQUEST);
     }
@@ -420,12 +437,15 @@ public class JWTValidator {
         return isValidSignature;
     }
 
-    private String getValidAudience(String tenantDomain) throws OAuthClientAuthnException {
+    private List<String> getValidAudience(String tenantDomain, boolean isBackchannelCall)
+            throws OAuthClientAuthnException {
 
         if (isNotEmpty(validAudience)) {
-            return validAudience;
+            List<String> validAudiences = new ArrayList<>();
+            validAudiences.add(validAudience);
+            return validAudiences;
         }
-        String audience = null;
+        List<String> audience = new ArrayList<>();
         IdentityProvider residentIdP;
         try {
             residentIdP = IdentityProviderManager.getInstance()
@@ -436,7 +456,7 @@ public class JWTValidator {
             Property idpEntityId = IdentityApplicationManagementUtil.getProperty(oidcFedAuthn.getProperties(),
                     IDP_ENTITY_ID);
             if (idpEntityId != null) {
-                audience = idpEntityId.getValue();
+                audience.add(idpEntityId.getValue());
             }
         } catch (IdentityProviderManagementException e) {
             String message = "Error while loading OAuth2TokenEPUrl of the resident IDP of tenant: " + tenantDomain;
@@ -446,8 +466,13 @@ public class JWTValidator {
             throw new OAuthClientAuthnException(message, OAuth2ErrorCodes.INVALID_REQUEST);
         }
 
-        if (isEmpty(audience)) {
-            audience = IdentityUtil.getProperty(PROP_ID_TOKEN_ISSUER_ID);
+        if (audience.size() == 0) {
+            audience.add(IdentityUtil.getProperty(PROP_ID_TOKEN_ISSUER_ID));
+        }
+
+        if (isBackchannelCall) {
+            audience.add(IdentityUtil.getServerURL(Constants.OAUTH2_TOKEN_EP, false, false));
+            audience.add(IdentityUtil.getServerURL(Constants.OAUTH2_CIBA_EP, false, false));
         }
         return audience;
     }

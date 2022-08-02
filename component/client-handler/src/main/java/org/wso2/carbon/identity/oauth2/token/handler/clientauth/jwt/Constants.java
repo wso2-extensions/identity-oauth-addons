@@ -40,6 +40,8 @@ public class Constants {
     public static final String ISSUER_CLAIM = "iss";
     public static final String PRIVATE_KEY_JWT = "signedJWT";
     public static final String JWKS_URI = "jwksURI";
+    public static final String OAUTH2_TOKEN_EP = "/oauth2/token";
+    public static final String OAUTH2_CIBA_EP = "/oauth2/ciba";
 
     public static class SQLQueries {
 
