@@ -107,6 +107,7 @@ public class JWTValidator {
     /**
      * To validate the JWT assertion.
      *
+     * @deprecated Use the method {@link #isValidAssertion(SignedJWT, boolean)} which includes backchannel call check
      * @param signedJWT Validate the token
      * @return true if the jwt is valid.
      * @throws OAuthClientAuthnException

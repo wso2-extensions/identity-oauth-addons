@@ -98,11 +98,8 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
     public boolean authenticateClient(HttpServletRequest httpServletRequest, Map<String, List> bodyParameters,
                                       OAuthClientAuthnContext oAuthClientAuthnContext) throws OAuthClientAuthnException {
 
-        if (isBackchannelCall(httpServletRequest)) {
-            return jwtValidator.isValidAssertion(getSignedJWT(bodyParameters, oAuthClientAuthnContext), true);
-        } else {
-            return jwtValidator.isValidAssertion(getSignedJWT(bodyParameters, oAuthClientAuthnContext), false);
-        }
+        return jwtValidator.isValidAssertion(getSignedJWT(bodyParameters, oAuthClientAuthnContext),
+                isBackchannelCall(httpServletRequest));
     }
 
     /**
