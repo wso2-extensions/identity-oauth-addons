@@ -83,7 +83,6 @@ public class JWTValidator {
     private static final String PROP_ID_TOKEN_ISSUER_ID = "OAuth.OpenIDConnect.IDTokenIssuerID";
     private boolean preventTokenReuse;
     private String validAudience;
-    private List<String> multipleValidAudience;
     private String validIssuer;
     private int rejectBeforeInMinutes;
     List<String> mandatoryClaims;
@@ -92,25 +91,11 @@ public class JWTValidator {
 
     private JWTStorageManager jwtStorageManager;
 
-    @Deprecated
     public JWTValidator(boolean preventTokenReuse, String validAudience, int rejectBefore, String validIssuer,
                         List<String> mandatoryClaims, boolean enableJTICache) {
 
         this.preventTokenReuse = preventTokenReuse;
         this.validAudience = validAudience;
-        this.validIssuer = validIssuer;
-        this.jwtStorageManager = new JWTStorageManager();
-        this.mandatoryClaims = mandatoryClaims;
-        this.rejectBeforeInMinutes = rejectBefore;
-        this.enableJTICache = enableJTICache;
-        this.jwtCache = JWTCache.getInstance();
-    }
-
-    public JWTValidator(boolean preventTokenReuse, List<String> multipleValidAudience, int rejectBefore,
-                        String validIssuer, List<String> mandatoryClaims, boolean enableJTICache) {
-
-        this.preventTokenReuse = preventTokenReuse;
-        this.multipleValidAudience = multipleValidAudience;
         this.validIssuer = validIssuer;
         this.jwtStorageManager = new JWTStorageManager();
         this.mandatoryClaims = mandatoryClaims;
@@ -129,66 +114,8 @@ public class JWTValidator {
     @Deprecated
     public boolean isValidAssertion(SignedJWT signedJWT) throws OAuthClientAuthnException {
 
-        String errorMessage;
+        return isValidAssertion(signedJWT, false);
 
-        if (signedJWT == null) {
-            errorMessage = "No valid JWT assertion found for " + Constants.OAUTH_JWT_BEARER_GRANT_TYPE;
-            return logAndThrowException(errorMessage);
-        }
-        try {
-            JWTClaimsSet claimsSet = getClaimSet(signedJWT);
-
-            if (claimsSet == null) {
-                errorMessage = "Claim set is missing in the JWT assertion";
-                throw new OAuthClientAuthnException(errorMessage, OAuth2ErrorCodes.INVALID_REQUEST);
-            }
-
-            String jwtIssuer = claimsSet.getIssuer();
-            String jwtSubject = resolveSubject(claimsSet);
-            List<String> audience = claimsSet.getAudience();
-            Date expirationTime = claimsSet.getExpirationTime();
-            String jti = claimsSet.getJWTID();
-            Date nbf = claimsSet.getNotBeforeTime();
-            Date issuedAtTime = claimsSet.getIssueTime();
-            long currentTimeInMillis = System.currentTimeMillis();
-            long timeStampSkewMillis = OAuthServerConfiguration.getInstance().getTimeStampSkewInSeconds() * 1000;
-            OAuthAppDO oAuthAppDO = getOAuthAppDO(jwtSubject);
-            String consumerKey = oAuthAppDO.getOauthConsumerKey();
-            String tenantDomain = oAuthAppDO.getUser().getTenantDomain();
-            if (!validateMandatoryFeilds(mandatoryClaims, claimsSet)) {
-                return false;
-            }
-
-            //Validate issuer and subject.
-            if (!validateIssuer(jwtIssuer, consumerKey) || !validateSubject(jwtSubject, consumerKey)) {
-                return false;
-            }
-
-            // Get audience.
-            String validAud = getValidAudience(tenantDomain);
-            long expTime = 0;
-            long issuedTime = 0;
-            if (expirationTime != null) {
-                expTime = expirationTime.getTime();
-            }
-            if (issuedAtTime != null) {
-                issuedTime = issuedAtTime.getTime();
-            }
-
-            //Validate signature validation, audience, nbf,exp time, jti.
-            if (!validateJTI(signedJWT, jti, currentTimeInMillis, timeStampSkewMillis, expTime, issuedTime) ||
-                    !validateAudience(validAud, audience) || !validateJWTWithExpTime(expirationTime, currentTimeInMillis
-                    , timeStampSkewMillis) || !validateNotBeforeClaim(currentTimeInMillis, timeStampSkewMillis, nbf) ||
-                    !validateAgeOfTheToken(issuedAtTime, currentTimeInMillis, timeStampSkewMillis) || !isValidSignature
-                    (consumerKey, signedJWT, tenantDomain, jwtSubject)) {
-                return false;
-            }
-
-            return true;
-
-        } catch (IdentityOAuth2Exception e) {
-            return logAndThrowException(e.getMessage());
-        }
     }
 
     /**
@@ -311,22 +238,6 @@ public class JWTValidator {
             throw new OAuthClientAuthnException(error, OAuth2ErrorCodes.INVALID_REQUEST);
         }
         return true;
-    }
-
-    // "The Audience SHOULD be the URL of the Authorization Server's Token Endpoint", if a valid audience is not
-    // specified.
-    @Deprecated
-    private boolean validateAudience(String expectedAudience, List<String> audience) throws OAuthClientAuthnException {
-
-        for (String aud : audience) {
-            if (StringUtils.equals(expectedAudience, aud)) {
-                return true;
-            }
-        }
-        if (log.isDebugEnabled()) {
-            log.debug("None of the audience values matched the tokenEndpoint Alias :" + expectedAudience);
-        }
-        throw new OAuthClientAuthnException("Failed to match audience values.", OAuth2ErrorCodes.INVALID_REQUEST);
     }
 
     // "The Audience SHOULD be the URL of the Authorization Server's Token Endpoint", if a valid audience is not
@@ -525,44 +436,13 @@ public class JWTValidator {
         return isValidSignature;
     }
 
-    @Deprecated
-    private String getValidAudience(String tenantDomain) throws OAuthClientAuthnException {
-
-        if (isNotEmpty(validAudience)) {
-            return validAudience;
-        }
-        String audience = null;
-        IdentityProvider residentIdP;
-        try {
-            residentIdP = IdentityProviderManager.getInstance()
-                    .getResidentIdP(tenantDomain);
-            FederatedAuthenticatorConfig oidcFedAuthn = IdentityApplicationManagementUtil
-                    .getFederatedAuthenticator(residentIdP.getFederatedAuthenticatorConfigs(),
-                            IdentityApplicationConstants.Authenticator.OIDC.NAME);
-            Property idpEntityId = IdentityApplicationManagementUtil.getProperty(oidcFedAuthn.getProperties(),
-                    IDP_ENTITY_ID);
-            if (idpEntityId != null) {
-                audience = idpEntityId.getValue();
-            }
-        } catch (IdentityProviderManagementException e) {
-            String message = "Error while loading OAuth2TokenEPUrl of the resident IDP of tenant: " + tenantDomain;
-            if (log.isDebugEnabled()) {
-                log.debug(message);
-            }
-            throw new OAuthClientAuthnException(message, OAuth2ErrorCodes.INVALID_REQUEST);
-        }
-
-        if (isEmpty(audience)) {
-            audience = IdentityUtil.getProperty(PROP_ID_TOKEN_ISSUER_ID);
-        }
-        return audience;
-    }
-
     private List<String> getValidAudience(String tenantDomain, boolean isBackchannelCall)
             throws OAuthClientAuthnException {
 
-        if (multipleValidAudience.size() > 0 && isNotEmpty(multipleValidAudience.get(0))) {
-            return multipleValidAudience;
+        if (isNotEmpty(validAudience)) {
+            List<String> validAudiences = new ArrayList<>();
+            validAudiences.add(validAudience);
+            return validAudiences;
         }
         List<String> audience = new ArrayList<>();
         IdentityProvider residentIdP;
