@@ -392,7 +392,7 @@
         </carbon.identity.framework.imp.pkg.version.range>
         <identity.inbound.auth.oauth.version>6.7.70</identity.inbound.auth.oauth.version>
         <org.wso2.carbon.database.utils.version>2.0.7</org.wso2.carbon.database.utils.version>
-        <org.wso2.carbon.database.utils.version.range>[2.0.0,2.1.0)</org.wso2.carbon.database.utils.version.range>
+        <org.wso2.carbon.database.utils.version.range>[2.0.0,2.2.0)</org.wso2.carbon.database.utils.version.range>
 
         <identity.inbound.auth.oauth.imp.pkg.version>[6.2.18,7.0.0)</identity.inbound.auth.oauth.imp.pkg.version>
         <identity.carbon.auth.rest.version>1.4.47</identity.carbon.auth.rest.version>
