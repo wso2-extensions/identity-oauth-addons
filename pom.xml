@@ -111,11 +111,23 @@
                 <groupId>org.wso2.carbon.identity.framework</groupId>
                 <artifactId>org.wso2.carbon.identity.user.profile</artifactId>
                 <version>${carbon.identity.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.wso2.carbon</groupId>
+                        <artifactId>org.wso2.carbon.registry.core</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.wso2.carbon.identity.framework</groupId>
                 <artifactId>org.wso2.carbon.identity.core</artifactId>
                 <version>${carbon.identity.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.wso2.carbon</groupId>
+                        <artifactId>org.wso2.carbon.registry.core</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.wso2.carbon.identity.framework</groupId>
@@ -288,7 +300,7 @@
             <dependency>
                 <groupId>org.wso2.carbon.identity.framework</groupId>
                 <artifactId>org.wso2.carbon.identity.testutil</artifactId>
-                <version>${carbon.identity.version}</version>
+                <version>${carbon.identity.testutil.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
@@ -314,7 +326,7 @@
             </dependency>
             <!-- Pax Logging -->
             <dependency>
-                <groupId>org.ops4j.pax.logging</groupId>
+                <groupId>org.wso2.org.ops4j.pax.logging</groupId>
                 <artifactId>pax-logging-api</artifactId>
                 <version>${pax.logging.api.version}</version>
             </dependency>
@@ -387,16 +399,16 @@
 
     <properties>
 
-        <carbon.identity.version>5.20.322</carbon.identity.version>
-        <carbon.identity.framework.imp.pkg.version.range>[5.17.5, 6.0.0)
+        <carbon.identity.version>6.0.0</carbon.identity.version>
+        <carbon.identity.framework.imp.pkg.version.range>[6.0.0, 7.0.0)
         </carbon.identity.framework.imp.pkg.version.range>
-        <identity.inbound.auth.oauth.version>6.7.70</identity.inbound.auth.oauth.version>
+        <identity.inbound.auth.oauth.version>7.0.0</identity.inbound.auth.oauth.version>
         <org.wso2.carbon.database.utils.version>2.0.7</org.wso2.carbon.database.utils.version>
         <org.wso2.carbon.database.utils.version.range>[2.0.0,2.2.0)</org.wso2.carbon.database.utils.version.range>
 
-        <identity.inbound.auth.oauth.imp.pkg.version>[6.2.18,7.0.0)</identity.inbound.auth.oauth.imp.pkg.version>
-        <identity.carbon.auth.rest.version>1.4.47</identity.carbon.auth.rest.version>
-        <identity.carbon.auth.rest.imp.pkg.version>[1.0.0,2.0.0)</identity.carbon.auth.rest.imp.pkg.version>
+        <identity.inbound.auth.oauth.imp.pkg.version>[7.0.0,8.0.0)</identity.inbound.auth.oauth.imp.pkg.version>
+        <identity.carbon.auth.rest.version>2.0.0</identity.carbon.auth.rest.version>
+        <identity.carbon.auth.rest.imp.pkg.version>[2.0.0,3.0.0)</identity.carbon.auth.rest.imp.pkg.version>
 
         <carbon.kernel.version>4.6.0</carbon.kernel.version>
         <carbon.kernel.feature.version>4.6.0</carbon.kernel.feature.version>
@@ -421,7 +433,7 @@
         <apache.felix.scr.ds.annotations.version>1.2.4</apache.felix.scr.ds.annotations.version>
         <equinox.osgi.services.version>3.5.100.v20160504-1419</equinox.osgi.services.version>
 
-        <carbon.identity.package.import.version.range>[5.14.0, 6.0.0)</carbon.identity.package.import.version.range>
+        <carbon.identity.package.import.version.range>[6.0.0, 7.0.0)</carbon.identity.package.import.version.range>
         <org.apache.commons.codec.package.import.version.range>[1.10.0,2)
         </org.apache.commons.codec.package.import.version.range>
         <org.apache.commons.io.package.import.version.range>[2.4.0,3)
@@ -461,9 +473,10 @@
         <maven.bundle.plugins.version>3.2.0</maven.bundle.plugins.version>
         <maven.compiler.plugin>3.7.0</maven.compiler.plugin>
         <maven.buildnumber.plugin.version>1.4</maven.buildnumber.plugin.version>
+        <carbon.identity.testutil.version>5.20.322</carbon.identity.testutil.version>
 
         <!-- Pax Logging Version -->
-        <pax.logging.api.version>1.10.1</pax.logging.api.version>
+        <pax.logging.api.version>2.1.0-wso2v4</pax.logging.api.version>
 
         <apache.catalina.version>1.7.0</apache.catalina.version>
 
