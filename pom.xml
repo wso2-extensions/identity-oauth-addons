@@ -35,7 +35,6 @@
         <!--this should be released after the required supplementary features are merged-->
         <module>component/org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls</module>
         <module>component/org.wso2.carbon.identity.oauth2.token.handler.clientauth.tlswithidsecret</module>
-        <module>component/org.wso2.carbon.identity.oauth2.validators.xacml</module>
         <module>features/org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.feature</module>
         <module>features/org.wso2.carbon.identity.oauth2.validators.xacml.server.feature</module>
         <module>component/org.wso2.carbon.identity.oauth2.clientauth.privilegeduser</module>
@@ -312,11 +311,6 @@
             <dependency>
                 <groupId>org.wso2.carbon.extension.identity.oauth.addons</groupId>
                 <artifactId>org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.wso2.carbon.extension.identity.oauth.addons</groupId>
-                <artifactId>org.wso2.carbon.identity.oauth2.validators.xacml</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
