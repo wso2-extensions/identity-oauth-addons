@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2018, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2018, WSO2 LLC. (http://www.wso2.com).
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -56,7 +56,7 @@ import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Const
 
 /**
  * Client Authentication handler to implement oidc private_key_jwt client authentication specDEFAULT_TOKEN_EP_ALIAS
- * http://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication.
+ * <a href="http://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication">Reference</a>.
  */
 public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthenticator {
 
@@ -88,11 +88,11 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
     /**
      * To check whether the authentication is successful.
      *
-     * @param httpServletRequest      http servelet request
-     * @param bodyParameters          map of request body params
-     * @param oAuthClientAuthnContext oAuthClientAuthnContext
+     * @param httpServletRequest      Http servelet request.
+     * @param bodyParameters          Map of request body params.
+     * @param oAuthClientAuthnContext OAuthClientAuthnContext.
      * @return true if the authentication is successful.
-     * @throws OAuthClientAuthnException
+     * @throws OAuthClientAuthnException OAuthClientAuthnException thrown with Invalid Request error code.
      */
     @Override
     public boolean authenticateClient(HttpServletRequest httpServletRequest, Map<String, List> bodyParameters,
@@ -104,9 +104,9 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
     /**
      * Returns whether the incoming request can be handled by the particular authenticator.
      *
-     * @param httpServletRequest      http servelet request
-     * @param bodyParameters          map of request body params
-     * @param oAuthClientAuthnContext oAuthClientAuthnContext
+     * @param httpServletRequest      Http servelet request.
+     * @param bodyParameters          Map of request body params.
+     * @param oAuthClientAuthnContext OAuthClientAuthnContext.
      * @return true if the incoming request can be handled.
      */
     @Override
@@ -121,9 +121,9 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
     /**
      * Retrievs the client ID which is extracted from the JWT.
      *
-     * @param httpServletRequest
-     * @param bodyParameters
-     * @param oAuthClientAuthnContext
+     * @param httpServletRequest      Http servelet request.
+     * @param bodyParameters          Map of request body params.
+     * @param oAuthClientAuthnContext OAuthClientAuthnContext.
      * @return jwt 'sub' value as the client id
      * @throws OAuthClientAuthnException
      */

@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2017, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2017, WSO2 LLC. (http://www.wso2.com).
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -109,7 +109,7 @@ public class JWTValidator {
      *
      * @param signedJWT Validate the token
      * @return true if the jwt is valid.
-     * @throws IdentityOAuth2Exception
+     * @throws OAuthClientAuthnException OAuthClientAuthnException thrown with Invalid Request error code.
      */
     public boolean isValidAssertion(SignedJWT signedJWT) throws OAuthClientAuthnException {
 
@@ -314,9 +314,7 @@ public class JWTValidator {
             if (oAuthAppDO == null) {
                 logAndThrowException(message);
             }
-        } catch (InvalidOAuthClientException e) {
-            logAndThrowException(message);
-        } catch (IdentityOAuth2Exception e) {
+        } catch (InvalidOAuthClientException | IdentityOAuth2Exception e) {
             logAndThrowException(message);
         }
         return oAuthAppDO;
@@ -353,7 +351,7 @@ public class JWTValidator {
         if (nbf != null) {
 
             if (currentTimeInMillis + timeStampSkewMillis - nbf.getTime() <= 0) {
-                String message = "The token is used bfore the nbf claim value.";
+                String message = "The token is used before the nbf claim value.";
                 if (log.isDebugEnabled()) {
                     log.debug(message);
                 }
@@ -457,7 +455,7 @@ public class JWTValidator {
      *
      * @param signedJWT signedJWT
      * @return JWT claim set
-     * @throws IdentityOAuth2Exception
+     * @throws OAuthClientAuthnException OAuthClientAuthnException thrown with Invalid Request error code.
      */
     public JWTClaimsSet getClaimSet(SignedJWT signedJWT) throws OAuthClientAuthnException {
 
