@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2017, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2017, WSO2 LLC. (http://www.wso2.com).
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,7 +13,7 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
- * under the License
+ * under the License.
  */
 
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator;
@@ -209,6 +209,8 @@ public class JWTValidatorTest {
                 "RSA265", key1, 0);
         String jsonWebToken17 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3010", audience, "RSA265", key1, 0);
         String jsonWebToken18 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3011", audience, "RSA265", key1, 0);
+        String jsonWebToken19 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "10010010", audience, "RSA265", key1, 0);
+        String jsonWebToken20 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "10010010", audience, "RSA265", key1, 0);
 
         return new Object[][]{
                 {jsonWebToken0, properties8, false, "Correct authentication request is failed."},
@@ -234,6 +236,9 @@ public class JWTValidatorTest {
                 {jsonWebToken16, properties4, false, ""},
                 {jsonWebToken17, properties6, false, ""},
                 {jsonWebToken18, properties7, false, ""},
+                {jsonWebToken19, properties1, true, "Unable to use same JTI across tenants."},
+                {jsonWebToken20, properties1, false, "Duplicated JTI was used in same tenant with " +
+                        "preventTokenReuse enabled."},
         };
     }
 

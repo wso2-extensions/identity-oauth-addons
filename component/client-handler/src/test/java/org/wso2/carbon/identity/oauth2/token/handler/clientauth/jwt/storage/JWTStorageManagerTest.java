@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2017, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2017, WSO2 LLC. (http://www.wso2.com).
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,7 +13,7 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
- * under the License
+ * under the License.
  */
 
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.storage;
@@ -81,7 +81,7 @@ public class JWTStorageManagerTest extends PowerMockIdentityBaseTest {
     @Test()
     public void testIsJTIExistsInDB() throws Exception {
 
-        assertTrue(JWTStorageManager.isJTIExistsInDB("2000"));
+        assertTrue(JWTStorageManager.isJTIExistsInDB("2000",-1234));
     }
 
     @Test()
@@ -93,7 +93,7 @@ public class JWTStorageManagerTest extends PowerMockIdentityBaseTest {
     @Test()
     public void testGetJwtFromDB() throws Exception {
 
-        assertNotNull(JWTStorageManager.getJwtFromDB("2000"));
+        assertNotNull(JWTStorageManager.getJwtFromDB("2000",-1234));
     }
 
     @Test()
@@ -105,13 +105,13 @@ public class JWTStorageManagerTest extends PowerMockIdentityBaseTest {
     @Test()
     public void testPersistJWTIdInDB() throws Exception {
 
-        JWTStorageManager.persistJWTIdInDB("2004", 10000000, 10000000);
+        JWTStorageManager.persistJWTIdInDB("2004",-1234, 10000000, 10000000);
     }
 
     @Test(expectedExceptions = OAuthClientAuthnException.class)
     public void testPersistJWTIdInDBExceptionCase() throws Exception {
 
-        JWTStorageManager.persistJWTIdInDB("2000", 10000000, 10000000);
+        JWTStorageManager.persistJWTIdInDB("2000",-1234, 10000000, 10000000);
     }
 
     @Test()

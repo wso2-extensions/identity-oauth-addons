@@ -13,7 +13,7 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
- * under the License
+ * under the License.
  */
 
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.dao;
@@ -54,13 +54,14 @@ public class JWTStorageManager {
     private static final Log log = LogFactory.getLog(JWTStorageManager.class);
 
     /**
-     * Check whether a JWT Entry with given jti exists in the DB.
+     * Check whether a JWT Entry with given jti  and tenant id exists in the DB.
      *
-     * @param jti JWT token id
-     * @return true if an entry is found
+     * @param   jti         JWT token id.
+     * @param   tenantId    Tenant Id.
+     * @return  true        if an entry is found.
      * @throws IdentityOAuth2Exception when exception occurs
      */
-    public boolean isJTIExistsInDB(String jti) throws OAuthClientAuthnException {
+    public boolean isJTIExistsInDB(String jti, int tenantId) throws OAuthClientAuthnException {
 
         Connection dbConnection = IdentityDatabaseUtil.getDBConnection();
         PreparedStatement prepStmt = null;
@@ -69,6 +70,7 @@ public class JWTStorageManager {
         try {
             prepStmt = dbConnection.prepareStatement(SQLQueries.GET_JWT_ID);
             prepStmt.setString(1, jti);
+            prepStmt.setInt(2, tenantId);
             rs = prepStmt.executeQuery();
             int count = 0;
             if (rs.next()) {
@@ -82,7 +84,7 @@ public class JWTStorageManager {
                 log.debug("Error when retrieving the JWT ID: " + jti, e);
             }
             throw new OAuthClientAuthnException("Error occurred while validating the JTI: " + jti + " of the " +
-                                                "assertion.", OAuth2ErrorCodes.INVALID_REQUEST);
+                    "assertion.", OAuth2ErrorCodes.INVALID_REQUEST);
         } finally {
             IdentityDatabaseUtil.closeAllConnections(dbConnection, rs, prepStmt);
         }
@@ -96,7 +98,7 @@ public class JWTStorageManager {
      * @return JWTEntry
      * @throws OAuthClientAuthnException OAuthClientAuthnException thrown with Invalid Request error code.
      */
-    public JWTEntry getJwtFromDB(String jti) throws OAuthClientAuthnException {
+    public JWTEntry getJwtFromDB(String jti, int tenantId) throws OAuthClientAuthnException {
 
         Connection dbConnection = IdentityDatabaseUtil.getDBConnection();
         PreparedStatement prepStmt = null;
@@ -105,6 +107,7 @@ public class JWTStorageManager {
         try {
             prepStmt = dbConnection.prepareStatement(SQLQueries.GET_JWT);
             prepStmt.setString(1, jti);
+            prepStmt.setInt(2, tenantId);
             rs = prepStmt.executeQuery();
             if (rs.next()) {
                 long exp = rs.getTime(1, Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC))).getTime();
@@ -116,7 +119,7 @@ public class JWTStorageManager {
                 log.debug("Error when retrieving the JWT ID: " + jti, e);
             }
             throw new OAuthClientAuthnException("Error occurred while validating the JTI: " + jti + " of the " +
-                                                "assertion.", OAuth2ErrorCodes.INVALID_REQUEST);
+                    "assertion.", OAuth2ErrorCodes.INVALID_REQUEST);
         } finally {
             IdentityDatabaseUtil.closeAllConnections(dbConnection, rs, prepStmt);
         }
@@ -131,7 +134,7 @@ public class JWTStorageManager {
      * @param timeCreated jti inserted time
      * @throws IdentityOAuth2Exception
      */
-    public void persistJWTIdInDB(String jti, long expTime, long timeCreated) throws OAuthClientAuthnException {
+    public void persistJWTIdInDB(String jti, int tenantId, long expTime, long timeCreated) throws OAuthClientAuthnException {
 
         Connection connection = null;
         PreparedStatement preparedStatement = null;
@@ -153,8 +156,11 @@ public class JWTStorageManager {
                 }
             }
             preparedStatement.setString(1, jti);
+            preparedStatement.setInt(2, tenantId);
             Timestamp timestamp = new Timestamp(timeCreated);
             Timestamp expTimestamp = new Timestamp(expTime);
+            preparedStatement.setTimestamp(3, expTimestamp, Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC)));
+            preparedStatement.setTimestamp(4, timestamp,
             preparedStatement.setTimestamp(2, expTimestamp,
                     Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC)));
             preparedStatement.setTimestamp(3, timestamp,

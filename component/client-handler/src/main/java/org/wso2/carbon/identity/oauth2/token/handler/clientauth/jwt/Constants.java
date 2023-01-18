@@ -70,5 +70,9 @@ public class Constants {
                 "WHEN MATCHED THEN UPDATE SET EXP_TIME = ? , TIME_CREATED = ? " +
                 "WHEN NOT MATCHED THEN INSERT (JWT_ID, EXP_TIME, TIME_CREATED) " +
                 " VALUES (?, ?, ?)";
+        public static final String GET_JWT_ID = "SELECT 1 FROM IDN_OIDC_JTI WHERE JWT_ID =? AND TENANT_ID=?";
+        public static final String GET_JWT = "SELECT EXP_TIME,TIME_CREATED FROM IDN_OIDC_JTI WHERE JWT_ID =? AND TENANT_ID=?";
+        public static final String INSERT_JWD_ID = "INSERT INTO IDN_OIDC_JTI (JWT_ID, TENANT_ID, EXP_TIME, TIME_CREATED)" +
+                "VALUES (?,?,?,?)";
     }
 }
