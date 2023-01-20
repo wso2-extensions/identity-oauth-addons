@@ -34,6 +34,9 @@ import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWT
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil;
 import org.wso2.carbon.identity.testutil.powermock.PowerMockIdentityBaseTest;
 
+import java.util.List;
+
+import static org.testng.Assert.assertEquals;
 import java.sql.Connection;
 
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
@@ -112,6 +115,15 @@ public class JWTStorageManagerTest extends PowerMockIdentityBaseTest {
     public void testPersistJWTIdInDBExceptionCase() throws Exception {
 
         JWTStorageManager.persistJWTIdInDB("2000",-1234, 10000000, 10000000);
+    }
+
+    @Test()
+    public void testGetJwtsFromDB() throws Exception {
+
+        List<JWTEntry> jwtEntryList = JWTStorageManager.getJwtFromDB("10010010");
+        assertNotNull(jwtEntryList);
+        JWTEntry jwtEntry = jwtEntryList.get(0);
+        assertEquals(1,jwtEntry.getTenantId());
     }
 
     @Test()

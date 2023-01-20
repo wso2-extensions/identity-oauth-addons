@@ -41,7 +41,14 @@ public class Constants {
     public static final String PRIVATE_KEY_JWT = "signedJWT";
     public static final String JWKS_URI = "jwksURI";
 
+    public static final int DEFAULT_TENANT_ID= -1;
+
+
     public static class SQLQueries {
+
+        public static final String TENANT_ID = "TENANT_ID";
+        public static final String EXP_TIME = "EXP_TIME";
+        public static final String TIME_CREATED = "TIME_CREATED";
 
         public static final String GET_JWT_ID = "SELECT 1 FROM IDN_OIDC_JTI WHERE JWT_ID =?";
         public static final String GET_JWT = "SELECT EXP_TIME,TIME_CREATED FROM IDN_OIDC_JTI WHERE JWT_ID =?";
@@ -72,6 +79,9 @@ public class Constants {
                 " VALUES (?, ?, ?)";
         public static final String GET_JWT_ID = "SELECT 1 FROM IDN_OIDC_JTI WHERE JWT_ID =? AND TENANT_ID=?";
         public static final String GET_JWT = "SELECT EXP_TIME,TIME_CREATED FROM IDN_OIDC_JTI WHERE JWT_ID =? AND TENANT_ID=?";
+
+        public static final String GET_JWT_DETAIL = "SELECT TENANT_ID, EXP_TIME,TIME_CREATED FROM IDN_OIDC_JTI WHERE JWT_ID =?";
+
         public static final String INSERT_JWD_ID = "INSERT INTO IDN_OIDC_JTI (JWT_ID, TENANT_ID, EXP_TIME, TIME_CREATED)" +
                 "VALUES (?,?,?,?)";
     }

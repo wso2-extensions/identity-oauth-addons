@@ -34,8 +34,14 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import java.util.TimeZone;
+
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.SQLQueries.EXP_TIME;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.SQLQueries.TENANT_ID;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.SQLQueries.TIME_CREATED;
 
 import static org.wso2.carbon.identity.core.util.JdbcUtils.isDB2DB;
 import static org.wso2.carbon.identity.core.util.JdbcUtils.isH2DB;
@@ -47,7 +53,7 @@ import static org.wso2.carbon.identity.core.util.JdbcUtils.isPostgreSQLDB;
 
 /**
  * JWT token persistence is managed by JWTStorageManager
- * It saved JWTEntry instances in Identity Database.
+ * It saved JWTEntry instances in IDN_OIDC_JTI table of Identity Database.
  */
 public class JWTStorageManager {
 
@@ -92,9 +98,10 @@ public class JWTStorageManager {
     }
 
     /**
-     * To get persisted JWT for a given JTI.
+     * To get persisted JWT for a given JTI and Tenant id.
      *
-     * @param jti jti
+     * @param jti       JTI.
+     * @param tenantId  Tenant id.
      * @return JWTEntry
      * @throws OAuthClientAuthnException OAuthClientAuthnException thrown with Invalid Request error code.
      */
@@ -112,7 +119,7 @@ public class JWTStorageManager {
             if (rs.next()) {
                 long exp = rs.getTime(1, Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC))).getTime();
                 long created = rs.getTime(2, Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC))).getTime();
-                jwtEntry = new JWTEntry(exp, created);
+                jwtEntry = new JWTEntry(exp, created, tenantId);
             }
         } catch (SQLException e) {
             if (log.isDebugEnabled()) {
@@ -127,11 +134,48 @@ public class JWTStorageManager {
     }
 
     /**
+     * To get a list of persisted JWTs for a given JTI.
+     *
+     * @param jti JTI.
+     * @return  List of JWTEntries.
+     * @throws OAuthClientAuthnException OAuthClientAuthnException thrown with Invalid Request error code.
+     */
+    public List<JWTEntry> getJwtFromDB(String jti) throws OAuthClientAuthnException {
+
+        List<JWTEntry> JWTEntries = new ArrayList<>();
+
+        Connection dbConnection = IdentityDatabaseUtil.getDBConnection();
+        PreparedStatement prepStmt = null;
+        ResultSet rs = null;
+        try {
+            prepStmt = dbConnection.prepareStatement(Constants.SQLQueries.GET_JWT_DETAIL);
+            prepStmt.setString(1, jti);
+            rs = prepStmt.executeQuery();
+            while (rs.next()) {
+                int tenantId = rs.getInt(TENANT_ID);
+                long exp = rs.getTime(EXP_TIME, Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC))).getTime();
+                long created = rs.getTime(TIME_CREATED, Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC))).getTime();
+                JWTEntries.add(new JWTEntry(exp, created, tenantId));
+            }
+        } catch (SQLException e) {
+            if (log.isDebugEnabled()) {
+                log.debug("Error when retrieving the JWT ID: " + jti, e);
+            }
+            throw new OAuthClientAuthnException("Error occurred while validating the JTI: " + jti + " of the " +
+                    "assertion.", OAuth2ErrorCodes.INVALID_REQUEST);
+        } finally {
+            IdentityDatabaseUtil.closeAllConnections(dbConnection, rs, prepStmt);
+        }
+        return JWTEntries;
+    }
+
+    /**
      * To persist unique id for jti in the table.
      *
-     * @param jti         jti a unique id
-     * @param expTime     expiration time
-     * @param timeCreated jti inserted time
+     * @param jti           JTI a unique id.
+     * @param tenantId      Tenant id.
+     * @param expTime       Expiration time.
+     * @param timeCreated   JTI inserted time.
      * @throws IdentityOAuth2Exception
      */
     public void persistJWTIdInDB(String jti, int tenantId, long expTime, long timeCreated) throws OAuthClientAuthnException {

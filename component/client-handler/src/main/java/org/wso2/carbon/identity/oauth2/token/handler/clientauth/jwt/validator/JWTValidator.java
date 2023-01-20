@@ -68,6 +68,7 @@ import java.util.Map;
 
 import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.apache.commons.lang.StringUtils.isNotEmpty;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.DEFAULT_TENANT_ID;
 
 /**
  * This class is used to validate the JWT which is coming along with the request.
@@ -271,23 +272,50 @@ public class JWTValidator {
     private boolean validateJWTInDataBase(String jti, long currentTimeInMillis,
                                           long timeStampSkewMillis, int tenantId) throws OAuthClientAuthnException {
 
-        JWTEntry jwtEntry = jwtStorageManager.getJwtFromDB(jti, tenantId);
+        JWTEntry jwtEntry = getJTIfromDB(jti, tenantId);
         if (jwtEntry == null) {
             if (log.isDebugEnabled()) {
                 log.debug("JWT id: " + jti + " not found in the Storage the JWT has been validated successfully.");
             }
             return true;
         } else if (preventTokenReuse) {
-            if (jwtStorageManager.isJTIExistsInDB(jti, tenantId)) {
+//            if (jwtStorageManager.isJTIExistsInDB(jti, tenantId)) {
                 String message = "JWT Token with JTI: " + jti + " has been replayed";
                 return logAndThrowException(message);
-            }
+//            }
         } else {
             if (!checkJTIValidityPeriod(jti, jwtEntry.getExp(), currentTimeInMillis, timeStampSkewMillis)) {
                 return false;
             }
         }
         return true;
+    }
+
+    /**
+     * This method is to get JTI from the DB.
+     * For the migration purposes (preserve existing behaviour),
+     * we are searching for the current tenant and default tenant.
+     * @param jti       JTI.
+     * @param tenantId  Tenant id.
+     * @return JWT entry if exists.
+     * @throws OAuthClientAuthnException OAuthClientAuthnException.
+     */
+    private JWTEntry getJTIfromDB(String jti, int tenantId) throws OAuthClientAuthnException {
+
+        List<JWTEntry> jwtEntries = jwtStorageManager.getJwtFromDB(jti);
+        if (jwtEntries.isEmpty()){
+            return null;
+        } else if (jwtEntries.size() == 1 && (jwtEntries.get(0).getTenantId() == tenantId
+                || jwtEntries.get(0).getTenantId() == DEFAULT_TENANT_ID )){
+            return jwtEntries.get(0);
+        }
+        for (JWTEntry jwtEntry: jwtEntries) {
+            if(jwtEntry.getTenantId()==tenantId
+                    || jwtEntry.getTenantId()== DEFAULT_TENANT_ID ) {
+                return jwtEntry;
+            }
+        }
+        return null;
     }
 
     private boolean checkJTIValidityPeriod(String jti, long jwtExpiryTimeMillis, long currentTimeInMillis,

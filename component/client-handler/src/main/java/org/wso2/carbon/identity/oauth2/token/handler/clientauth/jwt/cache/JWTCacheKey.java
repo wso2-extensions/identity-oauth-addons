@@ -19,8 +19,10 @@
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.cache;
 
 import org.wso2.carbon.identity.core.cache.CacheKey;
-import static java.lang.Math.abs;
 
+/**
+ * Cache key used to access JWT Cache Entry..
+ */
 public class JWTCacheKey  extends CacheKey {
 
     private static final long serialVersionUID = 718492345264523421L;
@@ -44,6 +46,11 @@ public class JWTCacheKey  extends CacheKey {
         return tenantId;
     }
 
+    /**
+     * Equals method to compare two JWT Cache Key.
+     * @param o java.lamg.Object
+     * @return True if both objects are same.
+     */
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -64,12 +71,19 @@ public class JWTCacheKey  extends CacheKey {
         return tenantId == (that.getTenantId());
     }
 
+    /**
+     * This method used to derive hash value for this class.
+     * Idea of this hash method is return same value for same object and return different value for different object.
+     * Number 31 is used as common prime number to multiply result to get unique hash value.
+     *
+     * @return Hashcode.
+     */
     @Override
     public int hashCode() {
 
         int result = super.hashCode();
         result = 31 * result + jti.hashCode();
-        result = 31 * result + abs(tenantId);
+        result = 31 * result + tenantId;
         return result;
     }
 }
