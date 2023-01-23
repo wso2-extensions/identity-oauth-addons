@@ -174,9 +174,7 @@ public class JWTValidator {
 
             return true;
 
-        } catch (IdentityOAuth2Exception e) {
-            return logAndThrowException(e.getMessage());
-        } catch (UserStoreException e) {
+        } catch (IdentityOAuth2Exception | UserStoreException e) {
             return logAndThrowException(e.getMessage());
         }
     }
@@ -279,10 +277,8 @@ public class JWTValidator {
             }
             return true;
         } else if (preventTokenReuse) {
-//            if (jwtStorageManager.isJTIExistsInDB(jti, tenantId)) {
-                String message = "JWT Token with JTI: " + jti + " has been replayed";
-                return logAndThrowException(message);
-//            }
+            String message = "JWT Token with JTI: " + jti + " has been replayed";
+            return logAndThrowException(message);
         } else {
             if (!checkJTIValidityPeriod(jti, jwtEntry.getExp(), currentTimeInMillis, timeStampSkewMillis)) {
                 return false;
@@ -294,26 +290,28 @@ public class JWTValidator {
     /**
      * This method is to get JTI from the DB.
      * For the migration purposes (preserve existing behaviour),
-     * we are searching for the current tenant and default tenant.
-     * @param jti       JTI.
-     * @param tenantId  Tenant id.
+     * We are searching for the current tenant and default tenant.
+     *
+     * @param jti      JTI.
+     * @param tenantId Tenant id.
      * @return JWT entry if exists.
      * @throws OAuthClientAuthnException OAuthClientAuthnException.
      */
     private JWTEntry getJTIfromDB(String jti, int tenantId) throws OAuthClientAuthnException {
 
-        List<JWTEntry> jwtEntries = jwtStorageManager.getJwtFromDB(jti);
-        if (jwtEntries.isEmpty()){
+        List<JWTEntry> jwtEntries = jwtStorageManager.getJwtsFromDB(jti, tenantId);
+        if (jwtEntries.isEmpty()) {
             return null;
-        } else if (jwtEntries.size() == 1 && (jwtEntries.get(0).getTenantId() == tenantId
-                || jwtEntries.get(0).getTenantId() == DEFAULT_TENANT_ID )){
+        }
+        // If there is only one entry return it.
+        else if (jwtEntries.size() == 1) {
             return jwtEntries.get(0);
         }
-        for (JWTEntry jwtEntry: jwtEntries) {
-            if(jwtEntry.getTenantId()==tenantId
-                    || jwtEntry.getTenantId()== DEFAULT_TENANT_ID ) {
-                return jwtEntry;
-            }
+        // At this point there are two entries due to migration, We need to check find the correct entry for tenant Id.
+        else if (jwtEntries.get(0).getTenantId() == tenantId) {
+            return jwtEntries.get(0);
+        } else if (jwtEntries.get(1).getTenantId() == tenantId) {
+            return jwtEntries.get(1);
         }
         return null;
     }
@@ -650,8 +648,7 @@ public class JWTValidator {
             // Update the cache with the new JWT for the same JTI.
             jwtCache.addToCache(new JWTCacheKey(jti, tenantId), new JWTCacheEntry(signedJWT));
         } else if (preventTokenReuse) {
-            throw new OAuthClientAuthnException("JWT Token with jti: " + jti + " for tenant id: " + tenantId +
-                    " has been replayed",
+            throw new OAuthClientAuthnException("JWT Token with jti: " + jti + " has been replayed",
                     OAuth2ErrorCodes.INVALID_REQUEST);
         } else {
             try {

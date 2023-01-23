@@ -39,6 +39,7 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.TimeZone;
 
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.DEFAULT_TENANT_ID;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.SQLQueries.EXP_TIME;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.SQLQueries.TENANT_ID;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.SQLQueries.TIME_CREATED;
@@ -62,9 +63,9 @@ public class JWTStorageManager {
     /**
      * Check whether a JWT Entry with given jti  and tenant id exists in the DB.
      *
-     * @param   jti         JWT token id.
-     * @param   tenantId    Tenant Id.
-     * @return  true        if an entry is found.
+     * @param jti      JWT token id.
+     * @param tenantId Tenant Id.
+     * @return true        if an entry is found.
      * @throws IdentityOAuth2Exception when exception occurs
      */
     public boolean isJTIExistsInDB(String jti, int tenantId) throws OAuthClientAuthnException {
@@ -100,8 +101,8 @@ public class JWTStorageManager {
     /**
      * To get persisted JWT for a given JTI and Tenant id.
      *
-     * @param jti       JTI.
-     * @param tenantId  Tenant id.
+     * @param jti      JTI.
+     * @param tenantId Tenant id.
      * @return JWTEntry
      * @throws OAuthClientAuthnException OAuthClientAuthnException thrown with Invalid Request error code.
      */
@@ -137,10 +138,10 @@ public class JWTStorageManager {
      * To get a list of persisted JWTs for a given JTI.
      *
      * @param jti JTI.
-     * @return  List of JWTEntries.
+     * @return List of JWTEntries.
      * @throws OAuthClientAuthnException OAuthClientAuthnException thrown with Invalid Request error code.
      */
-    public List<JWTEntry> getJwtFromDB(String jti) throws OAuthClientAuthnException {
+    public List<JWTEntry> getJwtsFromDB(String jti, int tenantId) throws OAuthClientAuthnException {
 
         List<JWTEntry> JWTEntries = new ArrayList<>();
 
@@ -150,12 +151,14 @@ public class JWTStorageManager {
         try {
             prepStmt = dbConnection.prepareStatement(Constants.SQLQueries.GET_JWT_DETAIL);
             prepStmt.setString(1, jti);
+            prepStmt.setInt(2, tenantId);
+            prepStmt.setInt(3, DEFAULT_TENANT_ID);
             rs = prepStmt.executeQuery();
             while (rs.next()) {
-                int tenantId = rs.getInt(TENANT_ID);
+                int tenantID = rs.getInt(TENANT_ID);
                 long exp = rs.getTime(EXP_TIME, Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC))).getTime();
                 long created = rs.getTime(TIME_CREATED, Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC))).getTime();
-                JWTEntries.add(new JWTEntry(exp, created, tenantId));
+                JWTEntries.add(new JWTEntry(exp, created, tenantID));
             }
         } catch (SQLException e) {
             if (log.isDebugEnabled()) {
@@ -172,10 +175,10 @@ public class JWTStorageManager {
     /**
      * To persist unique id for jti in the table.
      *
-     * @param jti           JTI a unique id.
-     * @param tenantId      Tenant id.
-     * @param expTime       Expiration time.
-     * @param timeCreated   JTI inserted time.
+     * @param jti         JTI a unique id.
+     * @param tenantId    Tenant id.
+     * @param expTime     Expiration time.
+     * @param timeCreated JTI inserted time.
      * @throws IdentityOAuth2Exception
      */
     public void persistJWTIdInDB(String jti, int tenantId, long expTime, long timeCreated) throws OAuthClientAuthnException {
@@ -225,6 +228,7 @@ public class JWTStorageManager {
                 log.debug(error, e);
             }
             throw new OAuthClientAuthnException("Error occurred while validating the JTI: " + jti + " of the " +
+                    "assertion.", OAuth2ErrorCodes.INVALID_REQUEST);
                                                 "assertion.", OAuth2ErrorCodes.INVALID_REQUEST, e);
         } finally {
             IdentityDatabaseUtil.closeAllConnections(connection, null, preparedStatement);

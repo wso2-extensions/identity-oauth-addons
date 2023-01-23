@@ -52,12 +52,12 @@ public class JWTCacheTest {
         String privateKeyJWT1 = buildJWT("some-issuer", "some-subject", "some-jti", "some-audience", "RSA265", key1, 0);
         signedJWT = SignedJWT.parse(privateKeyJWT1);
         cacheEntry = new JWTCacheEntry(signedJWT);
-        jwtCacheKey = new JWTCacheKey("some-key",-1234);
+        jwtCacheKey = new JWTCacheKey("some-key", -1234);
     }
 
     @Test()
     public void testAddToCache() throws Exception {
-        jwtCache.addToCache(jwtCacheKey,cacheEntry);
+        jwtCache.addToCache(jwtCacheKey, cacheEntry);
 
     }
 

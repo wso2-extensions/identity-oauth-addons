@@ -24,7 +24,7 @@ import org.wso2.carbon.utils.CarbonUtils;
 /**
  * Implements a cache to store JWT references
  */
-public class JWTCache extends AuthenticationBaseCache<JWTCacheKey,JWTCacheEntry>{
+public class JWTCache extends AuthenticationBaseCache<JWTCacheKey, JWTCacheEntry> {
     public static final String PRIVATE_KEY_JWT_CACHE = "PrivateKeyJWT";
     private static volatile JWTCache instance;
 

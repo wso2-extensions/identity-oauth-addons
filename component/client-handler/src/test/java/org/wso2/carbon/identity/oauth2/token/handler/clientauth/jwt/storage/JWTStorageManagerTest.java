@@ -84,7 +84,7 @@ public class JWTStorageManagerTest extends PowerMockIdentityBaseTest {
     @Test()
     public void testIsJTIExistsInDB() throws Exception {
 
-        assertTrue(JWTStorageManager.isJTIExistsInDB("2000",-1234));
+        assertTrue(JWTStorageManager.isJTIExistsInDB("2000", -1234));
     }
 
     @Test()
@@ -96,7 +96,7 @@ public class JWTStorageManagerTest extends PowerMockIdentityBaseTest {
     @Test()
     public void testGetJwtFromDB() throws Exception {
 
-        assertNotNull(JWTStorageManager.getJwtFromDB("2000",-1234));
+        assertNotNull(JWTStorageManager.getJwtFromDB("2000", -1234));
     }
 
     @Test()
@@ -108,22 +108,22 @@ public class JWTStorageManagerTest extends PowerMockIdentityBaseTest {
     @Test()
     public void testPersistJWTIdInDB() throws Exception {
 
-        JWTStorageManager.persistJWTIdInDB("2004",-1234, 10000000, 10000000);
+        JWTStorageManager.persistJWTIdInDB("2004", -1234, 10000000, 10000000);
     }
 
     @Test(expectedExceptions = OAuthClientAuthnException.class)
     public void testPersistJWTIdInDBExceptionCase() throws Exception {
 
-        JWTStorageManager.persistJWTIdInDB("2000",-1234, 10000000, 10000000);
+        JWTStorageManager.persistJWTIdInDB("2000", -1234, 10000000, 10000000);
     }
 
     @Test()
     public void testGetJwtsFromDB() throws Exception {
 
-        List<JWTEntry> jwtEntryList = JWTStorageManager.getJwtFromDB("10010010");
+        List<JWTEntry> jwtEntryList = JWTStorageManager.getJwtsFromDB("10010010", 1);
         assertNotNull(jwtEntryList);
         JWTEntry jwtEntry = jwtEntryList.get(0);
-        assertEquals(1,jwtEntry.getTenantId());
+        assertEquals(1, jwtEntry.getTenantId());
     }
 
     @Test()

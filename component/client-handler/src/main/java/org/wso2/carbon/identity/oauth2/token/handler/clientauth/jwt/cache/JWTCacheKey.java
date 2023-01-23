@@ -23,7 +23,7 @@ import org.wso2.carbon.identity.core.cache.CacheKey;
 /**
  * Cache key used to access JWT Cache Entry..
  */
-public class JWTCacheKey  extends CacheKey {
+public class JWTCacheKey extends CacheKey {
 
     private static final long serialVersionUID = 718492345264523421L;
 
@@ -48,6 +48,7 @@ public class JWTCacheKey  extends CacheKey {
 
     /**
      * Equals method to compare two JWT Cache Key.
+     *
      * @param o java.lamg.Object
      * @return True if both objects are same.
      */
