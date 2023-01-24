@@ -160,11 +160,12 @@ public class JWTValidator {
             }
 
             //Validate signature validation, audience, nbf,exp time, jti.
-            if (!validateJTI(signedJWT, jti, currentTimeInMillis, timeStampSkewMillis, expTime, issuedTime) ||
-                    !validateAudience(validAud, audience) || !validateJWTWithExpTime(expirationTime, currentTimeInMillis
-                    , timeStampSkewMillis) || !validateNotBeforeClaim(currentTimeInMillis, timeStampSkewMillis, nbf) ||
-                    !validateAgeOfTheToken(issuedAtTime, currentTimeInMillis, timeStampSkewMillis) || !isValidSignature
-                    (consumerKey, signedJWT, tenantDomain, jwtSubject)) {
+            if (!validateAudience(validAud, audience)
+                    || !validateJWTWithExpTime(expirationTime, currentTimeInMillis, timeStampSkewMillis)
+                    || !validateNotBeforeClaim(currentTimeInMillis, timeStampSkewMillis, nbf)
+                    || !validateAgeOfTheToken(issuedAtTime, currentTimeInMillis, timeStampSkewMillis)
+                    || !isValidSignature (consumerKey, signedJWT, tenantDomain, jwtSubject)
+                    || !validateJTI(signedJWT, jti, currentTimeInMillis, timeStampSkewMillis, expTime, issuedTime)) {
                 return false;
             }
 
