@@ -25,6 +25,7 @@ import org.wso2.carbon.identity.oauth.common.OAuth2ErrorCodes;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.client.authentication.OAuthClientAuthnException;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceDataHolder;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -126,7 +127,11 @@ public class JWTStorageManager {
         PreparedStatement preparedStatement = null;
         try {
             connection = IdentityDatabaseUtil.getDBConnection();
-            preparedStatement = connection.prepareStatement(Constants.SQLQueries.INSERT_JWD_ID);
+            if (JWTServiceDataHolder.getInstance().isPreventTokenReuse()){
+                preparedStatement = connection.prepareStatement(Constants.SQLQueries.INSERT_JWD_ID);
+            } else {
+                preparedStatement = connection.prepareStatement(Constants.SQLQueries.INSERT_OR_UPDATE_JWT_ID);
+            }
             preparedStatement.setString(1, jti);
             Timestamp timestamp = new Timestamp(timeCreated);
             Timestamp expTimestamp = new Timestamp(expTime);

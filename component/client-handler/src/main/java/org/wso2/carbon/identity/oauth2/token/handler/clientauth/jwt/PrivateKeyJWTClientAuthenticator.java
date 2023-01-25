@@ -28,6 +28,7 @@ import org.wso2.carbon.identity.oauth.common.OAuth2ErrorCodes;
 import org.wso2.carbon.identity.oauth2.bean.OAuthClientAuthnContext;
 import org.wso2.carbon.identity.oauth2.client.authentication.AbstractOAuthClientAuthenticator;
 import org.wso2.carbon.identity.oauth2.client.authentication.OAuthClientAuthnException;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceDataHolder;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.JWTValidator;
 
 import java.text.ParseException;
@@ -78,6 +79,7 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
             if (isNotEmpty(properties.getProperty(REJECT_BEFORE_IN_MINUTES))) {
                 rejectBeforePeriod = Integer.parseInt(properties.getProperty(REJECT_BEFORE_IN_MINUTES));
             }
+            JWTServiceDataHolder.getInstance().setPreventTokenReuse(preventTokenReuse);
             jwtValidator = createJWTValidator(tokenEPAlias, preventTokenReuse, rejectBeforePeriod);
         } catch (NumberFormatException e) {
             log.warn("Invalid PrivateKeyJWT Validity period found in the configuration. Using default value: " +
