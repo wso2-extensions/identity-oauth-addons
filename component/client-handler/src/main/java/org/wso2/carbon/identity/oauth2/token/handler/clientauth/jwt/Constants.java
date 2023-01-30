@@ -47,10 +47,29 @@ public class Constants {
         public static final String GET_JWT = "SELECT EXP_TIME,TIME_CREATED FROM IDN_OIDC_JTI WHERE JWT_ID =?";
         public static final String INSERT_JWD_ID = "INSERT INTO IDN_OIDC_JTI (JWT_ID, EXP_TIME, TIME_CREATED)" +
                 "VALUES (?,?,?)";
-        public static final String INSERT_OR_UPDATE_JWT_ID = "MERGE IDN_OIDC_JTI T USING  (VALUES (?,?,?)) " +
-                "S (JWT_ID, EXP_TIME, TIME_CREATED) ON T.JWT_ID = S.JWT_ID WHEN MATCHED THEN " +
+        public static final String INSERT_OR_UPDATE_JWT_ID_MSSQL_OR_DB2 = "MERGE IDN_OIDC_JTI T USING  " +
+                "(VALUES (?,?,?)) S (JWT_ID, EXP_TIME, TIME_CREATED) ON T.JWT_ID = S.JWT_ID WHEN MATCHED THEN " +
                 "UPDATE SET EXP_TIME = S.EXP_TIME, TIME_CREATED = S.TIME_CREATED WHEN NOT MATCHED THEN " +
                 "INSERT (JWT_ID, EXP_TIME, TIME_CREATED) VALUES (S.JWT_ID, S.EXP_TIME,S.TIME_CREATED);";
+
+        public static final String INSERT_OR_UPDATE_JWT_ID_MYSQL = "INSERT INTO IDN_OIDC_JTI " +
+                "(JWT_ID, EXP_TIME, TIME_CREATED) VALUES (?, ?, ?)  " +
+                "ON DUPLICATE KEY UPDATE EXP_TIME = VALUES(EXP_TIME), " +
+                "TIME_CREATED = VALUES(TIME_CREATED)";
+
+        public static final String INSERT_OR_UPDATE_JWT_ID_H2 = "MERGE INTO IDN_OIDC_JTI KEY (JWT_ID) " +
+                "VALUES (?, ?, ?)";
+
+        public static final String INSERT_OR_UPDATE_JWT_ID_POSTGRESQL =
+                "INSERT INTO IDN_OIDC_JTI (JWT_ID, EXP_TIME, TIME_CREATED) VALUES (?, ?, ?) " +
+                        "ON CONFLICT (JWT_ID) DO UPDATE SET EXP_TIME = EXCLUDED.EXP_TIME, " +
+                        "TIME_CREATED = EXCLUDED.TIME_CREATED";
+
+        public static final String INSERT_OR_UPDATE_JWT_ID_ORACLE = "MERGE INTO IDN_OIDC_JTI USING dual ON " +
+                "(JWT_ID = ?) " +
+                "WHEN MATCHED THEN UPDATE SET EXP_TIME = ? , TIME_CREATED = ? " +
+                "WHEN NOT MATCHED THEN INSERT (JWT_ID, EXP_TIME, TIME_CREATED) " +
+                " VALUES (?, ?, ?)";
 
     }
 }

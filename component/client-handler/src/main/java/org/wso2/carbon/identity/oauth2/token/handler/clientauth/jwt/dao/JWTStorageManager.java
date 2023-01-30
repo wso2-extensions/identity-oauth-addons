@@ -20,11 +20,13 @@ package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.dao;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.oauth.common.OAuth2ErrorCodes;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.client.authentication.OAuthClientAuthnException;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.SQLQueries;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceDataHolder;
 
 import java.sql.Connection;
@@ -34,6 +36,12 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.TimeZone;
+
+import static org.wso2.carbon.identity.core.util.JdbcUtils.isDB2DB;
+import static org.wso2.carbon.identity.core.util.JdbcUtils.isH2DB;
+import static org.wso2.carbon.identity.core.util.JdbcUtils.isMSSqlDB;
+import static org.wso2.carbon.identity.core.util.JdbcUtils.isOracleDB;
+import static org.wso2.carbon.identity.core.util.JdbcUtils.isPostgreSQLDB;
 
 /**
  * JWT token persistence is managed by JWTStorageManager
@@ -57,7 +65,7 @@ public class JWTStorageManager {
         boolean isExists = false;
         ResultSet rs = null;
         try {
-            prepStmt = dbConnection.prepareStatement(Constants.SQLQueries.GET_JWT_ID);
+            prepStmt = dbConnection.prepareStatement(SQLQueries.GET_JWT_ID);
             prepStmt.setString(1, jti);
             rs = prepStmt.executeQuery();
             int count = 0;
@@ -93,7 +101,7 @@ public class JWTStorageManager {
         ResultSet rs = null;
         JWTEntry jwtEntry = null;
         try {
-            prepStmt = dbConnection.prepareStatement(Constants.SQLQueries.GET_JWT);
+            prepStmt = dbConnection.prepareStatement(SQLQueries.GET_JWT);
             prepStmt.setString(1, jti);
             rs = prepStmt.executeQuery();
             if (rs.next()) {
@@ -128,20 +136,37 @@ public class JWTStorageManager {
         try {
             connection = IdentityDatabaseUtil.getDBConnection();
             if (JWTServiceDataHolder.getInstance().isPreventTokenReuse()){
-                preparedStatement = connection.prepareStatement(Constants.SQLQueries.INSERT_JWD_ID);
+                preparedStatement = connection.prepareStatement(SQLQueries.INSERT_JWD_ID);
             } else {
-                preparedStatement = connection.prepareStatement(Constants.SQLQueries.INSERT_OR_UPDATE_JWT_ID);
+                preparedStatement = connection.prepareStatement(SQLQueries.INSERT_OR_UPDATE_JWT_ID_MYSQL);
+                if (isH2DB()) {
+                    preparedStatement = connection.prepareStatement(SQLQueries.INSERT_OR_UPDATE_JWT_ID_H2);
+                } else if (isPostgreSQLDB()) {
+                    preparedStatement = connection.prepareStatement(SQLQueries.INSERT_OR_UPDATE_JWT_ID_POSTGRESQL);
+                } else if (isMSSqlDB() || isDB2DB()) {
+                    preparedStatement = connection.prepareStatement(SQLQueries.INSERT_OR_UPDATE_JWT_ID_MYSQL);
+                } else if (isOracleDB()) {
+                    preparedStatement = connection.prepareStatement(SQLQueries.INSERT_OR_UPDATE_JWT_ID_ORACLE);
+                }
             }
             preparedStatement.setString(1, jti);
             Timestamp timestamp = new Timestamp(timeCreated);
             Timestamp expTimestamp = new Timestamp(expTime);
-            preparedStatement.setTimestamp(2, expTimestamp, Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC)));
+            preparedStatement.setTimestamp(2, expTimestamp,
+                    Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC)));
             preparedStatement.setTimestamp(3, timestamp,
                     Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC)));
+            if (isOracleDB()) {
+                preparedStatement.setString(4, jti);
+                preparedStatement.setTimestamp(5, expTimestamp,
+                        Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC)));
+                preparedStatement.setTimestamp(6, timestamp,
+                        Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC)));
+            }
             preparedStatement.executeUpdate();
             preparedStatement.close();
             connection.commit();
-        } catch (SQLException e) {
+        } catch (SQLException|DataAccessException e) {
             String error = "Error when storing the JWT ID: " + jti + " with exp: " + expTime;
             if (log.isDebugEnabled()) {
                 log.debug(error, e);
