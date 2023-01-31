@@ -47,10 +47,10 @@ public class Constants {
         public static final String GET_JWT = "SELECT EXP_TIME,TIME_CREATED FROM IDN_OIDC_JTI WHERE JWT_ID =?";
         public static final String INSERT_JWD_ID = "INSERT INTO IDN_OIDC_JTI (JWT_ID, EXP_TIME, TIME_CREATED)" +
                 "VALUES (?,?,?)";
-        public static final String INSERT_OR_UPDATE_JWT_ID_MSSQL_OR_DB2 = "MERGE IDN_OIDC_JTI T USING  " +
+        public static final String INSERT_OR_UPDATE_JWT_ID_MSSQL_OR_DB2 = "MERGE INTO IDN_OIDC_JTI T USING  " +
                 "(VALUES (?,?,?)) S (JWT_ID, EXP_TIME, TIME_CREATED) ON T.JWT_ID = S.JWT_ID WHEN MATCHED THEN " +
                 "UPDATE SET EXP_TIME = S.EXP_TIME, TIME_CREATED = S.TIME_CREATED WHEN NOT MATCHED THEN " +
-                "INSERT (JWT_ID, EXP_TIME, TIME_CREATED) VALUES (S.JWT_ID, S.EXP_TIME,S.TIME_CREATED);";
+                "INSERT (JWT_ID, EXP_TIME, TIME_CREATED) VALUES (S.JWT_ID, S.EXP_TIME,S.TIME_CREATED)";
 
         public static final String INSERT_OR_UPDATE_JWT_ID_MYSQL = "INSERT INTO IDN_OIDC_JTI " +
                 "(JWT_ID, EXP_TIME, TIME_CREATED) VALUES (?, ?, ?)  " +
@@ -70,6 +70,5 @@ public class Constants {
                 "WHEN MATCHED THEN UPDATE SET EXP_TIME = ? , TIME_CREATED = ? " +
                 "WHEN NOT MATCHED THEN INSERT (JWT_ID, EXP_TIME, TIME_CREATED) " +
                 " VALUES (?, ?, ?)";
-
     }
 }

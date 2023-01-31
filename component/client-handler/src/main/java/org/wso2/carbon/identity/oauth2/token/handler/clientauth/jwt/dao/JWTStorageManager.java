@@ -40,6 +40,8 @@ import java.util.TimeZone;
 import static org.wso2.carbon.identity.core.util.JdbcUtils.isDB2DB;
 import static org.wso2.carbon.identity.core.util.JdbcUtils.isH2DB;
 import static org.wso2.carbon.identity.core.util.JdbcUtils.isMSSqlDB;
+import static org.wso2.carbon.identity.core.util.JdbcUtils.isMariaDB;
+import static org.wso2.carbon.identity.core.util.JdbcUtils.isMySQLDB;
 import static org.wso2.carbon.identity.core.util.JdbcUtils.isOracleDB;
 import static org.wso2.carbon.identity.core.util.JdbcUtils.isPostgreSQLDB;
 
@@ -138,13 +140,14 @@ public class JWTStorageManager {
             if (JWTServiceDataHolder.getInstance().isPreventTokenReuse()){
                 preparedStatement = connection.prepareStatement(SQLQueries.INSERT_JWD_ID);
             } else {
-                preparedStatement = connection.prepareStatement(SQLQueries.INSERT_OR_UPDATE_JWT_ID_MYSQL);
                 if (isH2DB()) {
                     preparedStatement = connection.prepareStatement(SQLQueries.INSERT_OR_UPDATE_JWT_ID_H2);
+                }  else if (isMySQLDB() || isMariaDB()) {
+                    preparedStatement = connection.prepareStatement(SQLQueries.INSERT_OR_UPDATE_JWT_ID_MYSQL);
                 } else if (isPostgreSQLDB()) {
                     preparedStatement = connection.prepareStatement(SQLQueries.INSERT_OR_UPDATE_JWT_ID_POSTGRESQL);
                 } else if (isMSSqlDB() || isDB2DB()) {
-                    preparedStatement = connection.prepareStatement(SQLQueries.INSERT_OR_UPDATE_JWT_ID_MYSQL);
+                    preparedStatement = connection.prepareStatement(SQLQueries.INSERT_OR_UPDATE_JWT_ID_MSSQL_OR_DB2);
                 } else if (isOracleDB()) {
                     preparedStatement = connection.prepareStatement(SQLQueries.INSERT_OR_UPDATE_JWT_ID_ORACLE);
                 }
@@ -156,7 +159,7 @@ public class JWTStorageManager {
                     Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC)));
             preparedStatement.setTimestamp(3, timestamp,
                     Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC)));
-            if (isOracleDB()) {
+            if (!JWTServiceDataHolder.getInstance().isPreventTokenReuse() && isOracleDB()) {
                 preparedStatement.setString(4, jti);
                 preparedStatement.setTimestamp(5, expTimestamp,
                         Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC)));
@@ -172,7 +175,7 @@ public class JWTStorageManager {
                 log.debug(error, e);
             }
             throw new OAuthClientAuthnException("Error occurred while validating the JTI: " + jti + " of the " +
-                                                "assertion.", OAuth2ErrorCodes.INVALID_REQUEST);
+                                                "assertion.", OAuth2ErrorCodes.INVALID_REQUEST, e);
         } finally {
             IdentityDatabaseUtil.closeAllConnections(connection, null, preparedStatement);
         }
