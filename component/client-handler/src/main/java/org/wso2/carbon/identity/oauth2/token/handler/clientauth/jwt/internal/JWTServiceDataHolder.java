@@ -28,6 +28,18 @@ public class JWTServiceDataHolder {
     private RealmService realmService = null;
     public static JWTServiceDataHolder instance = new JWTServiceDataHolder();
 
+    public boolean preventTokenReuse = true;
+
+    public boolean isPreventTokenReuse() {
+
+        return preventTokenReuse;
+    }
+
+    public void setPreventTokenReuse(boolean preventTokenReuse) {
+
+        this.preventTokenReuse = preventTokenReuse;
+    }
+
     public static JWTServiceDataHolder getInstance() {
 
         return instance;
