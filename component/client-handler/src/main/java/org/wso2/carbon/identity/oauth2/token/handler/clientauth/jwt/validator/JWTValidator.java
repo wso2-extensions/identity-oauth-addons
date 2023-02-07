@@ -49,6 +49,7 @@ import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.cache.JWTCac
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.dao.JWTEntry;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.dao.JWTStorageManager;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceComponent;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.Util;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 import org.wso2.carbon.identity.oauth2.validators.jwt.JWKSBasedJWTValidator;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementException;
@@ -167,8 +168,9 @@ public class JWTValidator {
                     || !validateJWTWithExpTime(expirationTime, currentTimeInMillis, timeStampSkewMillis)
                     || !validateNotBeforeClaim(currentTimeInMillis, timeStampSkewMillis, nbf)
                     || !validateAgeOfTheToken(issuedAtTime, currentTimeInMillis, timeStampSkewMillis)
-                    || !isValidSignature (consumerKey, signedJWT, tenantDomain, jwtSubject)
-                    || !validateJTI(signedJWT, jti, currentTimeInMillis, timeStampSkewMillis, expTime, issuedTime)) {
+                    || !isValidSignature (consumerKey, signedJWT, tenantDomain, jwtSubject, tenantId)
+                    || !validateJTI(signedJWT, jti, currentTimeInMillis, timeStampSkewMillis, expTime,
+                    issuedTime, tenantId)) {
                 return false;
             }
 
@@ -253,7 +255,13 @@ public class JWTValidator {
             throws OAuthClientAuthnException {
 
         if (enableJTICache) {
-            JWTCacheEntry entry = jwtCache.getValueFromCache(new JWTCacheKey(jti, tenantId));
+            JWTCacheKey jwtCacheKey;
+            if (Util.isIsTenantIdColumnIsAvailableInIdnOidcAuthTable()) {
+                jwtCacheKey = new JWTCacheKey(jti, tenantId);
+            } else {
+                jwtCacheKey = new JWTCacheKey(jti);
+            }
+            JWTCacheEntry entry = jwtCache.getValueFromCache(jwtCacheKey);
             if (!validateJTIInCache(jti, signedJWT, entry, currentTimeInMillis, timeStampSkewMillis, this.jwtCache,
                     tenantId)) {
                 return false;
@@ -646,7 +654,13 @@ public class JWTValidator {
 
         if (entry == null) {
             // Update the cache with the new JWT for the same JTI.
-            jwtCache.addToCache(new JWTCacheKey(jti, tenantId), new JWTCacheEntry(signedJWT));
+            JWTCacheKey jwtCacheKey;
+            if (Util.isIsTenantIdColumnIsAvailableInIdnOidcAuthTable()) {
+                jwtCacheKey = new JWTCacheKey(jti, tenantId);
+            } else {
+                jwtCacheKey = new JWTCacheKey(jti);
+            }
+            jwtCache.addToCache(jwtCacheKey, new JWTCacheEntry(signedJWT));
         } else if (preventTokenReuse) {
             throw new OAuthClientAuthnException("JWT Token with jti: " + jti + " has been replayed",
                     OAuth2ErrorCodes.INVALID_REQUEST);
@@ -656,7 +670,13 @@ public class JWTValidator {
                 long cachedJWTExpiryTimeMillis = cachedJWT.getJWTClaimsSet().getExpirationTime().getTime();
                 if (checkJTIValidityPeriod(jti, cachedJWTExpiryTimeMillis, currentTimeInMillis, timeStampSkewMillis)) {
                     // Update the cache with the new JWT for the same JTI.
-                    jwtCache.addToCache(new JWTCacheKey(jti, tenantId), new JWTCacheEntry(signedJWT));
+                    JWTCacheKey jwtCacheKey;
+                    if (Util.isIsTenantIdColumnIsAvailableInIdnOidcAuthTable()) {
+                        jwtCacheKey = new JWTCacheKey(jti, tenantId);
+                    } else {
+                        jwtCacheKey = new JWTCacheKey(jti);
+                    }
+                    jwtCache.addToCache(jwtCacheKey, new JWTCacheEntry(signedJWT));
                 } else {
                     return false;
                 }

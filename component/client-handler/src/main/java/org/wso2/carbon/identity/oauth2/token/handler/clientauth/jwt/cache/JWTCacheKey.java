@@ -36,6 +36,12 @@ public class JWTCacheKey extends CacheKey {
         this.tenantId = tenantId;
     }
 
+    public JWTCacheKey(String jti) {
+
+        this.jti = jti;
+        this.tenantId = -1;
+    }
+
     public String getJti() {
 
         return jti;
@@ -49,7 +55,7 @@ public class JWTCacheKey extends CacheKey {
     /**
      * Equals method to compare two JWT Cache Key.
      *
-     * @param o java.lamg.Object
+     * @param o java.lang.Object
      * @return True if both objects are same.
      */
     @Override

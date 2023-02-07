@@ -66,6 +66,7 @@ import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Const
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.buildJWT;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.getJWTValidator;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.getKeyStoreFromFile;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.Util.checkIfTenantIdColumnIsAvailableInIdnOidcAuthTable;
 import static org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
 import static org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENANT_ID;
 
@@ -247,6 +248,7 @@ public class JWTValidatorTest {
                                   String errorMsg) throws Exception {
 
         try {
+            checkIfTenantIdColumnIsAvailableInIdnOidcAuthTable();
             JWTValidator jwtValidator = getJWTValidator((Properties) properties);
             SignedJWT signedJWT = SignedJWT.parse(jwt);
             assertEquals(jwtValidator.isValidAssertion(signedJWT),
