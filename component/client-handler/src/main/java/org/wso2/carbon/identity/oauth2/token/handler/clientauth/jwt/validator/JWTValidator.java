@@ -167,7 +167,7 @@ public class JWTValidator {
                     || !validateJWTWithExpTime(expirationTime, currentTimeInMillis, timeStampSkewMillis)
                     || !validateNotBeforeClaim(currentTimeInMillis, timeStampSkewMillis, nbf)
                     || !validateAgeOfTheToken(issuedAtTime, currentTimeInMillis, timeStampSkewMillis)
-                    || !isValidSignature (consumerKey, signedJWT, tenantDomain, jwtSubject, tenantId)
+                    || !isValidSignature(consumerKey, signedJWT, tenantDomain, jwtSubject, tenantId)
                     || !validateJTI(signedJWT, jti, currentTimeInMillis, timeStampSkewMillis, expTime,
                     issuedTime, tenantId)) {
                 return false;
@@ -304,23 +304,18 @@ public class JWTValidator {
      * @return JWT entry if exists.
      * @throws OAuthClientAuthnException OAuthClientAuthnException.
      */
-    private JWTEntry getJTIfromDB(String jti, int tenantId) throws OAuthClientAuthnException {
+    private JWTEntry getJTIfromDB(String jti, final int tenantId) throws OAuthClientAuthnException {
 
         List<JWTEntry> jwtEntries = jwtStorageManager.getJwtsFromDB(jti, tenantId);
+
         if (jwtEntries.isEmpty()) {
             return null;
         }
         // If there is only one entry return it.
-        else if (jwtEntries.size() == 1) {
+        if (jwtEntries.size() == 1) {
             return jwtEntries.get(0);
         }
-        // At this point there are two entries due to migration, We need to check find the correct entry for tenant Id.
-        else if (jwtEntries.get(0).getTenantId() == tenantId) {
-            return jwtEntries.get(0);
-        } else if (jwtEntries.get(1).getTenantId() == tenantId) {
-            return jwtEntries.get(1);
-        }
-        return null;
+        return jwtEntries.stream().filter(e -> e.getTenantId() == tenantId).findFirst().orElse(null);
     }
 
     private boolean checkJTIValidityPeriod(String jti, long jwtExpiryTimeMillis, long currentTimeInMillis,

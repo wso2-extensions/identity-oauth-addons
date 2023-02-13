@@ -457,7 +457,7 @@
         <org.wso2.carbon.identity.testutil.version>5.11.9</org.wso2.carbon.identity.testutil.version>
         <maven.plugins.version>2.0</maven.plugins.version>
         <maven.resource.plugin.version>3.0.2</maven.resource.plugin.version>
-        <maven.plugins.version.source>1.7</maven.plugins.version.source>
+        <maven.plugins.version.source>1.8</maven.plugins.version.source>
         <maven.bundle.plugins.version>3.2.0</maven.bundle.plugins.version>
         <maven.compiler.plugin>3.7.0</maven.compiler.plugin>
         <maven.buildnumber.plugin.version>1.4</maven.buildnumber.plugin.version>
