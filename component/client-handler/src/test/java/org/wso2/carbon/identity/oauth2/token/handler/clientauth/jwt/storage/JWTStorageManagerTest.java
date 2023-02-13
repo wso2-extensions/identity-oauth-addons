@@ -85,30 +85,6 @@ public class JWTStorageManagerTest extends PowerMockIdentityBaseTest {
         closeH2Base();
     }
 
-//    @Test()
-//    public void testIsJTIExistsInDB() throws Exception {
-//
-//        assertTrue(JWTStorageManager.isJTIExistsInDB("2000", -1234));
-//    }
-//
-//    @Test()
-//    public void testIsJTINotExistsInDB() throws Exception {
-//
-//        assertFalse(JWTStorageManager.isJTIExistsInDB("2023"));
-//    }
-//
-//    @Test()
-//    public void testGetJwtFromDB() throws Exception {
-//
-//        assertNotNull(JWTStorageManager.getJwtFromDB("2000", -1234));
-//    }
-//
-//    @Test()
-//    public void testGetJwtFromDBWithNull() throws Exception {
-//
-//        assertNull(JWTStorageManager.getJwtFromDB(null));
-//    }
-
     @Test()
     public void testPersistJWTIdInDB() throws Exception {
 
