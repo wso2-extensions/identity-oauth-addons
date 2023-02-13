@@ -284,7 +284,7 @@ public class JWTValidator {
             }
             return true;
         } else if (preventTokenReuse) {
-            String message = "JWT Token with JTI: " + jti + " has been replayed";
+            String message = "JWT Token with JTI: " + jti + " has been replayed.";
             return logAndThrowException(message);
         } else {
             if (!checkJTIValidityPeriod(jti, jwtEntry.getExp(), currentTimeInMillis, timeStampSkewMillis)) {

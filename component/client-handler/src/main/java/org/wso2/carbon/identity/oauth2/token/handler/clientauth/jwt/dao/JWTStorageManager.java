@@ -69,6 +69,47 @@ public class JWTStorageManager {
     private static final Log log = LogFactory.getLog(JWTStorageManager.class);
 
     /**
+     * Check whether a JWT Entry with given jti exists in the DB.
+     *
+     * @param jti JWT token id
+     * @return true if an entry is found
+     * @throws IdentityOAuth2Exception when exception occurs
+     */
+    public boolean isJTIExistsInDB(String jti) throws OAuthClientAuthnException {
+
+        Connection dbConnection = IdentityDatabaseUtil.getDBConnection();
+        PreparedStatement prepStmt = null;
+        boolean isExists = false;
+        ResultSet rs = null;
+        try {
+            if (Util.isTenantIdColumnAvailableInIdnOidcAuth()){
+                log.warn("Checking JWT existence with JTI only, but tenant id also required to fetch unique data." +
+                        "This method will be deprecated soon. Use getJwtsFromDB instead.");
+            }else {
+                prepStmt = dbConnection.prepareStatement(Constants.SQLQueries.GET_JWT_ID);
+                prepStmt.setString(1, jti);
+                rs = prepStmt.executeQuery();
+                int count = 0;
+                if (rs.next()) {
+                    count = rs.getInt(1);
+                }
+                if (count > 0) {
+                    isExists = true;
+                }
+            }
+        } catch (SQLException e) {
+            if (log.isDebugEnabled()) {
+                log.debug("Error when retrieving the JWT ID: " + jti, e);
+            }
+            throw new OAuthClientAuthnException("Error occurred while validating the JTI: " + jti + " of the " +
+                    "assertion.", OAuth2ErrorCodes.INVALID_REQUEST);
+        } finally {
+            IdentityDatabaseUtil.closeAllConnections(dbConnection, rs, prepStmt);
+        }
+        return isExists;
+    }
+
+    /**
      * To get a list of persisted JWTs for a given JTI.
      *
      * @param jti JTI.

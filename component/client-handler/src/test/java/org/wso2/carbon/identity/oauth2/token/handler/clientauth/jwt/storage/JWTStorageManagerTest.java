@@ -43,6 +43,7 @@ import java.sql.Connection;
 
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.closeH2Base;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.initiateH2Base;
@@ -62,7 +63,6 @@ public class JWTStorageManagerTest extends PowerMockIdentityBaseTest {
 
         initiateH2Base();
         JWTStorageManager = new JWTStorageManager();
-
     }
 
     @BeforeMethod
@@ -83,6 +83,12 @@ public class JWTStorageManagerTest extends PowerMockIdentityBaseTest {
     public void tearDown() throws Exception {
 
         closeH2Base();
+    }
+
+    @Test()
+    public void testIsJTIExistsInDB() throws Exception {
+
+        assertFalse(JWTStorageManager.isJTIExistsInDB("2000"));
     }
 
     @Test()

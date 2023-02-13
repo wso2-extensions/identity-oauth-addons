@@ -53,6 +53,9 @@ public class Util {
         return queries.get(key);
     }
 
+    /**
+     * Checking whether the tenant id column is available in the IDN_OIDC_JTI table.
+     */
     public static void checkIfTenantIdColumnIsAvailableInIdnOidcAuthTable() {
 
         isTenantIdColumnIsAvailableInIdnOidcAuthTable = isTableColumnExists(SQLQueries.IDN_OIDC_JTI,
