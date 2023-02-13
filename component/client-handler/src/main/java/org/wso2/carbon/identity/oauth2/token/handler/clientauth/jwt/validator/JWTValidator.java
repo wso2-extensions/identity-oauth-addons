@@ -255,7 +255,7 @@ public class JWTValidator {
 
         if (enableJTICache) {
             JWTCacheKey jwtCacheKey;
-            if (Util.isTenantIdColumnIsAvailableInIdnOidcAuthTable()) {
+            if (Util.isTenantIdColumnAvailableInIdnOidcAuth()) {
                 jwtCacheKey = new JWTCacheKey(jti, tenantId);
             } else {
                 jwtCacheKey = new JWTCacheKey(jti);
@@ -649,7 +649,7 @@ public class JWTValidator {
         if (entry == null) {
             // Update the cache with the new JWT for the same JTI.
             JWTCacheKey jwtCacheKey;
-            if (Util.isTenantIdColumnIsAvailableInIdnOidcAuthTable()) {
+            if (Util.isTenantIdColumnAvailableInIdnOidcAuth()) {
                 jwtCacheKey = new JWTCacheKey(jti, tenantId);
             } else {
                 jwtCacheKey = new JWTCacheKey(jti);
@@ -665,7 +665,7 @@ public class JWTValidator {
                 if (checkJTIValidityPeriod(jti, cachedJWTExpiryTimeMillis, currentTimeInMillis, timeStampSkewMillis)) {
                     // Update the cache with the new JWT for the same JTI.
                     JWTCacheKey jwtCacheKey;
-                    if (Util.isTenantIdColumnIsAvailableInIdnOidcAuthTable()) {
+                    if (Util.isTenantIdColumnAvailableInIdnOidcAuth()) {
                         jwtCacheKey = new JWTCacheKey(jti, tenantId);
                     } else {
                         jwtCacheKey = new JWTCacheKey(jti);

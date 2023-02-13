@@ -83,7 +83,7 @@ public class JWTStorageManager {
         PreparedStatement prepStmt = null;
         ResultSet rs = null;
         try {
-            if (Util.isTenantIdColumnIsAvailableInIdnOidcAuthTable()) {
+            if (Util.isTenantIdColumnAvailableInIdnOidcAuth()) {
                 prepStmt = dbConnection.prepareStatement(Util.getDBQuery(GET_JWT_DETAILS));
                 prepStmt.setString(1, jti);
                 prepStmt.setInt(2, tenantId);
@@ -140,7 +140,7 @@ public class JWTStorageManager {
             if (JWTServiceDataHolder.getInstance().isPreventTokenReuse()) {
                 preparedStatement = connection.prepareStatement(Util.getDBQuery(INSERT_JWD_ID));
                 preparedStatement.setString(1, jti);
-                if (Util.isTenantIdColumnIsAvailableInIdnOidcAuthTable()) {
+                if (Util.isTenantIdColumnAvailableInIdnOidcAuth()) {
                     preparedStatement.setInt(2, tenantId);
                     Timestamp timestamp = new Timestamp(timeCreated);
                     Timestamp expTimestamp = new Timestamp(expTime);
@@ -169,7 +169,7 @@ public class JWTStorageManager {
 
                 if (preparedStatement != null) {
                     preparedStatement.setString(1, jti);
-                    if (Util.isTenantIdColumnIsAvailableInIdnOidcAuthTable()) {
+                    if (Util.isTenantIdColumnAvailableInIdnOidcAuth()) {
                         preparedStatement.setInt(2, tenantId);
                         Timestamp timestamp = new Timestamp(timeCreated);
                         Timestamp expTimestamp = new Timestamp(expTime);

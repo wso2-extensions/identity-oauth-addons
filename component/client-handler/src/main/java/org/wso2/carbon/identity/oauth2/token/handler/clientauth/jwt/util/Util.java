@@ -43,7 +43,7 @@ public class Util {
     private static boolean isTenantIdColumnIsAvailableInIdnOidcAuthTable = false;
     private static Map<String, String> queries = new HashMap<>();
 
-    public static boolean isTenantIdColumnIsAvailableInIdnOidcAuthTable() {
+    public static boolean isTenantIdColumnAvailableInIdnOidcAuth() {
 
         return isTenantIdColumnIsAvailableInIdnOidcAuthTable;
     }
