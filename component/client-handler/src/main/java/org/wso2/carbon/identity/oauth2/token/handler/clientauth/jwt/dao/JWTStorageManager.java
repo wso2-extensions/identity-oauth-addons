@@ -26,7 +26,6 @@ import org.wso2.carbon.identity.oauth.common.OAuth2ErrorCodes;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.client.authentication.OAuthClientAuthnException;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants;
-import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.SQLQueries;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceDataHolder;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.Util;
 
@@ -42,7 +41,7 @@ import java.util.TimeZone;
 
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.DEFAULT_TENANT_ID;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.GET_JWT;
-import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.GET_JWT_WITH_DEFAULT_TENANT;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.GET_JWT_DETAILS;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.INSERT_JWD_ID;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.SQLQueries.EXP_TIME;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.SQLQueries.TENANT_ID;
@@ -84,8 +83,8 @@ public class JWTStorageManager {
         PreparedStatement prepStmt = null;
         ResultSet rs = null;
         try {
-            if (Util.isIsTenantIdColumnIsAvailableInIdnOidcAuthTable()){
-                prepStmt = dbConnection.prepareStatement(Util.getDBQuery(GET_JWT_WITH_DEFAULT_TENANT));
+            if (Util.isTenantIdColumnIsAvailableInIdnOidcAuthTable()) {
+                prepStmt = dbConnection.prepareStatement(Util.getDBQuery(GET_JWT_DETAILS));
                 prepStmt.setString(1, jti);
                 prepStmt.setInt(2, tenantId);
                 prepStmt.setInt(3, DEFAULT_TENANT_ID);
@@ -138,10 +137,10 @@ public class JWTStorageManager {
         PreparedStatement preparedStatement = null;
         try {
             connection = IdentityDatabaseUtil.getDBConnection();
-            if (JWTServiceDataHolder.getInstance().isPreventTokenReuse()){
+            if (JWTServiceDataHolder.getInstance().isPreventTokenReuse()) {
                 preparedStatement = connection.prepareStatement(Util.getDBQuery(INSERT_JWD_ID));
-                if (Util.isIsTenantIdColumnIsAvailableInIdnOidcAuthTable()) {
-                    preparedStatement.setString(1, jti);
+                preparedStatement.setString(1, jti);
+                if (Util.isTenantIdColumnIsAvailableInIdnOidcAuthTable()) {
                     preparedStatement.setInt(2, tenantId);
                     Timestamp timestamp = new Timestamp(timeCreated);
                     Timestamp expTimestamp = new Timestamp(expTime);
@@ -149,18 +148,16 @@ public class JWTStorageManager {
                     preparedStatement.setTimestamp(4, timestamp,
                             Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC)));
                 } else {
-                    preparedStatement.setString(1, jti);
                     Timestamp timestamp = new Timestamp(timeCreated);
                     Timestamp expTimestamp = new Timestamp(expTime);
                     preparedStatement.setTimestamp(2, expTimestamp, Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC)));
                     preparedStatement.setTimestamp(3, timestamp,
                             Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC)));
                 }
-
             } else {
                 if (isH2DB()) {
                     preparedStatement = connection.prepareStatement(Util.getDBQuery(UPSERT_H2));
-                }  else if (isMySQLDB() || isMariaDB()) {
+                } else if (isMySQLDB() || isMariaDB()) {
                     preparedStatement = connection.prepareStatement(Util.getDBQuery(UPSERT_MYSQL));
                 } else if (isPostgreSQLDB()) {
                     preparedStatement = connection.prepareStatement(Util.getDBQuery(UPSERT_POSTGRESQL));
@@ -170,9 +167,9 @@ public class JWTStorageManager {
                     preparedStatement = connection.prepareStatement(Util.getDBQuery(UPSERT_ORACLE));
                 }
 
-                if (preparedStatement!=null) {
-                    if (Util.isIsTenantIdColumnIsAvailableInIdnOidcAuthTable()) {
-                        preparedStatement.setString(1, jti);
+                if (preparedStatement != null) {
+                    preparedStatement.setString(1, jti);
+                    if (Util.isTenantIdColumnIsAvailableInIdnOidcAuthTable()) {
                         preparedStatement.setInt(2, tenantId);
                         Timestamp timestamp = new Timestamp(timeCreated);
                         Timestamp expTimestamp = new Timestamp(expTime);
@@ -188,7 +185,6 @@ public class JWTStorageManager {
                                     Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC)));
                         }
                     } else {
-                        preparedStatement.setString(1, jti);
                         Timestamp timestamp = new Timestamp(timeCreated);
                         Timestamp expTimestamp = new Timestamp(expTime);
                         preparedStatement.setTimestamp(2, expTimestamp, Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC)));
@@ -204,12 +200,12 @@ public class JWTStorageManager {
                     }
                 }
             }
-            if (preparedStatement!=null) {
+            if (preparedStatement != null) {
                 preparedStatement.executeUpdate();
                 preparedStatement.close();
                 connection.commit();
             }
-        } catch (SQLException|DataAccessException e) {
+        } catch (SQLException | DataAccessException e) {
             String error = "Error when storing the JWT ID: " + jti + " with exp: " + expTime;
             if (log.isDebugEnabled()) {
                 log.debug(error, e);

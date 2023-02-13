@@ -44,7 +44,7 @@ public class Constants {
     //query keys
     public static final String GET_JWT_ID = "GET_JWT_ID";
     public static final String GET_JWT = "GET_JWT";
-    public static final String GET_JWT_WITH_DEFAULT_TENANT = "GET_JWT_WITH_DEFAULT_TENANT";
+    public static final String GET_JWT_DETAILS = "GET_JWT_DETAILS";
     public static final String UPSERT_MYSQL = "UPSERT_MYSQL";
     public static final String UPSERT_H2 = "UPSERT_H2";
     public static final String UPSERT_POSTGRESQL = "UPSERT_POSTGRESQL";

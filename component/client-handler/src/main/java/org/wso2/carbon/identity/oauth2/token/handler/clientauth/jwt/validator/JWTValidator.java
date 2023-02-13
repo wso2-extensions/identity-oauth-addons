@@ -69,7 +69,6 @@ import java.util.Map;
 
 import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.apache.commons.lang.StringUtils.isNotEmpty;
-import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.DEFAULT_TENANT_ID;
 
 /**
  * This class is used to validate the JWT which is coming along with the request.
@@ -256,7 +255,7 @@ public class JWTValidator {
 
         if (enableJTICache) {
             JWTCacheKey jwtCacheKey;
-            if (Util.isIsTenantIdColumnIsAvailableInIdnOidcAuthTable()) {
+            if (Util.isTenantIdColumnIsAvailableInIdnOidcAuthTable()) {
                 jwtCacheKey = new JWTCacheKey(jti, tenantId);
             } else {
                 jwtCacheKey = new JWTCacheKey(jti);
@@ -655,7 +654,7 @@ public class JWTValidator {
         if (entry == null) {
             // Update the cache with the new JWT for the same JTI.
             JWTCacheKey jwtCacheKey;
-            if (Util.isIsTenantIdColumnIsAvailableInIdnOidcAuthTable()) {
+            if (Util.isTenantIdColumnIsAvailableInIdnOidcAuthTable()) {
                 jwtCacheKey = new JWTCacheKey(jti, tenantId);
             } else {
                 jwtCacheKey = new JWTCacheKey(jti);
@@ -671,7 +670,7 @@ public class JWTValidator {
                 if (checkJTIValidityPeriod(jti, cachedJWTExpiryTimeMillis, currentTimeInMillis, timeStampSkewMillis)) {
                     // Update the cache with the new JWT for the same JTI.
                     JWTCacheKey jwtCacheKey;
-                    if (Util.isIsTenantIdColumnIsAvailableInIdnOidcAuthTable()) {
+                    if (Util.isTenantIdColumnIsAvailableInIdnOidcAuthTable()) {
                         jwtCacheKey = new JWTCacheKey(jti, tenantId);
                     } else {
                         jwtCacheKey = new JWTCacheKey(jti);

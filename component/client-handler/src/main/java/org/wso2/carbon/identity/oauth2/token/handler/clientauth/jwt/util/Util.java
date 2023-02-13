@@ -26,7 +26,7 @@ import java.util.Map;
 import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils.isTableColumnExists;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.GET_JWT;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.GET_JWT_ID;
-import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.GET_JWT_WITH_DEFAULT_TENANT;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.GET_JWT_DETAILS;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.INSERT_JWD_ID;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.UPSERT_H2;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.UPSERT_MSSQL_DB2;
@@ -43,7 +43,7 @@ public class Util {
     private static boolean isTenantIdColumnIsAvailableInIdnOidcAuthTable = false;
     private static Map<String, String> queries = new HashMap<>();
 
-    public static boolean isIsTenantIdColumnIsAvailableInIdnOidcAuthTable() {
+    public static boolean isTenantIdColumnIsAvailableInIdnOidcAuthTable() {
 
         return isTenantIdColumnIsAvailableInIdnOidcAuthTable;
     }
@@ -65,7 +65,7 @@ public class Util {
         if (isTenantIdColumnIsAvailableInIdnOidcAuthTable) {
             queries.put(GET_JWT_ID, SQLQueries.GET_TENANTED_JWT_ID);
             queries.put(GET_JWT, SQLQueries.GET_TENANTED_JWT);
-            queries.put(GET_JWT_WITH_DEFAULT_TENANT, SQLQueries.GET_JWT_DETAIL);
+            queries.put(GET_JWT_DETAILS, SQLQueries.GET_JWT_DETAIL);
             queries.put(INSERT_JWD_ID, SQLQueries.INSERT_TENANTED_JWD_ID);
             queries.put(UPSERT_MSSQL_DB2, SQLQueries.INSERT_OR_UPDATE_TENANTED_JWT_ID_MSSQL_OR_DB2);
             queries.put(UPSERT_MYSQL, SQLQueries.INSERT_OR_UPDATE_TENANTED_JWT_ID_MYSQL);
