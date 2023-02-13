@@ -41,34 +41,83 @@ public class Constants {
     public static final String PRIVATE_KEY_JWT = "signedJWT";
     public static final String JWKS_URI = "jwksURI";
 
+    //query keys
+    public static final String GET_JWT_ID = "GET_JWT_ID";
+    public static final String GET_JWT = "GET_JWT";
+    public static final String GET_JWT_DETAILS = "GET_JWT_DETAILS";
+    public static final String UPSERT_MYSQL = "UPSERT_MYSQL";
+    public static final String UPSERT_H2 = "UPSERT_H2";
+    public static final String UPSERT_POSTGRESQL = "UPSERT_POSTGRESQL";
+    public static final String UPSERT_ORACLE = "UPSERT_ORACLE";
+    public static final String UPSERT_MSSQL_DB2 = "UPSERT_MSSQL_DB2";
+    public static final String INSERT_JWD_ID = "INSERT_JWD_ID";
+    public static final int DEFAULT_TENANT_ID = -1;
+
     public static class SQLQueries {
 
+        public static final String TENANT_ID = "TENANT_ID";
+        public static final String IDN_OIDC_JTI = "IDN_OIDC_JTI";
+
+        public static final String EXP_TIME = "EXP_TIME";
+        public static final String TIME_CREATED = "TIME_CREATED";
+
         public static final String GET_JWT_ID = "SELECT 1 FROM IDN_OIDC_JTI WHERE JWT_ID =?";
+
+        public static final String GET_TENANTED_JWT_ID = "SELECT 1 FROM IDN_OIDC_JTI WHERE JWT_ID =? AND TENANT_ID=?";
+
         public static final String GET_JWT = "SELECT EXP_TIME,TIME_CREATED FROM IDN_OIDC_JTI WHERE JWT_ID =?";
+        public static final String GET_TENANTED_JWT = "SELECT EXP_TIME,TIME_CREATED FROM IDN_OIDC_JTI WHERE JWT_ID =? AND TENANT_ID=?";
+
+        public static final String GET_JWT_DETAIL = "SELECT TENANT_ID, EXP_TIME,TIME_CREATED FROM IDN_OIDC_JTI WHERE JWT_ID =? AND TENANT_ID IN (?,?)";
+
         public static final String INSERT_JWD_ID = "INSERT INTO IDN_OIDC_JTI (JWT_ID, EXP_TIME, TIME_CREATED)" +
                 "VALUES (?,?,?)";
+        public static final String INSERT_TENANTED_JWD_ID = "INSERT INTO IDN_OIDC_JTI (JWT_ID, TENANT_ID, EXP_TIME, TIME_CREATED)" +
+                "VALUES (?,?,?,?)";
         public static final String INSERT_OR_UPDATE_JWT_ID_MSSQL_OR_DB2 = "MERGE INTO IDN_OIDC_JTI T USING  " +
                 "(VALUES (?,?,?)) S (JWT_ID, EXP_TIME, TIME_CREATED) ON T.JWT_ID = S.JWT_ID WHEN MATCHED THEN " +
                 "UPDATE SET EXP_TIME = S.EXP_TIME, TIME_CREATED = S.TIME_CREATED WHEN NOT MATCHED THEN " +
                 "INSERT (JWT_ID, EXP_TIME, TIME_CREATED) VALUES (S.JWT_ID, S.EXP_TIME,S.TIME_CREATED);";
+        public static final String INSERT_OR_UPDATE_TENANTED_JWT_ID_MSSQL_OR_DB2 = "MERGE INTO IDN_OIDC_JTI T USING " +
+                "(VALUES (?,?,?,?)) S (JWT_ID, TENANT_ID, EXP_TIME, TIME_CREATED) ON T.JWT_ID = S.JWT_ID AND " +
+                "T.TENANT_ID  = S.TENANT_ID WHEN MATCHED THEN UPDATE SET EXP_TIME = S.EXP_TIME, " +
+                "TIME_CREATED = S.TIME_CREATED WHEN NOT MATCHED THEN INSERT (JWT_ID, TENANT_ID, EXP_TIME, " +
+                "TIME_CREATED) VALUES (S.JWT_ID, S.TENANT_ID, S.EXP_TIME,S.TIME_CREATED);";
 
         public static final String INSERT_OR_UPDATE_JWT_ID_MYSQL = "INSERT INTO IDN_OIDC_JTI " +
                 "(JWT_ID, EXP_TIME, TIME_CREATED) VALUES (?, ?, ?)  " +
                 "ON DUPLICATE KEY UPDATE EXP_TIME = VALUES(EXP_TIME), " +
                 "TIME_CREATED = VALUES(TIME_CREATED)";
+        public static final String INSERT_OR_UPDATE_TENANTED_JWT_ID_MYSQL = "INSERT INTO IDN_OIDC_JTI " +
+                "(JWT_ID, TENANT_ID, EXP_TIME, TIME_CREATED) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE " +
+                "EXP_TIME = VALUES(EXP_TIME),TIME_CREATED = VALUES(TIME_CREATED);";
 
         public static final String INSERT_OR_UPDATE_JWT_ID_H2 = "MERGE INTO IDN_OIDC_JTI KEY (JWT_ID) " +
                 "VALUES (?, ?, ?)";
+
+        public static final String INSERT_OR_UPDATE_TENANTED_JWT_ID_H2 = "MERGE INTO IDN_OIDC_JTI KEY (JWT_ID, TENANT_ID) " +
+                "VALUES (?, ?, ?, ?)";
 
         public static final String INSERT_OR_UPDATE_JWT_ID_POSTGRESQL =
                 "INSERT INTO IDN_OIDC_JTI (JWT_ID, EXP_TIME, TIME_CREATED) VALUES (?, ?, ?) " +
                         "ON CONFLICT (JWT_ID) DO UPDATE SET EXP_TIME = EXCLUDED.EXP_TIME, " +
                         "TIME_CREATED = EXCLUDED.TIME_CREATED";
 
+        public static final String INSERT_OR_UPDATE_TENANTED_JWT_ID_POSTGRESQL =
+                "INSERT INTO IDN_OIDC_JTI (JWT_ID, TENANT_ID, EXP_TIME, TIME_CREATED) VALUES (?,?,?,?) ON CONFLICT " +
+                        "(JWT_ID,TENANT_ID) DO UPDATE SET EXP_TIME = EXCLUDED.EXP_TIME, " +
+                        "TIME_CREATED = EXCLUDED.TIME_CREATED;";
+
         public static final String INSERT_OR_UPDATE_JWT_ID_ORACLE = "MERGE INTO IDN_OIDC_JTI USING dual ON " +
                 "(JWT_ID = ?) " +
                 "WHEN MATCHED THEN UPDATE SET EXP_TIME = ? , TIME_CREATED = ? " +
                 "WHEN NOT MATCHED THEN INSERT (JWT_ID, EXP_TIME, TIME_CREATED) " +
                 " VALUES (?, ?, ?)";
+        public static final String INSERT_OR_UPDATE_TENANTED_JWT_ID_ORACLE = "MERGE INTO IDN_OIDC_JTI USING dual " +
+                "ON (JWT_ID = ? AND TENANT_ID = ?) " +
+                "WHEN MATCHED THEN UPDATE SET " +
+                "EXP_TIME = ? , " +
+                "TIME_CREATED = ? WHEN NOT MATCHED THEN INSERT (JWT_ID, TENANT_ID ,EXP_TIME, TIME_CREATED) " +
+                "VALUES (?,?,?,?);";
     }
 }

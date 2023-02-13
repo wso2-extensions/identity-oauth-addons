@@ -13,7 +13,7 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
- * under the License
+ * under the License.
  */
 
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.dao;
@@ -26,16 +26,26 @@ import org.wso2.carbon.identity.oauth.common.OAuth2ErrorCodes;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.client.authentication.OAuthClientAuthnException;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants;
-import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.SQLQueries;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceDataHolder;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.Util;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import java.util.TimeZone;
+
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.DEFAULT_TENANT_ID;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.GET_JWT;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.GET_JWT_DETAILS;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.INSERT_JWD_ID;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.SQLQueries.EXP_TIME;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.SQLQueries.TENANT_ID;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.SQLQueries.TIME_CREATED;
 
 import static org.wso2.carbon.identity.core.util.JdbcUtils.isDB2DB;
 import static org.wso2.carbon.identity.core.util.JdbcUtils.isH2DB;
@@ -44,10 +54,15 @@ import static org.wso2.carbon.identity.core.util.JdbcUtils.isMariaDB;
 import static org.wso2.carbon.identity.core.util.JdbcUtils.isMySQLDB;
 import static org.wso2.carbon.identity.core.util.JdbcUtils.isOracleDB;
 import static org.wso2.carbon.identity.core.util.JdbcUtils.isPostgreSQLDB;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.UPSERT_H2;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.UPSERT_MSSQL_DB2;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.UPSERT_MYSQL;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.UPSERT_ORACLE;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.UPSERT_POSTGRESQL;
 
 /**
  * JWT token persistence is managed by JWTStorageManager
- * It saved JWTEntry instances in Identity Database.
+ * It saved JWTEntry instances in IDN_OIDC_JTI table of Identity Database.
  */
 public class JWTStorageManager {
 
@@ -67,22 +82,27 @@ public class JWTStorageManager {
         boolean isExists = false;
         ResultSet rs = null;
         try {
-            prepStmt = dbConnection.prepareStatement(SQLQueries.GET_JWT_ID);
-            prepStmt.setString(1, jti);
-            rs = prepStmt.executeQuery();
-            int count = 0;
-            if (rs.next()) {
-                count = rs.getInt(1);
-            }
-            if (count > 0) {
-                isExists = true;
+            if (Util.isTenantIdColumnAvailableInIdnOidcAuth()){
+                log.warn("Checking JWT existence with JTI only, but tenant id also required to fetch unique data." +
+                        "This method will be deprecated soon. Use getJwtsFromDB instead.");
+            }else {
+                prepStmt = dbConnection.prepareStatement(Constants.SQLQueries.GET_JWT_ID);
+                prepStmt.setString(1, jti);
+                rs = prepStmt.executeQuery();
+                int count = 0;
+                if (rs.next()) {
+                    count = rs.getInt(1);
+                }
+                if (count > 0) {
+                    isExists = true;
+                }
             }
         } catch (SQLException e) {
             if (log.isDebugEnabled()) {
                 log.debug("Error when retrieving the JWT ID: " + jti, e);
             }
             throw new OAuthClientAuthnException("Error occurred while validating the JTI: " + jti + " of the " +
-                                                "assertion.", OAuth2ErrorCodes.INVALID_REQUEST);
+                    "assertion.", OAuth2ErrorCodes.INVALID_REQUEST);
         } finally {
             IdentityDatabaseUtil.closeAllConnections(dbConnection, rs, prepStmt);
         }
@@ -90,92 +110,149 @@ public class JWTStorageManager {
     }
 
     /**
-     * To get persisted JWT for a given JTI.
+     * To get a list of persisted JWTs for a given JTI.
      *
-     * @param jti jti
-     * @return JWTEntry
+     * @param jti JTI.
+     * @return List of JWTEntries.
      * @throws OAuthClientAuthnException OAuthClientAuthnException thrown with Invalid Request error code.
      */
-    public JWTEntry getJwtFromDB(String jti) throws OAuthClientAuthnException {
+    public List<JWTEntry> getJwtsFromDB(String jti, int tenantId) throws OAuthClientAuthnException {
+
+        List<JWTEntry> JWTEntries = new ArrayList<>();
 
         Connection dbConnection = IdentityDatabaseUtil.getDBConnection();
         PreparedStatement prepStmt = null;
         ResultSet rs = null;
-        JWTEntry jwtEntry = null;
         try {
-            prepStmt = dbConnection.prepareStatement(SQLQueries.GET_JWT);
-            prepStmt.setString(1, jti);
-            rs = prepStmt.executeQuery();
-            if (rs.next()) {
-                long exp = rs.getTime(1, Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC))).getTime();
-                long created = rs.getTime(2, Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC))).getTime();
-                jwtEntry = new JWTEntry(exp, created);
+            if (Util.isTenantIdColumnAvailableInIdnOidcAuth()) {
+                prepStmt = dbConnection.prepareStatement(Util.getDBQuery(GET_JWT_DETAILS));
+                prepStmt.setString(1, jti);
+                prepStmt.setInt(2, tenantId);
+                prepStmt.setInt(3, DEFAULT_TENANT_ID);
+                rs = prepStmt.executeQuery();
+                while (rs.next()) {
+                    int tenantID = rs.getInt(TENANT_ID);
+                    long exp = rs.getTime(EXP_TIME,
+                            Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC))).getTime();
+                    long created = rs.getTime(TIME_CREATED,
+                            Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC))).getTime();
+                    JWTEntries.add(new JWTEntry(exp, created, tenantID));
+                }
+            } else {
+                prepStmt = dbConnection.prepareStatement(Util.getDBQuery(GET_JWT));
+                prepStmt.setString(1, jti);
+                rs = prepStmt.executeQuery();
+                while (rs.next()) {
+                    long exp = rs.getTime(EXP_TIME,
+                            Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC))).getTime();
+                    long created = rs.getTime(TIME_CREATED,
+                            Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC))).getTime();
+                    JWTEntries.add(new JWTEntry(exp, created));
+                }
             }
+
         } catch (SQLException e) {
             if (log.isDebugEnabled()) {
-                log.debug("Error when retrieving the JWT ID: " + jti, e);
+                log.debug("Error when retrieving the JWT ID: " + jti + " tenant id: " + tenantId, e);
             }
             throw new OAuthClientAuthnException("Error occurred while validating the JTI: " + jti + " of the " +
-                                                "assertion.", OAuth2ErrorCodes.INVALID_REQUEST);
+                    "assertion.", OAuth2ErrorCodes.INVALID_REQUEST);
         } finally {
             IdentityDatabaseUtil.closeAllConnections(dbConnection, rs, prepStmt);
         }
-        return jwtEntry;
+        return JWTEntries;
     }
 
     /**
      * To persist unique id for jti in the table.
      *
-     * @param jti         jti a unique id
-     * @param expTime     expiration time
-     * @param timeCreated jti inserted time
+     * @param jti         JTI a unique id.
+     * @param tenantId    Tenant id.
+     * @param expTime     Expiration time.
+     * @param timeCreated JTI inserted time.
      * @throws IdentityOAuth2Exception
      */
-    public void persistJWTIdInDB(String jti, long expTime, long timeCreated) throws OAuthClientAuthnException {
+    public void persistJWTIdInDB(String jti, int tenantId, long expTime, long timeCreated) throws OAuthClientAuthnException {
 
         Connection connection = null;
         PreparedStatement preparedStatement = null;
         try {
             connection = IdentityDatabaseUtil.getDBConnection();
-            if (JWTServiceDataHolder.getInstance().isPreventTokenReuse()){
-                preparedStatement = connection.prepareStatement(SQLQueries.INSERT_JWD_ID);
+            if (JWTServiceDataHolder.getInstance().isPreventTokenReuse()) {
+                preparedStatement = connection.prepareStatement(Util.getDBQuery(INSERT_JWD_ID));
+                preparedStatement.setString(1, jti);
+                if (Util.isTenantIdColumnAvailableInIdnOidcAuth()) {
+                    preparedStatement.setInt(2, tenantId);
+                    Timestamp timestamp = new Timestamp(timeCreated);
+                    Timestamp expTimestamp = new Timestamp(expTime);
+                    preparedStatement.setTimestamp(3, expTimestamp, Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC)));
+                    preparedStatement.setTimestamp(4, timestamp,
+                            Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC)));
+                } else {
+                    Timestamp timestamp = new Timestamp(timeCreated);
+                    Timestamp expTimestamp = new Timestamp(expTime);
+                    preparedStatement.setTimestamp(2, expTimestamp, Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC)));
+                    preparedStatement.setTimestamp(3, timestamp,
+                            Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC)));
+                }
             } else {
                 if (isH2DB()) {
-                    preparedStatement = connection.prepareStatement(SQLQueries.INSERT_OR_UPDATE_JWT_ID_H2);
-                }  else if (isMySQLDB() || isMariaDB()) {
-                    preparedStatement = connection.prepareStatement(SQLQueries.INSERT_OR_UPDATE_JWT_ID_MYSQL);
+                    preparedStatement = connection.prepareStatement(Util.getDBQuery(UPSERT_H2));
+                } else if (isMySQLDB() || isMariaDB()) {
+                    preparedStatement = connection.prepareStatement(Util.getDBQuery(UPSERT_MYSQL));
                 } else if (isPostgreSQLDB()) {
-                    preparedStatement = connection.prepareStatement(SQLQueries.INSERT_OR_UPDATE_JWT_ID_POSTGRESQL);
+                    preparedStatement = connection.prepareStatement(Util.getDBQuery(UPSERT_POSTGRESQL));
                 } else if (isMSSqlDB() || isDB2DB()) {
-                    preparedStatement = connection.prepareStatement(SQLQueries.INSERT_OR_UPDATE_JWT_ID_MSSQL_OR_DB2);
+                    preparedStatement = connection.prepareStatement(Util.getDBQuery(UPSERT_MSSQL_DB2));
                 } else if (isOracleDB()) {
-                    preparedStatement = connection.prepareStatement(SQLQueries.INSERT_OR_UPDATE_JWT_ID_ORACLE);
+                    preparedStatement = connection.prepareStatement(Util.getDBQuery(UPSERT_ORACLE));
+                }
+
+                if (preparedStatement != null) {
+                    preparedStatement.setString(1, jti);
+                    if (Util.isTenantIdColumnAvailableInIdnOidcAuth()) {
+                        preparedStatement.setInt(2, tenantId);
+                        Timestamp timestamp = new Timestamp(timeCreated);
+                        Timestamp expTimestamp = new Timestamp(expTime);
+                        preparedStatement.setTimestamp(3, expTimestamp, Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC)));
+                        preparedStatement.setTimestamp(4, timestamp,
+                                Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC)));
+                        if (isOracleDB()) {
+                            preparedStatement.setString(5, jti);
+                            preparedStatement.setInt(6, tenantId);
+                            preparedStatement.setTimestamp(7, expTimestamp,
+                                    Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC)));
+                            preparedStatement.setTimestamp(8, timestamp,
+                                    Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC)));
+                        }
+                    } else {
+                        Timestamp timestamp = new Timestamp(timeCreated);
+                        Timestamp expTimestamp = new Timestamp(expTime);
+                        preparedStatement.setTimestamp(2, expTimestamp, Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC)));
+                        preparedStatement.setTimestamp(3, timestamp,
+                                Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC)));
+                        if (isOracleDB()) {
+                            preparedStatement.setString(4, jti);
+                            preparedStatement.setTimestamp(5, expTimestamp,
+                                    Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC)));
+                            preparedStatement.setTimestamp(6, timestamp,
+                                    Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC)));
+                        }
+                    }
                 }
             }
-            preparedStatement.setString(1, jti);
-            Timestamp timestamp = new Timestamp(timeCreated);
-            Timestamp expTimestamp = new Timestamp(expTime);
-            preparedStatement.setTimestamp(2, expTimestamp,
-                    Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC)));
-            preparedStatement.setTimestamp(3, timestamp,
-                    Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC)));
-            if (!JWTServiceDataHolder.getInstance().isPreventTokenReuse() && isOracleDB()) {
-                preparedStatement.setString(4, jti);
-                preparedStatement.setTimestamp(5, expTimestamp,
-                        Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC)));
-                preparedStatement.setTimestamp(6, timestamp,
-                        Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC)));
+            if (preparedStatement != null) {
+                preparedStatement.executeUpdate();
+                preparedStatement.close();
+                connection.commit();
             }
-            preparedStatement.executeUpdate();
-            preparedStatement.close();
-            connection.commit();
-        } catch (SQLException|DataAccessException e) {
+        } catch (SQLException | DataAccessException e) {
             String error = "Error when storing the JWT ID: " + jti + " with exp: " + expTime;
             if (log.isDebugEnabled()) {
                 log.debug(error, e);
             }
             throw new OAuthClientAuthnException("Error occurred while validating the JTI: " + jti + " of the " +
-                                                "assertion.", OAuth2ErrorCodes.INVALID_REQUEST, e);
+                    "assertion.", OAuth2ErrorCodes.INVALID_REQUEST, e);
         } finally {
             IdentityDatabaseUtil.closeAllConnections(connection, null, preparedStatement);
         }

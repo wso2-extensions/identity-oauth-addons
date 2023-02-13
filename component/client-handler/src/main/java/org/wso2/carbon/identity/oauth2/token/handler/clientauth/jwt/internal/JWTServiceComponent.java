@@ -29,6 +29,7 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.core.util.IdentityCoreInitializedEvent;
 import org.wso2.carbon.identity.oauth2.client.authentication.OAuthClientAuthenticator;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.PrivateKeyJWTClientAuthenticator;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.Util;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
@@ -68,6 +69,7 @@ public class JWTServiceComponent {
 
         try {
             PrivateKeyJWTClientAuthenticator privateKeyJWTClientAuthenticator = new PrivateKeyJWTClientAuthenticator();
+            Util.checkIfTenantIdColumnIsAvailableInIdnOidcAuthTable();
             bundleContext = ctxt.getBundleContext();
             bundleContext.registerService(OAuthClientAuthenticator.class.getName(), privateKeyJWTClientAuthenticator,
                     null);
