@@ -27,6 +27,12 @@
             <class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.cache.JWTCacheTest"/>
             <class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.PrivateKeyJWTClientAuthenticatorTest"/>
             <class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.storage.JWTStorageManagerTest"/>
+
+            <!--Core  Testcases-->
+            <class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.core.constant.ErrorMessageTest"/>
+            <class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.core.dao.cache.JWTConfigCacheTest"/>
+            <class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.core.util.UtilTest"/>
+            <class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.core.JWTClientAuthenticatorMgtServiceTest"/>
         </classes>
     </test>
 </suite>
