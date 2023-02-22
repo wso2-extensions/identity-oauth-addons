@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.core.constant.Constants.ENABLE_TOKEN_REUSE;
@@ -41,7 +42,7 @@ public class UtilTest {
     public void testServerConfig() throws Exception {
 
         JWTServiceDataHolder.getInstance().setPreventTokenReuse(true);
-        assertTrue(Util.getServerConfiguration().isEnableTokenReuse());
+        assertFalse(Util.getServerConfiguration().isEnableTokenReuse());
     }
 
     @Test()

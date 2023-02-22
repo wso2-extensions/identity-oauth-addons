@@ -50,7 +50,7 @@ public class Util {
         JWTClientAuthenticatorConfig JWTClientAuthenticatorConfig = new JWTClientAuthenticatorConfig();
 
         JWTClientAuthenticatorConfig.
-                setEnableTokenReuse(JWTServiceDataHolder.getInstance().isPreventTokenReuse());
+                setEnableTokenReuse(!JWTServiceDataHolder.getInstance().isPreventTokenReuse());
         return JWTClientAuthenticatorConfig;
     }
 
