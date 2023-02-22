@@ -62,6 +62,10 @@ public class CacheBackedJWTConfigurationDAOImpl implements JWTAuthenticationConf
 
         JWTClientAuthenticatorConfig cachedResult = getJWTConfigurationFromCache(tenantDomain);
         if (cachedResult != null) {
+            if (log.isDebugEnabled()) {
+                log.debug("JWT Authenticator configuration is not available " +
+                        "in the cache for tenant domain: " + tenantDomain + ". Trying to get data from the database.");
+            }
             return cachedResult;
         }
 

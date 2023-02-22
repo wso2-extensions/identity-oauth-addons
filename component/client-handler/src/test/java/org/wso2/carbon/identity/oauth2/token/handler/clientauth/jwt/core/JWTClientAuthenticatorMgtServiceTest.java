@@ -58,8 +58,6 @@ public class JWTClientAuthenticatorMgtServiceTest {
         mockConfigurationManager = Mockito.mock(ConfigurationManager.class);
         JWTServiceDataHolder.getInstance()
                 .setConfigurationManager(mockConfigurationManager);
-
-
     }
 
     @Test()

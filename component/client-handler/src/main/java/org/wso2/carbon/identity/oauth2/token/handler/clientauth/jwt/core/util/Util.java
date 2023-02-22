@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.core.util;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.identity.configuration.mgt.core.model.Attribute;
 import org.wso2.carbon.identity.configuration.mgt.core.model.Resource;
@@ -46,8 +47,7 @@ public class Util {
      */
     public static JWTClientAuthenticatorConfig getServerConfiguration() {
 
-        JWTClientAuthenticatorConfig JWTClientAuthenticatorConfig
-                = new JWTClientAuthenticatorConfig();
+        JWTClientAuthenticatorConfig JWTClientAuthenticatorConfig = new JWTClientAuthenticatorConfig();
 
         JWTClientAuthenticatorConfig.
                 setEnableTokenReuse(JWTServiceDataHolder.getInstance().isPreventTokenReuse());
@@ -62,8 +62,7 @@ public class Util {
      */
     public static JWTClientAuthenticatorConfig parseResource(Resource resource) {
 
-        JWTClientAuthenticatorConfig JWTClientAuthenticatorConfig
-                = new JWTClientAuthenticatorConfig();
+        JWTClientAuthenticatorConfig JWTClientAuthenticatorConfig = new JWTClientAuthenticatorConfig();
 
         if (resource.isHasAttribute()) {
             List<Attribute> attributes = resource.getAttributes();
@@ -77,7 +76,7 @@ public class Util {
 
     private static Map<String, String> getAttributeMap(List<Attribute> attributes) {
 
-        if (attributes != null) {
+        if (CollectionUtils.isNotEmpty(attributes)) {
             return attributes.stream().collect(Collectors.toMap(Attribute::getKey, Attribute::getValue));
         }
 
@@ -87,25 +86,26 @@ public class Util {
     /**
      * Parse JWTClientAuthenticatorConfig to Resource instance.
      *
-     * @param JWTClientAuthenticatorConfig Configuration Instance.
+     * @param jwtClientAuthenticatorConfig Configuration Instance.
      * @return ResourceAdd Resource instance.
      */
-    public static ResourceAdd parseConfig(JWTClientAuthenticatorConfig JWTClientAuthenticatorConfig) {
+    public static ResourceAdd parseConfig(JWTClientAuthenticatorConfig jwtClientAuthenticatorConfig) {
 
         ResourceAdd resourceAdd = new ResourceAdd();
         resourceAdd.setName(JWT_CONFIGURATION_RESOURCE_NAME);
         List<Attribute> attributes = new ArrayList<>();
-        addAttribute(attributes, ENABLE_TOKEN_REUSE,
-                String.valueOf(JWTClientAuthenticatorConfig.isEnableTokenReuse()));
+        addAttribute(attributes, jwtClientAuthenticatorConfig);
         resourceAdd.setAttributes(attributes);
         return resourceAdd;
     }
 
-    private static void addAttribute(List<Attribute> attributeList, String key, String value) {
+    private static void addAttribute(List<Attribute> attributeList,
+                                     JWTClientAuthenticatorConfig jwtClientAuthenticatorConfig) {
 
+        String value = String.valueOf(jwtClientAuthenticatorConfig.isEnableTokenReuse());
         if (StringUtils.isNotBlank(value)) {
             Attribute attribute = new Attribute();
-            attribute.setKey(key);
+            attribute.setKey(ENABLE_TOKEN_REUSE);
             attribute.setValue(value);
             attributeList.add(attribute);
         }

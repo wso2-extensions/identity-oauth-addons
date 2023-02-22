@@ -37,8 +37,8 @@ public class JWTClientAuthenticatorMgtServiceImpl implements JWTClientAuthentica
      * {@inheritDoc}
      */
     @Override
-    public JWTClientAuthenticatorConfig getPrivateKeyJWTClientAuthenticatorConfiguration
-    (String tenantDomain) throws JWTClientAuthenticatorServiceException {
+    public JWTClientAuthenticatorConfig getPrivateKeyJWTClientAuthenticatorConfiguration (String tenantDomain)
+            throws JWTClientAuthenticatorServiceException {
 
         validateTenantDomain(tenantDomain);
 
@@ -53,8 +53,8 @@ public class JWTClientAuthenticatorMgtServiceImpl implements JWTClientAuthentica
      * {@inheritDoc}
      */
     @Override
-    public void setPrivateKeyJWTClientAuthenticatorConfiguration
-    (JWTClientAuthenticatorConfig JWTClientAuthenticatorConfig, String tenantDomain)
+    public void setPrivateKeyJWTClientAuthenticatorConfiguration (
+            JWTClientAuthenticatorConfig JWTClientAuthenticatorConfig, String tenantDomain)
             throws JWTClientAuthenticatorServiceException {
 
         validateTenantDomain(tenantDomain);
@@ -77,7 +77,7 @@ public class JWTClientAuthenticatorMgtServiceImpl implements JWTClientAuthentica
         try {
             IdentityTenantUtil.getTenantId(tenantDomain);
         } catch (IdentityRuntimeException e) {
-            throw handleClientException(ErrorMessage.ERROR_CODE_INVALID_TENANT_DOMAIN, tenantDomain);
+            throw handleClientException(ErrorMessage.ERROR_CODE_INVALID_TENANT_DOMAIN, e, tenantDomain);
         }
     }
 }

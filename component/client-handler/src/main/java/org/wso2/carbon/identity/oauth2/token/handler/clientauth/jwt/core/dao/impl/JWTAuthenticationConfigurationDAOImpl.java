@@ -109,7 +109,7 @@ public class JWTAuthenticationConfigurationDAOImpl implements JWTAuthenticationC
         try {
             return getConfigurationManager().getResource(resourceTypeName, resourceName);
         } catch (ConfigurationManagementException e) {
-            if (e.getErrorCode().equals(ERROR_CODE_RESOURCE_DOES_NOT_EXISTS.getCode())) {
+            if (ERROR_CODE_RESOURCE_DOES_NOT_EXISTS.getCode().equals(e.getErrorCode())) {
                 return null;
             } else {
                 throw e;

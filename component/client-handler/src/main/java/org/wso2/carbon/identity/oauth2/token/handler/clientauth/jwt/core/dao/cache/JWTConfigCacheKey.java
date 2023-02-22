@@ -58,10 +58,8 @@ public class JWTConfigCacheKey extends CacheKey {
         }
 
         JWTConfigCacheKey that = (JWTConfigCacheKey) o;
-
         return tenantDomain.equals(that.getTenantDomain());
     }
-
 
     /**
      * This method used to derive hash value for this class.
