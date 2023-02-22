@@ -46,9 +46,11 @@ import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.cache.JWTCache;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.cache.JWTCacheEntry;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.cache.JWTCacheKey;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.core.exception.JWTClientAuthenticatorServiceServerException;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.dao.JWTEntry;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.dao.JWTStorageManager;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceComponent;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceDataHolder;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.Util;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 import org.wso2.carbon.identity.oauth2.validators.jwt.JWKSBasedJWTValidator;
@@ -162,6 +164,10 @@ public class JWTValidator {
                 issuedTime = issuedAtTime.getTime();
             }
 
+            preventTokenReuse = JWTServiceDataHolder.getInstance()
+                    .getPrivateKeyJWTAuthenticationConfigurationDAO()
+                    .getPrivateKeyJWTClientAuthenticationConfigurationByTenantDomain(tenantDomain).isEnableTokenReuse();
+
             //Validate signature validation, audience, nbf,exp time, jti.
             if (!validateAudience(validAud, audience)
                     || !validateJWTWithExpTime(expirationTime, currentTimeInMillis, timeStampSkewMillis)
@@ -175,7 +181,7 @@ public class JWTValidator {
 
             return true;
 
-        } catch (IdentityOAuth2Exception | UserStoreException e) {
+        } catch (IdentityOAuth2Exception | UserStoreException | JWTClientAuthenticatorServiceServerException e) {
             return logAndThrowException(e.getMessage());
         }
     }

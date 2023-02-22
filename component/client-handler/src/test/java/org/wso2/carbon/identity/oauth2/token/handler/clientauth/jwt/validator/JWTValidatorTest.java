@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator;
 
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang.StringUtils;
 import org.mockito.Mockito;
 import org.powermock.reflect.internal.WhiteboxImpl;
 import org.testng.annotations.BeforeClass;
@@ -40,6 +41,8 @@ import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth2.client.authentication.OAuthClientAuthnException;
 import org.wso2.carbon.identity.oauth2.internal.OAuth2ServiceComponentHolder;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.core.dao.JWTAuthenticationConfigurationDAO;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.core.model.JWTClientAuthenticatorConfig;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceComponent;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceDataHolder;
 import org.wso2.carbon.identity.testutil.ReadCertStoreSampleUtil;
@@ -249,6 +252,22 @@ public class JWTValidatorTest {
 
         try {
             checkIfTenantIdColumnIsAvailableInIdnOidcAuthTable();
+            boolean  preventTokenReuse = true;
+            String preventTokenReuseProperty = ((Properties) properties).getProperty("PreventTokenReuse");
+            if (StringUtils.isNotEmpty(preventTokenReuseProperty)) {
+                preventTokenReuse = Boolean.parseBoolean(preventTokenReuseProperty);
+            }
+            JWTClientAuthenticatorConfig jwtClientAuthenticatorConfig = new JWTClientAuthenticatorConfig();
+            jwtClientAuthenticatorConfig.setEnableTokenReuse(preventTokenReuse);
+
+            JWTAuthenticationConfigurationDAO mockDAO = Mockito.mock(JWTAuthenticationConfigurationDAO
+                    .class);
+            Mockito.when(mockDAO.getPrivateKeyJWTClientAuthenticationConfigurationByTenantDomain(anyString()))
+                    .thenReturn(jwtClientAuthenticatorConfig);
+
+            JWTServiceDataHolder.getInstance()
+                    .setJWTAuthenticationConfigurationDAO(mockDAO);
+
             JWTValidator jwtValidator = getJWTValidator((Properties) properties);
             SignedJWT signedJWT = SignedJWT.parse(jwt);
             assertEquals(jwtValidator.isValidAssertion(signedJWT),

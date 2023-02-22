@@ -64,11 +64,18 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
     private static final Log log = LogFactory.getLog(PrivateKeyJWTClientAuthenticator.class);
     private JWTValidator jwtValidator;
 
+    private int rejectBeforePeriod = DEFAULT_VALIDITY_PERIOD_IN_MINUTES;
+    private boolean preventTokenReuse = true;
+    private String tokenEPAlias = DEFAULT_AUDIENCE;
+
     public PrivateKeyJWTClientAuthenticator() {
 
-        int rejectBeforePeriod = DEFAULT_VALIDITY_PERIOD_IN_MINUTES;
-        boolean preventTokenReuse = true;
-        String tokenEPAlias = DEFAULT_AUDIENCE;
+        readServerConfig();
+        jwtValidator = createJWTValidator(tokenEPAlias, preventTokenReuse, rejectBeforePeriod);
+    }
+
+    private void readServerConfig(){
+
         try {
             if (isNotEmpty(properties.getProperty(TOKEN_ENDPOINT_ALIAS))) {
                 tokenEPAlias = properties.getProperty(TOKEN_ENDPOINT_ALIAS);
@@ -80,7 +87,6 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
                 rejectBeforePeriod = Integer.parseInt(properties.getProperty(REJECT_BEFORE_IN_MINUTES));
             }
             JWTServiceDataHolder.getInstance().setPreventTokenReuse(preventTokenReuse);
-            jwtValidator = createJWTValidator(tokenEPAlias, preventTokenReuse, rejectBeforePeriod);
         } catch (NumberFormatException e) {
             log.warn("Invalid PrivateKeyJWT Validity period found in the configuration. Using default value: " +
                     rejectBeforePeriod);

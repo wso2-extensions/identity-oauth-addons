@@ -18,6 +18,10 @@
 
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal;
 
+import org.wso2.carbon.identity.configuration.mgt.core.ConfigurationManager;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.core.dao.JWTAuthenticationConfigurationDAO;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.core.dao.impl.CacheBackedJWTConfigurationDAOImpl;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.core.dao.impl.JWTAuthenticationConfigurationDAOImpl;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
@@ -29,6 +33,20 @@ public class JWTServiceDataHolder {
     public static JWTServiceDataHolder instance = new JWTServiceDataHolder();
 
     public boolean preventTokenReuse = true;
+    private ConfigurationManager configurationManager;
+
+    private JWTAuthenticationConfigurationDAO JWTAuthenticationConfigurationDAO =
+            new CacheBackedJWTConfigurationDAOImpl(new JWTAuthenticationConfigurationDAOImpl());
+
+    public ConfigurationManager getConfigurationManager() {
+
+        return configurationManager;
+    }
+
+    public void setConfigurationManager(ConfigurationManager configurationManager) {
+
+        this.configurationManager = configurationManager;
+    }
 
     public boolean isPreventTokenReuse() {
 
@@ -53,6 +71,17 @@ public class JWTServiceDataHolder {
     public void setRealmService(RealmService realmService) {
 
         this.realmService = realmService;
+    }
+
+    public JWTAuthenticationConfigurationDAO getPrivateKeyJWTAuthenticationConfigurationDAO() {
+
+        return JWTAuthenticationConfigurationDAO;
+    }
+
+    public void setJWTAuthenticationConfigurationDAO
+            (JWTAuthenticationConfigurationDAO JWTAuthenticationConfigurationDAO) {
+
+        this.JWTAuthenticationConfigurationDAO = JWTAuthenticationConfigurationDAO;
     }
 
 }
