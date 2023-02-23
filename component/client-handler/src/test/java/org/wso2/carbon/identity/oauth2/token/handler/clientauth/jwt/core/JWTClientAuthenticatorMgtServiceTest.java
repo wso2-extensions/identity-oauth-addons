@@ -32,6 +32,7 @@ import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.core.dao.imp
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.core.model.JWTClientAuthenticatorConfig;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceDataHolder;
 
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -74,6 +75,6 @@ public class JWTClientAuthenticatorMgtServiceTest {
                 .getPrivateKeyJWTClientAuthenticationConfigurationByTenantDomain("sampleTenant");
 
         assertNotNull(jwtClientAuthenticatorConfig1);
-        assertTrue(jwtClientAuthenticatorConfig1.isEnableTokenReuse());
+        assertFalse(jwtClientAuthenticatorConfig1.isEnableTokenReuse());
     }
 }
