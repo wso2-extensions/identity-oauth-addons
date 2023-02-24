@@ -164,7 +164,7 @@ public class JWTValidator {
                 issuedTime = issuedAtTime.getTime();
             }
 
-            preventTokenReuse = JWTServiceDataHolder.getInstance()
+            preventTokenReuse = !JWTServiceDataHolder.getInstance()
                     .getPrivateKeyJWTAuthenticationConfigurationDAO()
                     .getPrivateKeyJWTClientAuthenticationConfigurationByTenantDomain(tenantDomain).isEnableTokenReuse();
 
@@ -343,7 +343,7 @@ public class JWTValidator {
     private void persistJWTID(final String jti, long expiryTime, long issuedTime, int tenantId)
             throws OAuthClientAuthnException {
 
-        jwtStorageManager.persistJWTIdInDB(jti, tenantId, expiryTime, issuedTime);
+        jwtStorageManager.persistJWTIdInDB(jti, tenantId, expiryTime, issuedTime, this.preventTokenReuse);
     }
 
     private OAuthAppDO getOAuthAppDO(String jwtSubject) throws OAuthClientAuthnException {
