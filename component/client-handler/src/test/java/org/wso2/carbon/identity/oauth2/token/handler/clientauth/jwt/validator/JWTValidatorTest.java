@@ -258,7 +258,7 @@ public class JWTValidatorTest {
                 preventTokenReuse = Boolean.parseBoolean(preventTokenReuseProperty);
             }
             JWTClientAuthenticatorConfig jwtClientAuthenticatorConfig = new JWTClientAuthenticatorConfig();
-            jwtClientAuthenticatorConfig.setEnableTokenReuse(preventTokenReuse);
+            jwtClientAuthenticatorConfig.setEnableTokenReuse(!preventTokenReuse);
 
             JWTAuthenticationConfigurationDAO mockDAO = Mockito.mock(JWTAuthenticationConfigurationDAO
                     .class);

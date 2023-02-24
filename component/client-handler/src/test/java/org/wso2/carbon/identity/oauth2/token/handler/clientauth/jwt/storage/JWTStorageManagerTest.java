@@ -95,13 +95,19 @@ public class JWTStorageManagerTest extends PowerMockIdentityBaseTest {
     public void testPersistJWTIdInDB() throws Exception {
 
         JWTServiceDataHolder.getInstance().setPreventTokenReuse(true);
-        JWTStorageManager.persistJWTIdInDB("2023", -1234, 10000000, 10000000);
+        JWTStorageManager.persistJWTIdInDB("2023", -1234, 10000000, 10000000,true);
     }
 
     @Test(expectedExceptions = OAuthClientAuthnException.class)
     public void testPersistJWTIdInDBExceptionCase() throws Exception {
 
-        JWTStorageManager.persistJWTIdInDB("2000", -1234, 10000000, 10000000);
+        JWTStorageManager.persistJWTIdInDB("2000", -1234, 10000000, 10000000, true);
+    }
+
+    @Test
+    public void testDefaultPersistJWTIdInDB() throws Exception {
+
+        JWTStorageManager.persistJWTIdInDB("2026", -1234, 10000000, 10000000);
     }
 
     @Test()
@@ -120,11 +126,11 @@ public class JWTStorageManagerTest extends PowerMockIdentityBaseTest {
         when(JdbcUtils.isH2DB()).thenReturn(true);
         when(JdbcUtils.isOracleDB()).thenReturn(false);
         // Insert a JTI entry with Expired Date.
-        JWTStorageManager.persistJWTIdInDB("2023", 12, 10000000, 10000000);
+        JWTStorageManager.persistJWTIdInDB("2023", 12, 10000000, 10000000, false);
         when(JdbcUtils.isH2DB()).thenReturn(true);
         when(JdbcUtils.isOracleDB()).thenReturn(false);
         // Update a JTI entry again.
-        JWTStorageManager.persistJWTIdInDB("2023", 12, 10001000, 10000100);
+        JWTStorageManager.persistJWTIdInDB("2023", 12, 10001000, 10000100, false);
     }
 
     @Test(dependsOnMethods = {"testPersistJWTIdInDBWithoutTokenReuse"})

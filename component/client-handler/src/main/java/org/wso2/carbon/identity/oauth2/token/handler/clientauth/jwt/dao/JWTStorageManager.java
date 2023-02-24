@@ -82,10 +82,10 @@ public class JWTStorageManager {
         boolean isExists = false;
         ResultSet rs = null;
         try {
-            if (Util.isTenantIdColumnAvailableInIdnOidcAuth()){
+            if (Util.isTenantIdColumnAvailableInIdnOidcAuth()) {
                 log.warn("Checking JWT existence with JTI only, but tenant id also required to fetch unique data." +
                         "This method will be deprecated soon. Use getJwtsFromDB instead.");
-            }else {
+            } else {
                 prepStmt = dbConnection.prepareStatement(Constants.SQLQueries.GET_JWT_ID);
                 prepStmt.setString(1, jti);
                 rs = prepStmt.executeQuery();
@@ -171,14 +171,32 @@ public class JWTStorageManager {
      * @param expTime     Expiration time.
      * @param timeCreated JTI inserted time.
      * @throws IdentityOAuth2Exception
+     * @deprecated Use {@link #persistJWTIdInDB(String, int, long, long, boolean)} instead.
      */
-    public void persistJWTIdInDB(String jti, int tenantId, long expTime, long timeCreated) throws OAuthClientAuthnException {
+    public void persistJWTIdInDB(String jti, int tenantId, long expTime, long timeCreated)
+            throws OAuthClientAuthnException {
+
+        persistJWTIdInDB(jti, tenantId, expTime, timeCreated, JWTServiceDataHolder.getInstance().isPreventTokenReuse());
+    }
+
+    /**
+     * To persist unique id for jti in the table.
+     *
+     * @param jti               JTI a unique id.
+     * @param tenantId          Tenant id.
+     * @param expTime           Expiration time.
+     * @param timeCreated       JTI inserted time.
+     * @param preventTokenReuse Whether to prevent token reuse.
+     * @throws IdentityOAuth2Exception
+     */
+    public void persistJWTIdInDB(String jti, int tenantId, long expTime, long timeCreated, boolean preventTokenReuse)
+            throws OAuthClientAuthnException {
 
         Connection connection = null;
         PreparedStatement preparedStatement = null;
         try {
             connection = IdentityDatabaseUtil.getDBConnection();
-            if (JWTServiceDataHolder.getInstance().isPreventTokenReuse()) {
+            if (preventTokenReuse) {
                 preparedStatement = connection.prepareStatement(Util.getDBQuery(INSERT_JWD_ID));
                 preparedStatement.setString(1, jti);
                 if (Util.isTenantIdColumnAvailableInIdnOidcAuth()) {
