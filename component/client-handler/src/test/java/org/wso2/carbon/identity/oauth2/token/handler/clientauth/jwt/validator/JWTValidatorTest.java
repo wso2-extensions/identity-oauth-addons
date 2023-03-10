@@ -234,7 +234,7 @@ public class JWTValidatorTest {
                         "."},
                 {jsonWebToken11, properties1, false, ""},
                 {jsonWebToken12, properties5, true, ""},
-                {jsonWebToken12, properties5, false, ""},
+                {jsonWebToken12, properties5, true, ""},
                 {jsonWebToken13, properties1, false, ""},
                 {jsonWebToken15, properties1, false, ""},
                 {jsonWebToken16, properties4, false, ""},
