@@ -20,6 +20,7 @@
     <packaging>bundle</packaging>
     <name>Private Key JWT client handler</name>
     <url>http://wso2.org</url>
+    <version>3.0.0-SNAPSHOT</version>
     <parent>
         <groupId>org.wso2.carbon.extension.identity.oauth.addons</groupId>
         <artifactId>identity-oauth2-extenstions</artifactId>
