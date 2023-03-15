@@ -30,6 +30,7 @@
     <name>WSO2 Carbon Extension- Identity Oauth Extensions Feature</name>
     <url>http://wso2.org</url>
     <description>This feature contains extension feature for JWT Grant Type</description>
+    <version>3.0.0-SNAPSHOT</version>
 
     <dependencies>
         <dependency>

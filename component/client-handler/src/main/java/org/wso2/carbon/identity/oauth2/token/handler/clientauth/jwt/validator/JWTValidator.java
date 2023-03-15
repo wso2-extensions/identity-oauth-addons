@@ -292,9 +292,12 @@ public class JWTValidator {
         } else if (preventTokenReuse) {
             String message = "JWT Token with JTI: " + jti + " has been replayed.";
             return logAndThrowException(message);
-        } else {
-            if (!checkJTIValidityPeriod(jti, jwtEntry.getExp(), currentTimeInMillis, timeStampSkewMillis)) {
-                return false;
+        }
+        // Token reuse is allowed. Here we are logging whether the token is reused within the allowed expiry time.
+        if (currentTimeInMillis + timeStampSkewMillis < jwtEntry.getExp()) {
+            if (log.isDebugEnabled()) {
+                log.debug("JWT Token with jti: " + jti + "has been reused with in the allowed expiry time: " +
+                        jwtEntry.getExp());
             }
         }
         return true;
@@ -322,22 +325,6 @@ public class JWTValidator {
             return jwtEntries.get(0);
         }
         return jwtEntries.stream().filter(e -> e.getTenantId() == tenantId).findFirst().orElse(null);
-    }
-
-    private boolean checkJTIValidityPeriod(String jti, long jwtExpiryTimeMillis, long currentTimeInMillis,
-                                           long timeStampSkewMillis) throws OAuthClientAuthnException {
-
-        if (currentTimeInMillis + timeStampSkewMillis > jwtExpiryTimeMillis) {
-            if (log.isDebugEnabled()) {
-                log.debug("JWT Token with jti: " + jti + "has been reused after the allowed expiry time: " +
-                        jwtExpiryTimeMillis);
-            }
-            return true;
-        } else {
-            String message = "JWT Token with jti: " + jti + " has been replayed before the allowed expiry time: "
-                    + jwtExpiryTimeMillis;
-            return logAndThrowException(message);
-        }
     }
 
     private void persistJWTID(final String jti, long expiryTime, long issuedTime, int tenantId)
@@ -668,18 +655,21 @@ public class JWTValidator {
             try {
                 SignedJWT cachedJWT = entry.getJwt();
                 long cachedJWTExpiryTimeMillis = cachedJWT.getJWTClaimsSet().getExpirationTime().getTime();
-                if (checkJTIValidityPeriod(jti, cachedJWTExpiryTimeMillis, currentTimeInMillis, timeStampSkewMillis)) {
-                    // Update the cache with the new JWT for the same JTI.
-                    JWTCacheKey jwtCacheKey;
-                    if (Util.isTenantIdColumnAvailableInIdnOidcAuth()) {
-                        jwtCacheKey = new JWTCacheKey(jti, tenantId);
-                    } else {
-                        jwtCacheKey = new JWTCacheKey(jti);
+                // Token reuse is allowed. Here we are logging whether the token is reused within the allowed expiry time.
+                if (currentTimeInMillis + timeStampSkewMillis < cachedJWTExpiryTimeMillis) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("JWT Token with jti: " + jti + "has been reused with in the allowed expiry time: " +
+                                cachedJWTExpiryTimeMillis);
                     }
-                    jwtCache.addToCache(jwtCacheKey, new JWTCacheEntry(signedJWT));
-                } else {
-                    return false;
                 }
+                // Update the cache with the new JWT for the same JTI.
+                JWTCacheKey jwtCacheKey;
+                if (Util.isTenantIdColumnAvailableInIdnOidcAuth()) {
+                    jwtCacheKey = new JWTCacheKey(jti, tenantId);
+                } else {
+                    jwtCacheKey = new JWTCacheKey(jti);
+                }
+                jwtCache.addToCache(jwtCacheKey, new JWTCacheEntry(signedJWT));
             } catch (ParseException e) {
                 if (log.isDebugEnabled()) {
                     log.debug("Unable to parse the cached jwt assertion : " + entry.getEncodedJWt());

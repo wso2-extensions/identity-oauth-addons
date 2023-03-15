@@ -132,9 +132,9 @@ public class JWTStorageManager {
                 rs = prepStmt.executeQuery();
                 while (rs.next()) {
                     int tenantID = rs.getInt(TENANT_ID);
-                    long exp = rs.getTime(EXP_TIME,
+                    long exp = rs.getTimestamp(EXP_TIME,
                             Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC))).getTime();
-                    long created = rs.getTime(TIME_CREATED,
+                    long created = rs.getTimestamp(TIME_CREATED,
                             Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC))).getTime();
                     JWTEntries.add(new JWTEntry(exp, created, tenantID));
                 }
