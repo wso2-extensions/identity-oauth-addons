@@ -133,7 +133,7 @@
                             version="${org.wso2.carbon.database.utils.version.range}",
                             org.apache.axiom.om.*; version="${axiom.osgi.version.range}",
                             org.wso2.carbon.idp.mgt;
-                            version="${carbon.identity.framework.imp.pkg.version.range}",
+                            version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.context.*; version="${carbon.kernel.imp.pkg.version.range}",
                             net.minidev.json.*; version="${net.minidev.json.imp.pkg.version.range}"
                         </Import-Package>
