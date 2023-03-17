@@ -393,8 +393,6 @@
     <properties>
 
         <carbon.identity.version>5.20.322</carbon.identity.version>
-        <carbon.identity.framework.imp.pkg.version.range>[5.17.5, 6.0.0)
-        </carbon.identity.framework.imp.pkg.version.range>
         <identity.inbound.auth.oauth.version>6.7.70</identity.inbound.auth.oauth.version>
         <org.wso2.carbon.database.utils.version>2.0.7</org.wso2.carbon.database.utils.version>
         <org.wso2.carbon.database.utils.version.range>[2.0.0,2.2.0)</org.wso2.carbon.database.utils.version.range>
@@ -426,7 +424,7 @@
         <apache.felix.scr.ds.annotations.version>1.2.4</apache.felix.scr.ds.annotations.version>
         <equinox.osgi.services.version>3.5.100.v20160504-1419</equinox.osgi.services.version>
 
-        <carbon.identity.package.import.version.range>[5.14.0, 6.0.0)</carbon.identity.package.import.version.range>
+        <carbon.identity.package.import.version.range>[5.14.0, 7.0.0)</carbon.identity.package.import.version.range>
         <org.apache.commons.codec.package.import.version.range>[1.10.0,2)
         </org.apache.commons.codec.package.import.version.range>
         <org.apache.commons.io.package.import.version.range>[2.4.0,3)
