@@ -217,7 +217,8 @@
                             org.osgi.framework.*,
                             org.apache.oltu.oauth2.common.validators; version="${oltu.package.import.version.range}",
                             org.apache.oltu.oauth2.common; version="${oltu.package.import.version.range}",
-                            org.wso2.carbon.identity.application.authentication.framework.*,
+                            org.wso2.carbon.identity.application.authentication.framework.*;
+                            version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.utils.*; version="${carbon.kernel.package.import.version.range}",
                             com.nimbusds.jose.*; version="${nimbusds.osgi.version.range}",
                             com.nimbusds.jwt; version="${nimbusds.osgi.version.range}",
