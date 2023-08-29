@@ -20,7 +20,6 @@ package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt;
 
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
@@ -232,6 +231,14 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
                 String registeredSigningAlgorithm = getRegisteredSigningAlgorithm(getClientId(request, bodyParameters,
                         oAuthClientAuthnContext));
                 if (registeredSigningAlgorithm.equals(Constants.NOT_APPLICABLE)) {
+                    return false;
+                }
+                if (!(Constants.ALG_ES256.equals(requestSigningAlgorithm) ||
+                        Constants.ALG_PS256.equals(requestSigningAlgorithm))) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("FAPI unsupported signing algorithm " + requestSigningAlgorithm + " is used to " +
+                                "sign the JWT");
+                    }
                     return false;
                 }
                 if (!(isNotEmpty(requestSigningAlgorithm) &&

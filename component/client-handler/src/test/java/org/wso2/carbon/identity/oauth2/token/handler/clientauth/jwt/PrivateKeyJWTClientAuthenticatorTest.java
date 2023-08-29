@@ -109,11 +109,11 @@ public class PrivateKeyJWTClientAuthenticatorTest extends PowerMockTestCase {
     }
 
     @Test
-    public void testIsRegisteredSignatureAlgorithm() throws IdentityOAuth2Exception {
+    public void testIsValidRegisteredSignatureAlgorithm() throws IdentityOAuth2Exception {
         Map<String, List> bodyContent = new HashMap<>();
         List<String> assertion = new ArrayList<>();
         List<String> assertionType = new ArrayList<>();
-        assertion.add(buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3000", AUDIENCE, "RSA265", key1, 0));
+        assertion.add(buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3000", AUDIENCE, "PS256", key1, 0));
         assertionType.add(OAUTH_JWT_BEARER_GRANT_TYPE);
         bodyContent.put(OAUTH_JWT_ASSERTION, assertion);
 
@@ -123,7 +123,7 @@ public class PrivateKeyJWTClientAuthenticatorTest extends PowerMockTestCase {
         ServiceProvider serviceProvider = new ServiceProvider();
         ServiceProviderProperty signingAlgSpProperty = new ServiceProviderProperty();
         signingAlgSpProperty.setName(Constants.TOKEN_ENDPOINT_AUTH_SIGNING_ALG);
-        signingAlgSpProperty.setValue("RS256");
+        signingAlgSpProperty.setValue("PS256");
         ServiceProviderProperty fapiAppSpProperty = new ServiceProviderProperty();
         fapiAppSpProperty.setName("IsFAPIApp");
         fapiAppSpProperty.setValue("true");

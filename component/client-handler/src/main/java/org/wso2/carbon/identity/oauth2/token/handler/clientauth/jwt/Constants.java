@@ -42,6 +42,8 @@ public class Constants {
     public static final String JWKS_URI = "jwksURI";
     public static final String NOT_APPLICABLE = "N/A";
     public static final String TOKEN_ENDPOINT_AUTH_SIGNING_ALG = "token_endpoint_auth_signing_alg";
+    public static final String ALG_ES256 = "ES256";
+    public static final String ALG_PS256 = "PS256";
 
     //query keys
     public static final String GET_JWT_ID = "GET_JWT_ID";

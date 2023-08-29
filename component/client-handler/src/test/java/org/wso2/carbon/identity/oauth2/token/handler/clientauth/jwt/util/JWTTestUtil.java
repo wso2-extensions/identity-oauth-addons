@@ -19,10 +19,12 @@
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util;
 
 import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.crypto.RSASSASigner;
+import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.PlainJWT;
 import com.nimbusds.jwt.SignedJWT;
@@ -124,6 +126,8 @@ public class JWTTestUtil {
         JWTClaimsSet jwtClaimsSet = jwtClaimsSetBuilder.build();
         if (JWSAlgorithm.NONE.getName().equals(algorythm)) {
             return new PlainJWT(jwtClaimsSet).serialize();
+        } else if (JWSAlgorithm.PS256.getName().equals(algorythm)) {
+            return signJWTWithPS256(jwtClaimsSet, privateKey);
         }
 
         return signJWTWithRSA(jwtClaimsSet, privateKey);
@@ -207,6 +211,32 @@ public class JWTTestUtil {
         try {
             JWSSigner signer = new RSASSASigner((RSAPrivateKey) privateKey);
             SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.RS256), jwtClaimsSet);
+            signedJWT.sign(signer);
+            return signedJWT.serialize();
+        } catch (JOSEException e) {
+            throw new IdentityOAuth2Exception("Error occurred while signing JWT", e);
+        }
+    }
+
+    /**
+     * sign JWT token from PS256 algorithm
+     *
+     * @param jwtClaimsSet contains JWT body
+     * @param privateKey
+     * @return signed JWT token
+     * @throws IdentityOAuth2Exception
+     */
+    public static String signJWTWithPS256(JWTClaimsSet jwtClaimsSet, Key privateKey)
+            throws IdentityOAuth2Exception {
+
+        try {
+            JWSSigner signer = new RSASSASigner((RSAPrivateKey) privateKey);
+            JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.PS256)
+                    .keyID("sample_kid_value")
+                    .type(JOSEObjectType.JWT)
+                    .build();
+            SignedJWT signedJWT = new SignedJWT(header, jwtClaimsSet);
+            signer.getJCAContext().setProvider(BouncyCastleProviderSingleton.getInstance());
             signedJWT.sign(signer);
             return signedJWT.serialize();
         } catch (JOSEException e) {
