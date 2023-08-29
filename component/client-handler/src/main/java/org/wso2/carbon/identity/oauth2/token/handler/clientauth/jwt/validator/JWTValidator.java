@@ -64,6 +64,7 @@ import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -154,7 +155,15 @@ public class JWTValidator {
             }
 
             // Get audience.
-            String validAud = getValidAudience(tenantDomain);
+            String tokenEndpoint = OAuth2Util.OAuthURL.getOAuth2TokenEPUrl();
+            String issuer = OAuth2Util.getIDTokenIssuer();
+            //  A list of valid audiences (issuer identifier, token endpoint URL or pushed authorization request
+            //  endpoint URL) should be supported for PAR and not just a single valid audience.
+            List<String> acceptedAudienceList = new ArrayList<>();
+            acceptedAudienceList.add(tokenEndpoint);
+            acceptedAudienceList.add(issuer);
+            acceptedAudienceList.add(getValidAudience(tenantDomain));
+
             long expTime = 0;
             long issuedTime = 0;
             if (expirationTime != null) {
@@ -169,7 +178,7 @@ public class JWTValidator {
                     .getPrivateKeyJWTClientAuthenticationConfigurationByTenantDomain(tenantDomain).isEnableTokenReuse();
 
             //Validate signature validation, audience, nbf,exp time, jti.
-            if (!validateAudience(validAud, audience)
+            if (!validateAudience(acceptedAudienceList, audience)
                     || !validateJWTWithExpTime(expirationTime, currentTimeInMillis, timeStampSkewMillis)
                     || !validateNotBeforeClaim(currentTimeInMillis, timeStampSkewMillis, nbf)
                     || !validateAgeOfTheToken(issuedAtTime, currentTimeInMillis, timeStampSkewMillis)
@@ -239,15 +248,15 @@ public class JWTValidator {
 
     // "The Audience SHOULD be the URL of the Authorization Server's Token Endpoint", if a valid audience is not
     // specified.
-    private boolean validateAudience(String expectedAudience, List<String> audience) throws OAuthClientAuthnException {
+    private boolean validateAudience(List<String> expectedAudiences, List<String> audience) throws OAuthClientAuthnException {
 
         for (String aud : audience) {
-            if (StringUtils.equals(expectedAudience, aud)) {
+            if (expectedAudiences.contains(aud)) {
                 return true;
             }
         }
         if (log.isDebugEnabled()) {
-            log.debug("None of the audience values matched the tokenEndpoint Alias :" + expectedAudience);
+            log.debug("None of the audience values matched the tokenEndpoint Alias :" + expectedAudiences);
         }
         throw new OAuthClientAuthnException("Failed to match audience values.", OAuth2ErrorCodes.INVALID_REQUEST);
     }
