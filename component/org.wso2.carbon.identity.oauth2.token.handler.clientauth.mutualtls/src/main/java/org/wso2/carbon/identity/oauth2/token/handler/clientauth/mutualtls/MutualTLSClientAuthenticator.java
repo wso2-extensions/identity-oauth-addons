@@ -52,6 +52,7 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -64,6 +65,8 @@ import java.util.Optional;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils.MutualTLSUtil.JAVAX_SERVLET_REQUEST_CERTIFICATE;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils.MutualTLSUtil.isJwksUriConfigured;
 import static org.wso2.carbon.identity.oauth2.util.OAuth2Util.getServiceProvider;
+import static org.apache.commons.lang.StringUtils.isNotEmpty;
+import static org.apache.commons.lang.StringUtils.isEmpty;
 
 /**
  * This class is responsible for authenticating OAuth clients with Mutual TLS. The client will present
@@ -177,7 +180,16 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
                                    OAuthClientAuthnContext context) {
 
         String headerName = IdentityUtil.getProperty(CommonConstants.MTLS_AUTH_HEADER);
-        if (clientIdExistsAsParam(bodyParams)) {
+        if (clientIdExistsAsParam(bodyParams) || clientIdExistsAsHeader(request)) {
+            try {
+                if (!isMTLSAuthentication(request, bodyParams)) {
+                    return false;
+                }
+            } catch (OAuthClientAuthnException e) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Mutual TLS authenticator cannot handle this request.", e);
+                }
+            }
             if (validCertExistsAsAttribute(request)) {
                 if (log.isDebugEnabled()) {
                     log.debug("A valid certificate was found in the request attribute hence returning true.");
@@ -458,6 +470,62 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
     public String getName() {
 
         return this.getClass().getSimpleName();
+    }
+
+    /**
+     * Validate whether the request follows MTLS client authentication.
+     *
+     * @param request         Http servlet request.
+     * @param contentParam    Map of request body params.
+     * @return Whether the request follows MTLS client authentication.
+     * @throws OAuthClientAuthnException
+     */
+    private boolean isMTLSAuthentication(HttpServletRequest request, Map<String, List> contentParam)
+            throws OAuthClientAuthnException {
+
+        String mtlsAuthHeader = Optional.ofNullable(IdentityUtil.getProperty(CommonConstants.MTLS_AUTH_HEADER))
+                .orElse("CONFIG_NOT_FOUND");
+
+        if (request instanceof HttpServletRequest) {
+            String oauthClientID =  request.getParameter(OAuth.OAUTH_CLIENT_ID);
+            if (isEmpty(oauthClientID)) {
+                oauthClientID = (String) contentParam.get(OAuth.OAUTH_CLIENT_ID).get(0);
+            }
+            try {
+                String oauthClientSecret = request.getParameter(OAuth.OAUTH_CLIENT_SECRET);
+                String oauthJWTAssertion = request.getParameter(CommonConstants.OAUTH_JWT_ASSERTION);
+                String oauthJWTAssertionType = request.getParameter(CommonConstants.OAUTH_JWT_ASSERTION_TYPE);
+                String authorizationHeader = request.getHeader(CommonConstants.AUTHORIZATION_HEADER);
+                String x509Certificate = request.getHeader(mtlsAuthHeader);
+                if (isEmpty(x509Certificate)) {
+                    Certificate certificate = (Certificate) request.getAttribute(mtlsAuthHeader);
+                    if (certificate != null) {
+                        x509Certificate = IdentityUtil.convertCertificateToPEM(certificate);
+                    }
+                }
+                return (isNotEmpty(oauthClientID) && isEmpty(oauthClientSecret) && isEmpty(oauthJWTAssertion) &&
+                        isEmpty(oauthJWTAssertionType) && isEmpty(authorizationHeader) && x509Certificate != null &&
+                        parseCertificate(x509Certificate) != null);
+            } catch (CertificateException e) {
+                throw new OAuthClientAuthnException("Error occurred while parsing the certificate",
+                        OAuth2ErrorCodes.INVALID_REQUEST);
+            }
+        } else {
+            throw new OAuthClientAuthnException("Error occurred during request validation, passed request is not a " +
+                    "HttpServletRequest", OAuth2ErrorCodes.INVALID_REQUEST);
+        }
+    }
+
+    /**
+     * Check whether the Client ID is included in the request headers.
+     *
+     * @param request     Http servlet request.
+     * @return Whether the Client ID is included in the request headers.
+     */
+    private boolean clientIdExistsAsHeader(HttpServletRequest request) {
+
+        String oauthClientID =  request.getParameter(OAuth.OAUTH_CLIENT_ID);
+        return (isNotEmpty(oauthClientID));
     }
 }
 
