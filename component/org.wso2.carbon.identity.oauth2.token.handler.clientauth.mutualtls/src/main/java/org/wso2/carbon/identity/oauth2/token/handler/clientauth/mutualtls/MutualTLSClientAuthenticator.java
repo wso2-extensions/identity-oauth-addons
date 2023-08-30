@@ -187,8 +187,9 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
                 }
             } catch (OAuthClientAuthnException e) {
                 if (log.isDebugEnabled()) {
-                    log.debug("Mutual TLS authenticator cannot handle this request.", e);
+                    log.debug("Error occurred while processing the request.", e);
                 }
+                return false;
             }
             if (validCertExistsAsAttribute(request)) {
                 if (log.isDebugEnabled()) {
@@ -486,33 +487,28 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
         String mtlsAuthHeader = Optional.ofNullable(IdentityUtil.getProperty(CommonConstants.MTLS_AUTH_HEADER))
                 .orElse("CONFIG_NOT_FOUND");
 
-        if (request instanceof HttpServletRequest) {
-            String oauthClientID =  request.getParameter(OAuth.OAUTH_CLIENT_ID);
-            if (isEmpty(oauthClientID)) {
-                oauthClientID = (String) contentParam.get(OAuth.OAUTH_CLIENT_ID).get(0);
-            }
-            try {
-                String oauthClientSecret = request.getParameter(OAuth.OAUTH_CLIENT_SECRET);
-                String oauthJWTAssertion = request.getParameter(CommonConstants.OAUTH_JWT_ASSERTION);
-                String oauthJWTAssertionType = request.getParameter(CommonConstants.OAUTH_JWT_ASSERTION_TYPE);
-                String authorizationHeader = request.getHeader(CommonConstants.AUTHORIZATION_HEADER);
-                String x509Certificate = request.getHeader(mtlsAuthHeader);
-                if (isEmpty(x509Certificate)) {
-                    Certificate certificate = (Certificate) request.getAttribute(mtlsAuthHeader);
-                    if (certificate != null) {
-                        x509Certificate = IdentityUtil.convertCertificateToPEM(certificate);
-                    }
+        String oauthClientID =  request.getParameter(OAuth.OAUTH_CLIENT_ID);
+        if (isEmpty(oauthClientID)) {
+            oauthClientID = (String) contentParam.get(OAuth.OAUTH_CLIENT_ID).get(0);
+        }
+        try {
+            String oauthClientSecret = request.getParameter(OAuth.OAUTH_CLIENT_SECRET);
+            String oauthJWTAssertion = request.getParameter(CommonConstants.OAUTH_JWT_ASSERTION);
+            String oauthJWTAssertionType = request.getParameter(CommonConstants.OAUTH_JWT_ASSERTION_TYPE);
+            String authorizationHeader = request.getHeader(CommonConstants.AUTHORIZATION_HEADER);
+            String x509Certificate = request.getHeader(mtlsAuthHeader);
+            if (isEmpty(x509Certificate)) {
+                Certificate certificate = (Certificate) request.getAttribute(mtlsAuthHeader);
+                if (certificate != null) {
+                    x509Certificate = IdentityUtil.convertCertificateToPEM(certificate);
                 }
-                return (isNotEmpty(oauthClientID) && isEmpty(oauthClientSecret) && isEmpty(oauthJWTAssertion) &&
-                        isEmpty(oauthJWTAssertionType) && isEmpty(authorizationHeader) && x509Certificate != null &&
-                        parseCertificate(x509Certificate) != null);
-            } catch (CertificateException e) {
-                throw new OAuthClientAuthnException("Error occurred while parsing the certificate",
-                        OAuth2ErrorCodes.INVALID_REQUEST);
             }
-        } else {
-            throw new OAuthClientAuthnException("Error occurred during request validation, passed request is not a " +
-                    "HttpServletRequest", OAuth2ErrorCodes.INVALID_REQUEST);
+            return (isNotEmpty(oauthClientID) && isEmpty(oauthClientSecret) && isEmpty(oauthJWTAssertion) &&
+                    isEmpty(oauthJWTAssertionType) && isEmpty(authorizationHeader) && x509Certificate != null &&
+                    parseCertificate(x509Certificate) != null);
+        } catch (CertificateException e) {
+            throw new OAuthClientAuthnException("Error occurred while parsing the certificate",
+                    OAuth2ErrorCodes.INVALID_REQUEST);
         }
     }
 
