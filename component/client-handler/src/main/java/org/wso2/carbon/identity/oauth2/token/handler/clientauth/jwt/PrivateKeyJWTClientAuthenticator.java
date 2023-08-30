@@ -224,32 +224,30 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
                                                   OAuthClientAuthnContext oAuthClientAuthnContext)
             throws OAuthClientAuthnException{
 
-        if (request instanceof HttpServletRequest) {
-            String signedObject = request.getParameter(OAUTH_JWT_ASSERTION);
-            if (isNotEmpty(signedObject)) {
-                String requestSigningAlgorithm = getRequestSigningAlgorithm(signedObject);
-                String registeredSigningAlgorithm = getRegisteredSigningAlgorithm(getClientId(request, bodyParameters,
-                        oAuthClientAuthnContext));
-                if (registeredSigningAlgorithm.equals(Constants.NOT_APPLICABLE)) {
-                    return false;
+        String signedObject = request.getParameter(OAUTH_JWT_ASSERTION);
+        if (isNotEmpty(signedObject)) {
+            String requestSigningAlgorithm = getRequestSigningAlgorithm(signedObject);
+            String registeredSigningAlgorithm = getRegisteredSigningAlgorithm(getClientId(request, bodyParameters,
+                    oAuthClientAuthnContext));
+            if (registeredSigningAlgorithm.equals(Constants.NOT_APPLICABLE)) {
+                return false;
+            }
+            if (!(Constants.ALG_ES256.equals(requestSigningAlgorithm) ||
+                    Constants.ALG_PS256.equals(requestSigningAlgorithm))) {
+                if (log.isDebugEnabled()) {
+                    log.debug("FAPI unsupported signing algorithm " + requestSigningAlgorithm + " is used to " +
+                            "sign the JWT");
                 }
-                if (!(Constants.ALG_ES256.equals(requestSigningAlgorithm) ||
-                        Constants.ALG_PS256.equals(requestSigningAlgorithm))) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("FAPI unsupported signing algorithm " + requestSigningAlgorithm + " is used to " +
-                                "sign the JWT");
-                    }
-                    return false;
+                return false;
+            }
+            if (!(isNotEmpty(requestSigningAlgorithm) &&
+                    requestSigningAlgorithm.equals(registeredSigningAlgorithm))) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Registered algorithm does not match with the token signed algorithm");
                 }
-                if (!(isNotEmpty(requestSigningAlgorithm) &&
-                        requestSigningAlgorithm.equals(registeredSigningAlgorithm))) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Registered algorithm does not match with the token signed algorithm");
-                    }
-                    return false;
-                } else {
-                    return true;
-                }
+                return false;
+            } else {
+                return true;
             }
         }
         return false;
