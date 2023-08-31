@@ -44,6 +44,7 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.OAUTH_JWT_ASSERTION;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.OAUTH_JWT_ASSERTION_TYPE;
@@ -110,30 +111,54 @@ public class PrivateKeyJWTClientAuthenticatorTest extends PowerMockTestCase {
 
     @Test
     public void testIsValidRegisteredSignatureAlgorithm() throws IdentityOAuth2Exception {
+
+        Map<String, List> bodyContent = getBodyContent();
+        ServiceProvider serviceProvider = getServiceProvider("PS256");
+        HttpServletRequest httpServletRequest = PowerMockito.mock(HttpServletRequest.class);
+        PowerMockito.when(httpServletRequest.getParameter(OAUTH_JWT_ASSERTION))
+                .thenReturn((String) bodyContent.get(OAUTH_JWT_ASSERTION).get(0));
+        PowerMockito.mockStatic(OAuth2Util.class);
+        PowerMockito.when(OAuth2Util.getServiceProvider(TEST_CLIENT_ID_1)).thenReturn(serviceProvider);
+        boolean isRegistered = privateKeyJWTClientAuthenticator.isRegisteredSignatureAlgorithm(httpServletRequest,
+                bodyContent, oAuthClientAuthnContext);
+        assertTrue(isRegistered, "A valid request refused to authenticate.");
+    }
+
+    @Test
+    public void testAuthenticateClient() throws IdentityOAuth2Exception {
+
+        Map<String, List> bodyContent = getBodyContent();
+        ServiceProvider serviceProvider = getServiceProvider("RS256");
+        HttpServletRequest httpServletRequest = PowerMockito.mock(HttpServletRequest.class);
+        PowerMockito.when(httpServletRequest.getParameter(OAUTH_JWT_ASSERTION))
+                .thenReturn((String) bodyContent.get(OAUTH_JWT_ASSERTION).get(0));
+        PowerMockito.mockStatic(OAuth2Util.class);
+        PowerMockito.when(OAuth2Util.getServiceProvider(TEST_CLIENT_ID_1)).thenReturn(serviceProvider);
+        boolean isRegistered = privateKeyJWTClientAuthenticator.authenticateClient(httpServletRequest,
+                bodyContent, oAuthClientAuthnContext);
+        assertFalse(isRegistered, "An invalid request but got authenticated.");
+    }
+
+    private Map<String, List> getBodyContent() throws IdentityOAuth2Exception {
         Map<String, List> bodyContent = new HashMap<>();
         List<String> assertion = new ArrayList<>();
         List<String> assertionType = new ArrayList<>();
         assertion.add(buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3000", AUDIENCE, "PS256", key1, 0));
         assertionType.add(OAUTH_JWT_BEARER_GRANT_TYPE);
         bodyContent.put(OAUTH_JWT_ASSERTION, assertion);
-
         bodyContent.put(OAUTH_JWT_ASSERTION_TYPE, assertionType);
-        HttpServletRequest httpServletRequest = PowerMockito.mock(HttpServletRequest.class);
-        PowerMockito.when(httpServletRequest.getParameter(OAUTH_JWT_ASSERTION)).thenReturn(assertion.get(0));
+        return bodyContent;
+    }
+
+    private ServiceProvider getServiceProvider(String alg) {
         ServiceProvider serviceProvider = new ServiceProvider();
         ServiceProviderProperty signingAlgSpProperty = new ServiceProviderProperty();
         signingAlgSpProperty.setName(Constants.TOKEN_ENDPOINT_AUTH_SIGNING_ALG);
-        signingAlgSpProperty.setValue("PS256");
+        signingAlgSpProperty.setValue(alg);
         ServiceProviderProperty fapiAppSpProperty = new ServiceProviderProperty();
         fapiAppSpProperty.setName("IsFAPIApp");
         fapiAppSpProperty.setValue("true");
         serviceProvider.setSpProperties(new ServiceProviderProperty[]{signingAlgSpProperty, fapiAppSpProperty});
-
-        PowerMockito.mockStatic(OAuth2Util.class);
-        PowerMockito.when(OAuth2Util.getServiceProvider(TEST_CLIENT_ID_1)).thenReturn(serviceProvider);
-
-        boolean isRegistered = privateKeyJWTClientAuthenticator.isRegisteredSignatureAlgorithm(httpServletRequest,
-                bodyContent, oAuthClientAuthnContext);
-        assertTrue(isRegistered, "A valid request refused to authenticate.");
+        return serviceProvider;
     }
 }
