@@ -113,11 +113,16 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
         //   For FAPI compliant applications the allowed JWT signing algorithm should be registered at the application
         //   creation and only PS256 and ES256 algorithms are allowed. Therefore these will be checked against the
         //   signing algorithm used to sign the JWT in the request.
-        if (Boolean.parseBoolean(isFapiApplication(getClientId(httpServletRequest, bodyParameters,
-                oAuthClientAuthnContext)))) {
-            if (!isRegisteredSignatureAlgorithm(httpServletRequest, bodyParameters, oAuthClientAuthnContext)) {
-                return false;
+        try {
+            if (OAuth2Util.isFapiConformantApp(getClientId(httpServletRequest, bodyParameters,
+                    oAuthClientAuthnContext))) {
+                if (!isRegisteredSignatureAlgorithm(httpServletRequest, bodyParameters, oAuthClientAuthnContext)) {
+                    return false;
+                }
             }
+        } catch (IdentityOAuth2Exception e) {
+            throw new OAuthClientAuthnException("Error occurred while retrieving service provider details.",
+                    OAuth2ErrorCodes.INVALID_REQUEST, e);
         }
         return jwtValidator.isValidAssertion(getSignedJWT(bodyParameters, oAuthClientAuthnContext));
     }
@@ -299,32 +304,5 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
             throw new OAuthClientAuthnException("Error occurred while parsing the signed assertion",
                     OAuth2ErrorCodes.INVALID_REQUEST, e);
         }
-    }
-
-    /**
-     * Check whether the application should support FAPI.
-     *
-     * @param clientId       Client ID of the application.
-     * @return Whether the application should support FAPI.
-     * @throws OAuthClientAuthnException
-     */
-    private String isFapiApplication(String clientId) throws OAuthClientAuthnException {
-
-        String isFapiApp = "IsFAPIApp";
-        try {
-            ServiceProvider serviceProvider = OAuth2Util.getServiceProvider(clientId);
-            if (isEmpty(serviceProvider.getCertificateContent())) {
-                ServiceProviderProperty[] serviceProviderProperties = serviceProvider.getSpProperties();
-                for (ServiceProviderProperty serviceProviderProperty : serviceProviderProperties) {
-                    if (isFapiApp.equals(serviceProviderProperty.getName())) {
-                        return serviceProviderProperty.getValue();
-                    }
-                }
-            }
-        } catch (IdentityOAuth2Exception e) {
-            throw new OAuthClientAuthnException("Error occurred while retrieving the service provider",
-                    OAuth2ErrorCodes.INVALID_REQUEST, e);
-        }
-        return null;
     }
 }

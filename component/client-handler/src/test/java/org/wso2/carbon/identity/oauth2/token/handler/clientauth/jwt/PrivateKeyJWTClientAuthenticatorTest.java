@@ -19,6 +19,7 @@
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt;
 
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.testng.PowerMockTestCase;
@@ -31,6 +32,7 @@ import org.wso2.carbon.identity.common.testng.WithAxisConfiguration;
 import org.wso2.carbon.identity.common.testng.WithCarbonHome;
 import org.wso2.carbon.identity.common.testng.WithH2Database;
 import org.wso2.carbon.identity.common.testng.WithKeyStore;
+import org.wso2.carbon.identity.oauth.common.OAuthConstants;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.bean.OAuthClientAuthnContext;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
@@ -119,6 +121,7 @@ public class PrivateKeyJWTClientAuthenticatorTest extends PowerMockTestCase {
                 .thenReturn((String) bodyContent.get(OAUTH_JWT_ASSERTION).get(0));
         PowerMockito.mockStatic(OAuth2Util.class);
         PowerMockito.when(OAuth2Util.getServiceProvider(TEST_CLIENT_ID_1)).thenReturn(serviceProvider);
+        PowerMockito.when(OAuth2Util.isFapiConformantApp(Mockito.anyString())).thenReturn(true);
         boolean isRegistered = privateKeyJWTClientAuthenticator.isRegisteredSignatureAlgorithm(httpServletRequest,
                 bodyContent, oAuthClientAuthnContext);
         assertTrue(isRegistered, "A valid request refused to authenticate.");
@@ -134,6 +137,7 @@ public class PrivateKeyJWTClientAuthenticatorTest extends PowerMockTestCase {
                 .thenReturn((String) bodyContent.get(OAUTH_JWT_ASSERTION).get(0));
         PowerMockito.mockStatic(OAuth2Util.class);
         PowerMockito.when(OAuth2Util.getServiceProvider(TEST_CLIENT_ID_1)).thenReturn(serviceProvider);
+        PowerMockito.when(OAuth2Util.isFapiConformantApp(Mockito.anyString())).thenReturn(true);
         boolean isRegistered = privateKeyJWTClientAuthenticator.authenticateClient(httpServletRequest,
                 bodyContent, oAuthClientAuthnContext);
         assertFalse(isRegistered, "An invalid request but got authenticated.");
@@ -156,7 +160,7 @@ public class PrivateKeyJWTClientAuthenticatorTest extends PowerMockTestCase {
         signingAlgSpProperty.setName(Constants.TOKEN_ENDPOINT_AUTH_SIGNING_ALG);
         signingAlgSpProperty.setValue(alg);
         ServiceProviderProperty fapiAppSpProperty = new ServiceProviderProperty();
-        fapiAppSpProperty.setName("IsFAPIApp");
+        fapiAppSpProperty.setName(OAuthConstants.IS_FAPI_CONFORMANT_APP);
         fapiAppSpProperty.setValue("true");
         serviceProvider.setSpProperties(new ServiceProviderProperty[]{signingAlgSpProperty, fapiAppSpProperty});
         return serviceProvider;
