@@ -110,7 +110,7 @@ public class MTLSTokenBindingRefreshGrantHandlerTest extends PowerMockTestCase {
                         Matchers.any(OAuthAuthzReqMessageContext.class))).thenReturn(false);
         OAuthTokenReqMessageContext oAuthTokenReqMessageContext =
                 new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTOObject());
-        oAuthTokenReqMessageContext.setScope(new String[]{"openid"});
+        oAuthTokenReqMessageContext.getOauth2AccessTokenReqDTO().setScope(new String[]{"openid"});
         boolean validateScope =
                 mtlsTokenBindingRefreshGrantHandler.validateScope(oAuthTokenReqMessageContext);
         assertFalse(validateScope);
