@@ -271,12 +271,10 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
     private String getRegisteredSigningAlgorithm(String clientId) throws OAuthClientAuthnException {
         try {
             ServiceProvider serviceProvider = OAuth2Util.getServiceProvider(clientId);
-            if (!(isNotEmpty(serviceProvider.getCertificateContent()))) {
-                ServiceProviderProperty[] serviceProviderProperties = serviceProvider.getSpProperties();
-                for (ServiceProviderProperty serviceProviderProperty : serviceProviderProperties) {
-                    if (Constants.TOKEN_ENDPOINT_AUTH_SIGNING_ALG.equals(serviceProviderProperty.getName())) {
-                        return serviceProviderProperty.getValue();
-                    }
+            ServiceProviderProperty[] serviceProviderProperties = serviceProvider.getSpProperties();
+            for (ServiceProviderProperty serviceProviderProperty : serviceProviderProperties) {
+                if (Constants.TOKEN_ENDPOINT_AUTH_SIGNING_ALG.equals(serviceProviderProperty.getName())) {
+                    return serviceProviderProperty.getValue();
                 }
             }
         } catch (IdentityOAuth2Exception e) {
