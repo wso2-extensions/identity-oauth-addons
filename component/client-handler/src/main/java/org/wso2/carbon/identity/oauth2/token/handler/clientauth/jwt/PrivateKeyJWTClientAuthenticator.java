@@ -246,10 +246,7 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
             //   Mandating PS256 and ES256 as the JWT signing algorithms
             if (!(Constants.ALG_ES256.equals(requestSigningAlgorithm) ||
                     Constants.ALG_PS256.equals(requestSigningAlgorithm))) {
-                if (log.isDebugEnabled()) {
-                    log.debug("FAPI unsupported signing algorithm " + requestSigningAlgorithm + " is used to " +
-                            "sign the JWT");
-                }
+                log.error("FAPI unsupported signing algorithm " + requestSigningAlgorithm + " is used to sign the JWT");
                 return false;
             }
             if (isNotBlank(requestSigningAlgorithm) && requestSigningAlgorithm.equals(registeredSigningAlgorithm)) {
