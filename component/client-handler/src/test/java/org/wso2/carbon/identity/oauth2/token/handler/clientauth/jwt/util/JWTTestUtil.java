@@ -219,12 +219,12 @@ public class JWTTestUtil {
     }
 
     /**
-     * sign JWT token from PS256 algorithm
+     * Sign JWT using the PS256 algorithm.
      *
-     * @param jwtClaimsSet contains JWT body
-     * @param privateKey
-     * @return signed JWT token
-     * @throws IdentityOAuth2Exception
+     * @param jwtClaimsSet    Set of claims to be included in the JWT.
+     * @param privateKey      Private key used to sign the JWT.
+     * @return Signed JWT value.
+     * @throws IdentityOAuth2Exception An exception is thrown if an error occurs while signing the JWT.
      */
     public static String signJWTWithPS256(JWTClaimsSet jwtClaimsSet, Key privateKey)
             throws IdentityOAuth2Exception {

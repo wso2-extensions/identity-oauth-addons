@@ -18,7 +18,6 @@
 
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.handlers;
 
-import org.mockito.Matchers;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.testng.PowerMockTestCase;
@@ -27,7 +26,6 @@ import org.testng.annotations.Test;
 import org.wso2.carbon.identity.common.testng.WithCarbonHome;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
-import org.wso2.carbon.identity.oauth2.authz.OAuthAuthzReqMessageContext;
 import org.wso2.carbon.identity.oauth2.bean.OAuthClientAuthnContext;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2AccessTokenReqDTO;
 import org.wso2.carbon.identity.oauth2.model.HttpRequestHeader;
@@ -104,10 +102,6 @@ public class MTLSTokenBindingRefreshGrantHandlerTest extends PowerMockTestCase {
         PowerMockito.when(IdentityUtil.getIdentityConfigDirPath()).thenReturn(System.
                 getProperty("user.dir") + "/src/test/resources/repository/conf/identity");
         mtlsTokenBindingRefreshGrantHandler = new MTLSTokenBindingRefreshGrantHandler();
-        mockStatic(Oauth2ScopeUtils.class);
-        PowerMockito.when(Oauth2ScopeUtils.validateByApplicationScopeValidator
-                (Matchers.any(OAuthTokenReqMessageContext.class),
-                        Matchers.any(OAuthAuthzReqMessageContext.class))).thenReturn(false);
         OAuthTokenReqMessageContext oAuthTokenReqMessageContext =
                 new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTOObject());
         oAuthTokenReqMessageContext.getOauth2AccessTokenReqDTO().setScope(new String[]{"openid"});

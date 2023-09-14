@@ -43,6 +43,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.apache.commons.lang.StringUtils.isNotEmpty;
+import static org.apache.commons.lang.StringUtils.isNotBlank;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.AUDIENCE_CLAIM;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.DEFAULT_ENABLE_JTI_CACHE;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.DEFAULT_AUDIENCE;
@@ -110,9 +111,9 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
     public boolean authenticateClient(HttpServletRequest httpServletRequest, Map<String, List> bodyParameters,
                                       OAuthClientAuthnContext oAuthClientAuthnContext) throws OAuthClientAuthnException {
 
-        //   For FAPI compliant applications the allowed JWT signing algorithm should be registered at the application
-        //   creation and only PS256 and ES256 algorithms are allowed. Therefore these will be checked against the
-        //   signing algorithm used to sign the JWT in the request.
+        /** For FAPI compliant applications the allowed JWT signing algorithm should be registered at the application
+        creation and only PS256 and ES256 algorithms are allowed. Therefore these will be checked against the
+        signing algorithm used to sign the JWT in the request. */
         try {
             if (OAuth2Util.isFapiConformantApp(getClientId(httpServletRequest, bodyParameters,
                     oAuthClientAuthnContext))) {
@@ -225,7 +226,7 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
      * @param bodyParameters          Map of request body params.
      * @param oAuthClientAuthnContext OAuthClientAuthnContext.
      * @return whether the request signing algorithm is registered for the application.
-     * @throws OAuthClientAuthnException
+     * @throws OAuthClientAuthnException OAuth Client Authentication Exception.
      */
     public boolean isRegisteredSignatureAlgorithm(HttpServletRequest request,
                                                   Map<String, List> bodyParameters,
@@ -233,13 +234,13 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
             throws OAuthClientAuthnException{
 
         String signedObject = request.getParameter(OAUTH_JWT_ASSERTION);
-        if (isNotEmpty(signedObject)) {
+        if (isNotBlank(signedObject)) {
             //   Obtain the signing algorithm used to sign the JWT in the request
             String requestSigningAlgorithm = getRequestSigningAlgorithm(signedObject);
             //   Obtain the signing algorithm registered for the application
             String registeredSigningAlgorithm = getRegisteredSigningAlgorithm(getClientId(request, bodyParameters,
                     oAuthClientAuthnContext));
-            if (registeredSigningAlgorithm.equals(Constants.NOT_APPLICABLE)) {
+            if (Constants.NOT_APPLICABLE.equals(registeredSigningAlgorithm)) {
                 return false;
             }
             //   Mandating PS256 and ES256 as the JWT signing algorithms
@@ -251,14 +252,13 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
                 }
                 return false;
             }
-            if (!(isNotEmpty(requestSigningAlgorithm) &&
-                    requestSigningAlgorithm.equals(registeredSigningAlgorithm))) {
+            if (isNotBlank(requestSigningAlgorithm) && requestSigningAlgorithm.equals(registeredSigningAlgorithm)) {
+                return true;
+            } else {
                 if (log.isDebugEnabled()) {
                     log.debug("Registered algorithm does not match with the token signed algorithm");
                 }
                 return false;
-            } else {
-                return true;
             }
         }
         return false;
@@ -269,7 +269,7 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
      *
      * @param clientId   Client ID of the application.
      * @return Registered signing algorithm for the application.
-     * @throws OAuthClientAuthnException
+     * @throws OAuthClientAuthnException OAuth Client Authentication Exception.
      */
     private String getRegisteredSigningAlgorithm(String clientId) throws OAuthClientAuthnException {
         try {
