@@ -154,14 +154,11 @@ public class JWTValidator {
                 return false;
             }
 
-            // Get audience.
-            String tokenEndpoint = OAuth2Util.OAuthURL.getOAuth2TokenEPUrl();
-            String issuer = OAuth2Util.getIDTokenIssuer();
             //  A list of valid audiences (issuer identifier, token endpoint URL or pushed authorization request
             //  endpoint URL) should be supported for PAR and not just a single valid audience.
             List<String> acceptedAudienceList = new ArrayList<>();
-            acceptedAudienceList.add(tokenEndpoint);
-            acceptedAudienceList.add(issuer);
+            acceptedAudienceList.add(OAuth2Util.OAuthURL.getOAuth2TokenEPUrl());
+            acceptedAudienceList.add(OAuth2Util.getIDTokenIssuer());
             acceptedAudienceList.add(getValidAudience(tenantDomain));
 
             long expTime = 0;
