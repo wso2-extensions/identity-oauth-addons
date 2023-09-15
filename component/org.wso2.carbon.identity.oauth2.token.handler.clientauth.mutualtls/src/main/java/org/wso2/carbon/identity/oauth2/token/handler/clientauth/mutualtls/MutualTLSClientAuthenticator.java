@@ -180,7 +180,7 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
                                    OAuthClientAuthnContext context) {
 
         String headerName = IdentityUtil.getProperty(CommonConstants.MTLS_AUTH_HEADER);
-        if (clientIdExistsAsParam(bodyParams) || clientIdExistsAsHeader(request)) {
+        if (clientIdExistsAsParam(bodyParams) || clientIdExistsAsParameter(request)) {
             try {
                 if (!isMTLSAuthentication(request, bodyParams)) {
                     return false;
@@ -513,12 +513,12 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
     }
 
     /**
-     * Check whether the Client ID is included in the request headers.
+     * Check whether the Client ID is included in the request parameters.
      *
      * @param request     Http servlet request.
-     * @return Whether the Client ID is included in the request headers.
+     * @return Whether the Client ID is included in the request parameters.
      */
-    private boolean clientIdExistsAsHeader(HttpServletRequest request) {
+    private boolean clientIdExistsAsParameter(HttpServletRequest request) {
 
         String oauthClientID =  request.getParameter(OAuth.OAUTH_CLIENT_ID);
         return (isNotEmpty(oauthClientID));
