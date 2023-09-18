@@ -22,6 +22,7 @@ package org.wso2.carbon.identity.oauth2.validators;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.testng.PowerMockObjectFactory;
+import org.powermock.modules.testng.PowerMockTestCase;
 import org.powermock.reflect.internal.WhiteboxImpl;
 import org.testng.IObjectFactory;
 import org.testng.annotations.BeforeClass;
@@ -33,7 +34,6 @@ import org.wso2.balana.utils.policy.PolicyBuilder;
 import org.wso2.balana.utils.policy.dto.RequestElementDTO;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
-import org.wso2.carbon.identity.application.common.cache.BaseCache;
 import org.wso2.carbon.identity.common.testng.WithCarbonHome;
 import org.wso2.carbon.identity.entitlement.EntitlementException;
 import org.wso2.carbon.identity.entitlement.EntitlementService;
@@ -53,7 +53,6 @@ import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 import org.wso2.carbon.identity.oauth2.validators.xacml.XACMLScopeValidator;
 import org.wso2.carbon.identity.oauth2.validators.xacml.constants.XACMLScopeValidatorConstants;
 import org.wso2.carbon.identity.oauth2.validators.xacml.internal.OAuthScopeValidatorDataHolder;
-import org.wso2.carbon.identity.testutil.IdentityBaseTest;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -71,7 +70,7 @@ import static org.testng.Assert.assertTrue;
         AuthorizationGrantCache.class})
 @PowerMockIgnore({"javax.xml.*"})
 @WithCarbonHome
-public class XACMLScopeValidatorTest extends IdentityBaseTest {
+public class XACMLScopeValidatorTest extends PowerMockTestCase {
 
     private static final String ADMIN_USER = "admin_user";
     private static final String APP_NAME = "SP_APP";
