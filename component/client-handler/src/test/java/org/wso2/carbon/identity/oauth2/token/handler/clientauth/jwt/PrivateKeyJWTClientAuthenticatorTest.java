@@ -116,9 +116,6 @@ public class PrivateKeyJWTClientAuthenticatorTest extends PowerMockTestCase {
 
         Map<String, List> bodyContent = getBodyContent();
         ServiceProvider serviceProvider = getServiceProvider("PS256");
-        HttpServletRequest httpServletRequest = PowerMockito.mock(HttpServletRequest.class);
-        PowerMockito.when(httpServletRequest.getParameter(OAUTH_JWT_ASSERTION))
-                .thenReturn((String) bodyContent.get(OAUTH_JWT_ASSERTION).get(0));
         PowerMockito.mockStatic(OAuth2Util.class);
         PowerMockito.when(OAuth2Util.getServiceProvider(TEST_CLIENT_ID_1)).thenReturn(serviceProvider);
         PowerMockito.when(OAuth2Util.isFapiConformantApp(Mockito.anyString())).thenReturn(true);
@@ -132,9 +129,6 @@ public class PrivateKeyJWTClientAuthenticatorTest extends PowerMockTestCase {
 
         Map<String, List> bodyContent = getBodyContent();
         ServiceProvider serviceProvider = getServiceProvider("RS256");
-        HttpServletRequest httpServletRequest = PowerMockito.mock(HttpServletRequest.class);
-        PowerMockito.when(httpServletRequest.getParameter(OAUTH_JWT_ASSERTION))
-                .thenReturn((String) bodyContent.get(OAUTH_JWT_ASSERTION).get(0));
         PowerMockito.mockStatic(OAuth2Util.class);
         PowerMockito.when(OAuth2Util.getServiceProvider(TEST_CLIENT_ID_1)).thenReturn(serviceProvider);
         PowerMockito.when(OAuth2Util.isFapiConformantApp(Mockito.anyString())).thenReturn(true);

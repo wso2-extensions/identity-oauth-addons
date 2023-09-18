@@ -233,7 +233,7 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
                                                   OAuthClientAuthnContext oAuthClientAuthnContext)
             throws OAuthClientAuthnException{
 
-        String signedObject = request.getParameter(OAUTH_JWT_ASSERTION);
+        String signedObject = getBodyParameters(bodyParameters).get(OAUTH_JWT_ASSERTION);
         if (isNotBlank(signedObject)) {
             //   Obtain the signing algorithm used to sign the JWT in the request
             String requestSigningAlgorithm = getRequestSigningAlgorithm(signedObject);
