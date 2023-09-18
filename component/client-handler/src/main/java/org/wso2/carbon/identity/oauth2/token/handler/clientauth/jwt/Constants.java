@@ -40,6 +40,8 @@ public class Constants {
     public static final String ISSUER_CLAIM = "iss";
     public static final String PRIVATE_KEY_JWT = "signedJWT";
     public static final String JWKS_URI = "jwksURI";
+    public static final String AUTHENTICATOR_TYPE_PARAM = "authenticatorType";
+    public static final String AUTHENTICATOR_TYPE_PK_JWT = "pkJWT";
 
     //query keys
     public static final String GET_JWT_ID = "GET_JWT_ID";

@@ -106,6 +106,7 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
     public boolean authenticateClient(HttpServletRequest httpServletRequest, Map<String, List> bodyParameters,
                                       OAuthClientAuthnContext oAuthClientAuthnContext) throws OAuthClientAuthnException {
 
+        oAuthClientAuthnContext.addParameter(Constants.AUTHENTICATOR_TYPE_PARAM, Constants.AUTHENTICATOR_TYPE_PK_JWT);
         return jwtValidator.isValidAssertion(getSignedJWT(bodyParameters, oAuthClientAuthnContext));
     }
 

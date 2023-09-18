@@ -49,6 +49,7 @@ import java.nio.charset.Charset;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -134,21 +135,6 @@ public class MutualTLSClientAuthenticatorTest extends PowerMockTestCase {
             "yEBIDgcpZrD8x/Z42al6T/6EANMpvu4Jopisg+uwwkEGSM1I/kjiW+YkWC4oTZ1jMZUWC" +
             "11WbcouLwjfaf6gt4zWitYCP0r0fLGk4bSJfUFsnJNu6vDhx60TbRhIh9P2jxkmgNYPuA" +
             "xFtF8v+h-----END CERTIFICATE-----";
-
-    private static String INVALID_CERT = "-----BEGIN CERTIFICATE-----MIID3" +
-            "TCCAsWgAwIBAgIUJQW8iwYsAbyjc/oHti8DPLJH5ZcwDQYJKoZIhvcNAQELBQAwfjELMA" +
-            "kGA1UEBhMCU0wxEDAOBgNVBAgMB1dlc3Rlcm4xEDAOBgNVBAcMB0NvbG9tYm8xDTALBgN" +
-            "VBAoMBFdTTzIxDDAKBgNVBAsMA0lBTTENMAsGA1UEAwwER2FnYTEfMB0GCSqGSIb3DQEJ" +
-            "ARYQZ2FuZ2FuaUB3c28yLmNvbTAeFw0yMDAzMjQxMjQyMDFaFw0zMDAzMjIxMjQyMDFaM" +
-            "H4xCzAJBgNVBAYTAlNMMRAwDgYDVQQIDAdXZXN0ZXJuMRAwDgYDVQQHDAdDb2xvbWJvMQ" +
-            "0wCwYDVQQKDARXU08yMQwwCgYDVQQLDANJQU0xDTALBgNVBAMMBEdhZ2ExHzAdBgkqhki" +
-            "G9w0BCQEWEGdhbmdhbmlAd3NvMi5jb20wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK" +
-            "AoIBAQC+reCEYOn2lnWgFsp0TF0R1wQiD9C/N+dnv4xCa0rFiu4njDzWR/8tYFl0koaxX" +
-            "oP0+oGnT07KlkA66q0ztwikLZXphLdCBbJ1hSmNvor48FuSb6DgqWixrUa2LHlpaaV7Rv" +
-            "yEBIDgcpZrD8x/Z42al6T/6EANMpvu4Jopisg+uwwkEGSM1I/kjiW+YkWC4oTZ1jMZUWC" +
-            "11WbcouLwjfaf6gt4zWitYCP0r0fLGk4bSJfUFsnJNu6vDhx60TbRhIh9P2jxkmgNYPuA" +
-            "xFtF8v+h-----END CERTIFICATE-----";
-
     private static String TEST_JSON_WITH_X5T ="{\n" +
             "  \"keys\" : [ {\n" +
             "    \"e\" : \"AQAB\",\n" +
@@ -350,11 +336,8 @@ public class MutualTLSClientAuthenticatorTest extends PowerMockTestCase {
             throws
             Exception {
 
-        mockStatic(IdentityUtil.class);
         HttpServletRequest httpServletRequest = PowerMockito.mock(HttpServletRequest.class);
-        when(IdentityUtil.getProperty(CommonConstants.MTLS_AUTH_HEADER)).thenReturn(JAVAX_SERVLET_REQUEST_CERTIFICATE);
         PowerMockito.when(httpServletRequest.getAttribute(JAVAX_SERVLET_REQUEST_CERTIFICATE)).thenReturn(certificate);
-        when(IdentityUtil.convertCertificateToPEM(certificate)).thenReturn(CERTIFICATE_CONTENT3);
         assertEquals(mutualTLSClientAuthenticator.canAuthenticate(httpServletRequest, bodyContent, new
                 OAuthClientAuthnContext()), canHandle, "Expected can authenticate evaluation not received");
     }
@@ -501,31 +484,18 @@ public class MutualTLSClientAuthenticatorTest extends PowerMockTestCase {
     }
 
     @Test
-    public void testCanAuthenticateWithInvalidCert() {
+    public void testCanAuthenticateWhenPKJWTAuthMethod () {
 
-        mockStatic(IdentityUtil.class);
+        HashMap<String, List> bodyContent = new HashMap<>();
+        bodyContent.put(OAuth.OAUTH_ASSERTION_TYPE, Arrays.asList(CommonConstants.OAUTH_JWT_BEARER_GRANT_TYPE));
+        bodyContent.put(OAuth.OAUTH_ASSERTION, Arrays.asList("Test_Assertion"));
+        bodyContent.put(OAuth.OAUTH_CLIENT_ID, Arrays.asList(CLIENT_ID));
+        OAuthClientAuthnContext oAuthClientAuthnContext = new OAuthClientAuthnContext();
+        oAuthClientAuthnContext.addParameter(CommonConstants.AUTHENTICATOR_TYPE_PARAM,
+                CommonConstants.AUTHENTICATOR_TYPE_MTLS);
         HttpServletRequest httpServletRequest = PowerMockito.mock(HttpServletRequest.class);
-        when(IdentityUtil.getProperty(CommonConstants.MTLS_AUTH_HEADER)).thenReturn("x-wso2-mtls-cert");
-        PowerMockito.when(httpServletRequest.getParameter(OAuth.OAUTH_CLIENT_ID)).thenReturn(CLIENT_ID);
-        PowerMockito.when(httpServletRequest.getHeader("x-wso2-mtls-cert")).thenReturn(INVALID_CERT);
-        assertFalse(mutualTLSClientAuthenticator.canAuthenticate(httpServletRequest, new HashMap<>(), new
-                OAuthClientAuthnContext()));
-    }
-
-    @Test(dataProvider = "testCanAuthenticateData")
-    public void testCanAuthenticateWithAssertion (X509Certificate certificate, HashMap<String, List> bodyContent,
-                                                  boolean canHandle) {
-
-        mockStatic(IdentityUtil.class);
-        HttpServletRequest httpServletRequest = PowerMockito.mock(HttpServletRequest.class);
-        when(IdentityUtil.getProperty(CommonConstants.MTLS_AUTH_HEADER)).thenReturn("x-wso2-mtls-cert");
-        PowerMockito.when(httpServletRequest.getAttribute("x-wso2-mtls-cert")).thenReturn(certificate);
-        PowerMockito.when(httpServletRequest.getParameter(CommonConstants.OAUTH_JWT_ASSERTION))
-                .thenReturn(CLIENT_ASSERTION);
-        PowerMockito.when(httpServletRequest.getParameter(CommonConstants.OAUTH_JWT_ASSERTION_TYPE))
-                .thenReturn(CommonConstants.OAUTH_JWT_BEARER_GRANT_TYPE);
-        assertFalse(mutualTLSClientAuthenticator.canAuthenticate(httpServletRequest, bodyContent, new
-                OAuthClientAuthnContext()));
+        assertFalse(mutualTLSClientAuthenticator.canAuthenticate(httpServletRequest, bodyContent,
+                oAuthClientAuthnContext));
     }
 }
 
