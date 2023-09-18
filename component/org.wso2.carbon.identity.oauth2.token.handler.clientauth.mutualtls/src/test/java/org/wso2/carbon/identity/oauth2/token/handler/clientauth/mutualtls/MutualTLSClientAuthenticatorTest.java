@@ -237,7 +237,6 @@ public class MutualTLSClientAuthenticatorTest extends PowerMockTestCase {
             + "    \"x5u\" : \"https://keystore.abc.org.lk/0015800001HQQrZAAX/CzUe1ecMKykHLhQAATzFBudOj0Y.pem\",\n"
             + "    \"x5t#S256\" : \"fMSq7nleARP8LlJGKDmYII1EjhGwBpW8BZapcCZNKSo=\"\n" + "  } ]\n" + "}";
 
-
     @DataProvider(name = "testAuthenticateClientWhenJWKSEndPointGiven")
     public Object[][] testAuthenticateClientWhenJWKSEndPointGiven() {
 
