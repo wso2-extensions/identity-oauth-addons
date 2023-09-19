@@ -22,6 +22,7 @@ import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
+import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.commons.lang.StringUtils;
@@ -32,6 +33,7 @@ import org.wso2.carbon.core.util.KeyStoreManager;
 import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorConfig;
 import org.wso2.carbon.identity.application.common.model.IdentityProvider;
 import org.wso2.carbon.identity.application.common.model.Property;
+import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationManagementUtil;
@@ -64,6 +66,7 @@ import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -162,6 +165,15 @@ public class JWTValidator {
             }
             if (issuedAtTime != null) {
                 issuedTime = issuedAtTime.getTime();
+            }
+
+            /** For FAPI compliant applications the allowed JWT signing algorithm should be registered at the application
+             creation and only PS256 and ES256 algorithms are allowed. Therefore these will be checked against the
+             signing algorithm used to sign the JWT in the request. */
+            if (OAuth2Util.isFapiConformantApp(consumerKey)) {
+                if (!isValidSignatureAlgorithm(signedJWT, consumerKey)) {
+                    return false;
+                }
             }
 
             preventTokenReuse = !JWTServiceDataHolder.getInstance()
@@ -583,6 +595,7 @@ public class JWTValidator {
                 PublicKey publicKey = x509Certificate.getPublicKey();
                 if (publicKey instanceof RSAPublicKey) {
                     verifier = new RSASSAVerifier((RSAPublicKey) publicKey);
+                    verifier.getJCAContext().setProvider(BouncyCastleProviderSingleton.getInstance());
                 } else {
                     throw new OAuthClientAuthnException("Signature validation failed. Public key is not an RSA public key.",
                             OAuth2ErrorCodes.INVALID_REQUEST);
@@ -683,4 +696,61 @@ public class JWTValidator {
         }
         return true;
     }
+
+    /**
+     * Validate whether the request signing algorithm is registered for the application.
+     *
+     * @param signedJWT     The signed JWT.
+     * @param clientId      Client ID of the application.
+     * @return whether the request signing algorithm is registered for the application.
+     * @throws OAuthClientAuthnException OAuth Client Authentication Exception.
+     */
+    private boolean isValidSignatureAlgorithm(SignedJWT signedJWT, String clientId) throws OAuthClientAuthnException{
+
+        //   Obtain the signing algorithm used to sign the JWT in the request
+        String requestSigningAlgorithm = signedJWT.getHeader().getAlgorithm().getName();
+        //   Obtain the signing algorithm registered for the application
+        List<String> registeredSigningAlgorithms = getRegisteredSigningAlgorithm(clientId);
+        //   Mandating PS256 and ES256 as the JWT signing algorithms
+        if (!(Constants.ALG_ES256.equals(requestSigningAlgorithm) ||
+                Constants.ALG_PS256.equals(requestSigningAlgorithm))) {
+            if (log.isDebugEnabled()) {
+                log.debug("FAPI unsupported signing algorithm " + requestSigningAlgorithm + " is used to sign the JWT");
+            }
+            return false;
+        }
+        if (registeredSigningAlgorithms.contains(requestSigningAlgorithm)) {
+            return true;
+        } else {
+            if (log.isDebugEnabled()) {
+                log.debug("JWT signed algorithm does not match with the registered algorithms: " +
+                        registeredSigningAlgorithms);
+            }
+            return false;
+        }
+    }
+
+    /**
+     * Obtain the request signing algorithms registered for the application.
+     *
+     * @param clientId   Client ID of the application.
+     * @throws OAuthClientAuthnException OAuth Client Authentication Exception.
+     */
+    private List<String> getRegisteredSigningAlgorithm(String clientId) throws OAuthClientAuthnException {
+
+        try {
+            ServiceProvider serviceProvider = OAuth2Util.getServiceProvider(clientId);
+            ServiceProviderProperty[] serviceProviderProperties = serviceProvider.getSpProperties();
+            for (ServiceProviderProperty serviceProviderProperty : serviceProviderProperties) {
+                if (Constants.TOKEN_ENDPOINT_AUTH_SIGNING_ALG.equals(serviceProviderProperty.getName())) {
+                    return Arrays.asList(serviceProviderProperty.getValue());
+                }
+            }
+        } catch (IdentityOAuth2Exception e) {
+            throw new OAuthClientAuthnException("Token signing algorithm not registered",
+                    OAuth2ErrorCodes.INVALID_REQUEST, e);
+        }
+        return OAuthServerConfiguration.getInstance().getSupportedIdTokenEncryptionAlgorithm();
+    }
+
 }

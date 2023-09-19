@@ -19,23 +19,19 @@
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt;
 
 import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.testng.PowerMockTestCase;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.wso2.carbon.base.CarbonBaseConstants;
-import org.wso2.carbon.identity.application.common.model.ServiceProvider;
-import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
+import org.wso2.carbon.identity.base.IdentityConstants;
 import org.wso2.carbon.identity.common.testng.WithAxisConfiguration;
 import org.wso2.carbon.identity.common.testng.WithCarbonHome;
 import org.wso2.carbon.identity.common.testng.WithH2Database;
 import org.wso2.carbon.identity.common.testng.WithKeyStore;
-import org.wso2.carbon.identity.oauth.common.OAuthConstants;
+import org.wso2.carbon.identity.common.testng.WithRealmService;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.bean.OAuthClientAuthnContext;
-import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceComponent;
 
 import java.security.Key;
 import java.security.KeyStore;
@@ -46,21 +42,22 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.OAUTH_JWT_ASSERTION;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.OAUTH_JWT_ASSERTION_TYPE;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.OAUTH_JWT_BEARER_GRANT_TYPE;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.buildJWT;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.getKeyStoreFromFile;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.JWTValidatorTest.TEST_CLIENT_ID_1;
+import static org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
+import static org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENANT_ID;
 
-@PrepareForTest({OAuth2Util.class})
 @WithCarbonHome
 @WithAxisConfiguration
 @WithH2Database(jndiName = "jdbc/WSO2CarbonDB", files = {"dbscripts/identity.sql"})
+@WithRealmService(tenantId = SUPER_TENANT_ID, tenantDomain = SUPER_TENANT_DOMAIN_NAME,
+        injectToSingletons = {JWTServiceComponent.class})
 @WithKeyStore
-public class PrivateKeyJWTClientAuthenticatorTest extends PowerMockTestCase {
+public class PrivateKeyJWTClientAuthenticatorTest {
 
     PrivateKeyJWTClientAuthenticator privateKeyJWTClientAuthenticator;
     @Mock
@@ -70,7 +67,7 @@ public class PrivateKeyJWTClientAuthenticatorTest extends PowerMockTestCase {
 
     KeyStore clientKeyStore;
     Key key1;
-    public static final String AUDIENCE = "https://localhost:9443/oauth2/token";
+    String audience;
 
     @BeforeClass
     public void setUp() throws Exception {
@@ -78,6 +75,7 @@ public class PrivateKeyJWTClientAuthenticatorTest extends PowerMockTestCase {
         clientKeyStore = getKeyStoreFromFile("testkeystore.jks", "wso2carbon",
                 System.getProperty(CarbonBaseConstants.CARBON_HOME));
         key1 = clientKeyStore.getKey("wso2carbon", "wso2carbon".toCharArray());
+        audience = IdentityUtil.getServerURL(IdentityConstants.OAuth.TOKEN, true, false);
         privateKeyJWTClientAuthenticator = new PrivateKeyJWTClientAuthenticator();
     }
 
@@ -86,7 +84,7 @@ public class PrivateKeyJWTClientAuthenticatorTest extends PowerMockTestCase {
 
         Map<String, List> bodyContent = new HashMap<>();
         List<String> assertion = new ArrayList<>();
-        assertion.add(buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3000", AUDIENCE, "RSA265", key1, 0));
+        assertion.add(buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3000", audience, "RSA265", key1, 0));
         bodyContent.put(OAUTH_JWT_ASSERTION, assertion);
         String clientId = privateKeyJWTClientAuthenticator.getClientId(httpServletRequest, bodyContent,
                 oAuthClientAuthnContext);
@@ -100,7 +98,7 @@ public class PrivateKeyJWTClientAuthenticatorTest extends PowerMockTestCase {
         Map<String, List> bodyContent = new HashMap<>();
         List<String> assertion = new ArrayList<>();
         List<String> assertionType = new ArrayList<>();
-        assertion.add(buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3000", AUDIENCE, "RSA265", key1, 0));
+        assertion.add(buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3000", audience, "RSA265", key1, 0));
         assertionType.add(OAUTH_JWT_BEARER_GRANT_TYPE);
         bodyContent.put(OAUTH_JWT_ASSERTION, assertion);
 
@@ -109,54 +107,5 @@ public class PrivateKeyJWTClientAuthenticatorTest extends PowerMockTestCase {
                 oAuthClientAuthnContext);
         assertEquals(received, true, "A valid request refused to authenticate.");
 
-    }
-
-    @Test
-    public void testIsValidRegisteredSignatureAlgorithm() throws IdentityOAuth2Exception {
-
-        Map<String, List> bodyContent = getBodyContent();
-        ServiceProvider serviceProvider = getServiceProvider("PS256");
-        PowerMockito.mockStatic(OAuth2Util.class);
-        PowerMockito.when(OAuth2Util.getServiceProvider(TEST_CLIENT_ID_1)).thenReturn(serviceProvider);
-        PowerMockito.when(OAuth2Util.isFapiConformantApp(Mockito.anyString())).thenReturn(true);
-        boolean isRegistered = privateKeyJWTClientAuthenticator.isRegisteredSignatureAlgorithm(httpServletRequest,
-                bodyContent, oAuthClientAuthnContext);
-        assertTrue(isRegistered, "A valid request refused to authenticate.");
-    }
-
-    @Test
-    public void testAuthenticateClient() throws IdentityOAuth2Exception {
-
-        Map<String, List> bodyContent = getBodyContent();
-        ServiceProvider serviceProvider = getServiceProvider("RS256");
-        PowerMockito.mockStatic(OAuth2Util.class);
-        PowerMockito.when(OAuth2Util.getServiceProvider(TEST_CLIENT_ID_1)).thenReturn(serviceProvider);
-        PowerMockito.when(OAuth2Util.isFapiConformantApp(Mockito.anyString())).thenReturn(true);
-        boolean isRegistered = privateKeyJWTClientAuthenticator.authenticateClient(httpServletRequest,
-                bodyContent, oAuthClientAuthnContext);
-        assertFalse(isRegistered, "An invalid request but got authenticated.");
-    }
-
-    private Map<String, List> getBodyContent() throws IdentityOAuth2Exception {
-        Map<String, List> bodyContent = new HashMap<>();
-        List<String> assertion = new ArrayList<>();
-        List<String> assertionType = new ArrayList<>();
-        assertion.add(buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3000", AUDIENCE, "PS256", key1, 0));
-        assertionType.add(OAUTH_JWT_BEARER_GRANT_TYPE);
-        bodyContent.put(OAUTH_JWT_ASSERTION, assertion);
-        bodyContent.put(OAUTH_JWT_ASSERTION_TYPE, assertionType);
-        return bodyContent;
-    }
-
-    private ServiceProvider getServiceProvider(String alg) {
-        ServiceProvider serviceProvider = new ServiceProvider();
-        ServiceProviderProperty signingAlgSpProperty = new ServiceProviderProperty();
-        signingAlgSpProperty.setName(Constants.TOKEN_ENDPOINT_AUTH_SIGNING_ALG);
-        signingAlgSpProperty.setValue(alg);
-        ServiceProviderProperty fapiAppSpProperty = new ServiceProviderProperty();
-        fapiAppSpProperty.setName(OAuthConstants.IS_FAPI_CONFORMANT_APP);
-        fapiAppSpProperty.setValue("true");
-        serviceProvider.setSpProperties(new ServiceProviderProperty[]{signingAlgSpProperty, fapiAppSpProperty});
-        return serviceProvider;
     }
 }

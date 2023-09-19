@@ -22,18 +22,14 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wso2.carbon.identity.application.common.model.ServiceProvider;
-import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.base.IdentityConstants;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth.common.OAuth2ErrorCodes;
-import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.bean.OAuthClientAuthnContext;
 import org.wso2.carbon.identity.oauth2.client.authentication.AbstractOAuthClientAuthenticator;
 import org.wso2.carbon.identity.oauth2.client.authentication.OAuthClientAuthnException;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceDataHolder;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.JWTValidator;
-import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -43,7 +39,6 @@ import javax.servlet.http.HttpServletRequest;
 
 import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.apache.commons.lang.StringUtils.isNotEmpty;
-import static org.apache.commons.lang.StringUtils.isNotBlank;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.AUDIENCE_CLAIM;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.DEFAULT_ENABLE_JTI_CACHE;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.DEFAULT_AUDIENCE;
@@ -111,20 +106,6 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
     public boolean authenticateClient(HttpServletRequest httpServletRequest, Map<String, List> bodyParameters,
                                       OAuthClientAuthnContext oAuthClientAuthnContext) throws OAuthClientAuthnException {
 
-        /** For FAPI compliant applications the allowed JWT signing algorithm should be registered at the application
-        creation and only PS256 and ES256 algorithms are allowed. Therefore these will be checked against the
-        signing algorithm used to sign the JWT in the request. */
-        try {
-            if (OAuth2Util.isFapiConformantApp(getClientId(httpServletRequest, bodyParameters,
-                    oAuthClientAuthnContext))) {
-                if (!isRegisteredSignatureAlgorithm(httpServletRequest, bodyParameters, oAuthClientAuthnContext)) {
-                    return false;
-                }
-            }
-        } catch (IdentityOAuth2Exception e) {
-            throw new OAuthClientAuthnException("Error occurred while retrieving service provider details.",
-                    OAuth2ErrorCodes.INVALID_REQUEST, e);
-        }
         return jwtValidator.isValidAssertion(getSignedJWT(bodyParameters, oAuthClientAuthnContext));
     }
 
@@ -217,87 +198,5 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
         mandatoryClaims.add(EXPIRATION_TIME_CLAIM);
         mandatoryClaims.add(JWT_ID_CLAIM);
         return mandatoryClaims;
-    }
-
-    /**
-     * Validate whether the request signing algorithm is registered for the application.
-     *
-     * @param request                 Http servlet request.
-     * @param bodyParameters          Map of request body params.
-     * @param oAuthClientAuthnContext OAuthClientAuthnContext.
-     * @return whether the request signing algorithm is registered for the application.
-     * @throws OAuthClientAuthnException OAuth Client Authentication Exception.
-     */
-    public boolean isRegisteredSignatureAlgorithm(HttpServletRequest request,
-                                                  Map<String, List> bodyParameters,
-                                                  OAuthClientAuthnContext oAuthClientAuthnContext)
-            throws OAuthClientAuthnException{
-
-        String signedObject = getBodyParameters(bodyParameters).get(OAUTH_JWT_ASSERTION);
-        if (isNotBlank(signedObject)) {
-            //   Obtain the signing algorithm used to sign the JWT in the request
-            String requestSigningAlgorithm = getRequestSigningAlgorithm(signedObject);
-            //   Obtain the signing algorithm registered for the application
-            String registeredSigningAlgorithm = getRegisteredSigningAlgorithm(getClientId(request, bodyParameters,
-                    oAuthClientAuthnContext));
-            if (Constants.NOT_APPLICABLE.equals(registeredSigningAlgorithm)) {
-                return false;
-            }
-            //   Mandating PS256 and ES256 as the JWT signing algorithms
-            if (!(Constants.ALG_ES256.equals(requestSigningAlgorithm) ||
-                    Constants.ALG_PS256.equals(requestSigningAlgorithm))) {
-                log.error("FAPI unsupported signing algorithm " + requestSigningAlgorithm + " is used to sign the JWT");
-                return false;
-            }
-            if (isNotBlank(requestSigningAlgorithm) && requestSigningAlgorithm.equals(registeredSigningAlgorithm)) {
-                return true;
-            } else {
-                if (log.isDebugEnabled()) {
-                    log.debug("Registered algorithm does not match with the token signed algorithm");
-                }
-                return false;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Obtain the request signing algorithms registered for the application.
-     *
-     * @param clientId   Client ID of the application.
-     * @return Registered signing algorithm for the application.
-     * @throws OAuthClientAuthnException OAuth Client Authentication Exception.
-     */
-    private String getRegisteredSigningAlgorithm(String clientId) throws OAuthClientAuthnException {
-        try {
-            ServiceProvider serviceProvider = OAuth2Util.getServiceProvider(clientId);
-            ServiceProviderProperty[] serviceProviderProperties = serviceProvider.getSpProperties();
-            for (ServiceProviderProperty serviceProviderProperty : serviceProviderProperties) {
-                if (Constants.TOKEN_ENDPOINT_AUTH_SIGNING_ALG.equals(serviceProviderProperty.getName())) {
-                    return serviceProviderProperty.getValue();
-                }
-            }
-        } catch (IdentityOAuth2Exception e) {
-            throw new OAuthClientAuthnException("Token signing algorithm not registered",
-                    OAuth2ErrorCodes.INVALID_REQUEST, e);
-        }
-        return Constants.NOT_APPLICABLE;
-    }
-
-    /**
-     * Obtain the request signing algorithm from the signed JWT.
-     *
-     * @param signedObject   Signed JWT in the request.
-     * @return Request signing algorithm.
-     * @throws OAuthClientAuthnException
-     */
-    private String getRequestSigningAlgorithm(String signedObject) throws OAuthClientAuthnException {
-        try {
-            SignedJWT signedJWT = SignedJWT.parse(signedObject);
-            return signedJWT.getHeader().getAlgorithm().getName();
-        } catch (ParseException e) {
-            throw new OAuthClientAuthnException("Error occurred while parsing the signed assertion",
-                    OAuth2ErrorCodes.INVALID_REQUEST, e);
-        }
     }
 }
