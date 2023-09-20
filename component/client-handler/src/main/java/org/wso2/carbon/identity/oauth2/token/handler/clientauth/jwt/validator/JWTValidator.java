@@ -169,7 +169,8 @@ public class JWTValidator {
 
             /** For FAPI compliant applications the allowed JWT signing algorithm should be registered at the application
              creation and only PS256 and ES256 algorithms are allowed. Therefore these will be checked against the
-             signing algorithm used to sign the JWT in the request. */
+             signing algorithm used to sign the JWT in the request.
+             https://openid.net/specs/openid-financial-api-part-2-1_0.html#algorithm-considerations */
             if (OAuth2Util.isFapiConformantApp(consumerKey)) {
                 if (!isValidSignatureAlgorithm(signedJWT, consumerKey)) {
                     return false;
@@ -750,6 +751,8 @@ public class JWTValidator {
             throw new OAuthClientAuthnException("Token signing algorithm not registered",
                     OAuth2ErrorCodes.INVALID_REQUEST, e);
         }
+        // Below code needs to be changed to getSupportedTokenEndpointSigningAlgorithms() once the
+        // https://github.com/wso2-extensions/identity-inbound-auth-oauth/pull/2162 is merged.
         return OAuthServerConfiguration.getInstance().getSupportedIdTokenEncryptionAlgorithm();
     }
 
