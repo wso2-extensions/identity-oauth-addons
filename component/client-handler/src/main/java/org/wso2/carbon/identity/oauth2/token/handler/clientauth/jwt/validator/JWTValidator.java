@@ -154,8 +154,9 @@ public class JWTValidator {
                 return false;
             }
 
-            //  A list of valid audiences (issuer identifier, token endpoint URL or pushed authorization request
-            //  endpoint URL) should be supported for PAR and not just a single valid audience.
+            /* A list of valid audiences (issuer identifier, token endpoint URL or pushed authorization request
+            endpoint URL) should be supported for PAR and not just a single valid audience.
+            https://datatracker.ietf.org/doc/html/rfc9126 */
             List<String> acceptedAudienceList = getValidAudiences(tenantDomain);
 
             long expTime = 0;
