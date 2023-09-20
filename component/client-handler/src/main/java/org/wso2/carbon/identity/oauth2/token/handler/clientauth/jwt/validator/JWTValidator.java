@@ -156,9 +156,7 @@ public class JWTValidator {
 
             //  A list of valid audiences (issuer identifier, token endpoint URL or pushed authorization request
             //  endpoint URL) should be supported for PAR and not just a single valid audience.
-            List<String> acceptedAudienceList = new ArrayList<>();
-            acceptedAudienceList.add(getValidPAREndpoint(tenantDomain));
-            acceptedAudienceList.add(getValidAudience(tenantDomain));
+            List<String> acceptedAudienceList = getValidAudiences(tenantDomain);
 
             long expTime = 0;
             long issuedTime = 0;
@@ -452,12 +450,11 @@ public class JWTValidator {
         return isValidSignature;
     }
 
-    private String getValidAudience(String tenantDomain) throws OAuthClientAuthnException {
+    private List<String> getValidAudiences(String tenantDomain) throws OAuthClientAuthnException {
 
-        if (isNotEmpty(validAudience)) {
-            return validAudience;
-        }
+        List<String> validAudiences = new ArrayList<>();
         String audience = null;
+        String parEndpoint = null;
         IdentityProvider residentIdP;
         try {
             residentIdP = IdentityProviderManager.getInstance()
@@ -467,8 +464,13 @@ public class JWTValidator {
                             IdentityApplicationConstants.Authenticator.OIDC.NAME);
             Property idpEntityId = IdentityApplicationManagementUtil.getProperty(oidcFedAuthn.getProperties(),
                     IDP_ENTITY_ID);
+            Property parEndpointFromResidentIdp = IdentityApplicationManagementUtil.getProperty(oidcFedAuthn
+                    .getProperties(), Constants.OAUTH2_PAR_URL_REF);
             if (idpEntityId != null) {
                 audience = idpEntityId.getValue();
+            }
+            if (parEndpointFromResidentIdp != null) {
+                parEndpoint = parEndpointFromResidentIdp.getValue();
             }
         } catch (IdentityProviderManagementException e) {
             String message = "Error while loading OAuth2TokenEPUrl of the resident IDP of tenant: " + tenantDomain;
@@ -478,10 +480,20 @@ public class JWTValidator {
             throw new OAuthClientAuthnException(message, OAuth2ErrorCodes.INVALID_REQUEST);
         }
 
-        if (isEmpty(audience)) {
+        if (StringUtils.isEmpty(audience)) {
             audience = IdentityUtil.getProperty(PROP_ID_TOKEN_ISSUER_ID);
         }
-        return audience;
+        if (StringUtils.isEmpty(parEndpoint)) {
+            parEndpoint = IdentityUtil.getProperty(Constants.OAUTH2_PAR_URL_CONFIG);
+        }
+
+        if (StringUtils.isNotEmpty(validAudience)) {
+            validAudiences.add(validAudience);
+        } else {
+            validAudiences.add(audience);
+        }
+        validAudiences.add(parEndpoint);
+        return validAudiences;
     }
 
     /**
@@ -687,41 +699,5 @@ public class JWTValidator {
                     "and the JWT has been validated successfully in cache.");
         }
         return true;
-    }
-
-    /**
-     * This method used to obtain the PAR endpoint from the resident IDP.
-     *
-     * @param tenantDomain      The domain of the tenant.
-     * @return PAR endpoint.
-     * @throws OAuthClientAuthnException OAuth Client Authentication Exception.
-     */
-    private String getValidPAREndpoint(String tenantDomain) throws OAuthClientAuthnException {
-
-        String parEndpoint = null;
-        IdentityProvider residentIdP;
-        try {
-            residentIdP = IdentityProviderManager.getInstance()
-                    .getResidentIdP(tenantDomain);
-            FederatedAuthenticatorConfig oidcFedAuthn = IdentityApplicationManagementUtil
-                    .getFederatedAuthenticator(residentIdP.getFederatedAuthenticatorConfigs(),
-                            IdentityApplicationConstants.Authenticator.OIDC.NAME);
-            Property parEndpointFromResidentIdp = IdentityApplicationManagementUtil.getProperty(oidcFedAuthn
-                            .getProperties(), Constants.OAUTH2_PAR_URL_REF);
-            if (parEndpointFromResidentIdp != null) {
-                parEndpoint = parEndpointFromResidentIdp.getValue();
-            }
-        } catch (IdentityProviderManagementException e) {
-            String message = "Error while loading PAR endpoint of the resident IDP of tenant: " + tenantDomain;
-            if (log.isDebugEnabled()) {
-                log.debug(message);
-            }
-            throw new OAuthClientAuthnException(message, OAuth2ErrorCodes.INVALID_REQUEST);
-        }
-
-        if (isEmpty(parEndpoint)) {
-            parEndpoint = IdentityUtil.getProperty(Constants.OAUTH2_PAR_URL_CONFIG);
-        }
-        return parEndpoint;
     }
 }
