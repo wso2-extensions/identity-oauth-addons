@@ -31,7 +31,6 @@ import org.wso2.carbon.identity.oauth2.dto.OAuth2AccessTokenReqDTO;
 import org.wso2.carbon.identity.oauth2.model.HttpRequestHeader;
 import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils.CommonConstants;
-import org.wso2.carbon.identity.oauth2.util.Oauth2ScopeUtils;
 import org.wso2.carbon.utils.CarbonUtils;
 
 import java.util.ArrayList;
@@ -42,7 +41,7 @@ import static org.testng.Assert.assertFalse;
 /**
  * Test class for MTLSTokenBindingRefreshGrantHandlerTest class.
  */
-@PrepareForTest({IdentityUtil.class, CarbonUtils.class, Oauth2ScopeUtils.class})
+@PrepareForTest({IdentityUtil.class, CarbonUtils.class})
 
 @WithCarbonHome
 public class MTLSTokenBindingRefreshGrantHandlerTest extends PowerMockTestCase {
