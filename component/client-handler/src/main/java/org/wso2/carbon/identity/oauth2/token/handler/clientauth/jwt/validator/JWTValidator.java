@@ -751,7 +751,7 @@ public class JWTValidator {
                 }
             }
         } catch (IdentityOAuth2Exception e) {
-            throw new OAuthClientAuthnException("Error occurred while obtaining the service provider.",
+            throw new OAuthClientAuthnException("Error occurred while retrieving the service provider.",
                     OAuth2ErrorCodes.INVALID_REQUEST, e);
         }
         // Below code needs to be changed to getSupportedTokenEndpointSigningAlgorithms() once the
