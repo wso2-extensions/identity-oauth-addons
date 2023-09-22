@@ -173,7 +173,8 @@ public class JWTValidator {
              https://openid.net/specs/openid-financial-api-part-2-1_0.html#algorithm-considerations */
             if (OAuth2Util.isFapiConformantApp(consumerKey)) {
                 if (!isValidSignatureAlgorithm(signedJWT, consumerKey)) {
-                    return false;
+                    throw new OAuthClientAuthnException("Signature algorithm used in the request is invalid.",
+                            OAuth2ErrorCodes.INVALID_CLIENT);
                 }
             }
 
@@ -716,10 +717,12 @@ public class JWTValidator {
         if (!(Constants.ALG_ES256.equals(requestSigningAlgorithm) ||
                 Constants.ALG_PS256.equals(requestSigningAlgorithm))) {
             if (log.isDebugEnabled()) {
-                log.debug("FAPI unsupported signing algorithm " + requestSigningAlgorithm + " is used to sign the JWT");
+                log.debug("FAPI unsupported signing algorithm " + requestSigningAlgorithm +
+                        " is used to sign the JWT.");
             }
             return false;
         }
+        //  Validate whether the JWT signing algorithm is registered for the application
         if (registeredSigningAlgorithms.contains(requestSigningAlgorithm)) {
             return true;
         } else {
@@ -748,7 +751,7 @@ public class JWTValidator {
                 }
             }
         } catch (IdentityOAuth2Exception e) {
-            throw new OAuthClientAuthnException("Token signing algorithm not registered",
+            throw new OAuthClientAuthnException("Error occurred while obtaining the service provider.",
                     OAuth2ErrorCodes.INVALID_REQUEST, e);
         }
         // Below code needs to be changed to getSupportedTokenEndpointSigningAlgorithms() once the

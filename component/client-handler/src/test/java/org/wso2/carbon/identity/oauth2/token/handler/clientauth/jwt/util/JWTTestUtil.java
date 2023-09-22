@@ -240,7 +240,7 @@ public class JWTTestUtil {
             signedJWT.sign(signer);
             return signedJWT.serialize();
         } catch (JOSEException e) {
-            throw new IdentityOAuth2Exception("Error occurred while signing JWT", e);
+            throw new IdentityOAuth2Exception("Error occurred while signing JWT.", e);
         }
     }
 
