@@ -754,9 +754,9 @@ public class JWTValidator {
             throw new OAuthClientAuthnException("Error occurred while retrieving the service provider.",
                     OAuth2ErrorCodes.INVALID_REQUEST, e);
         }
-        // Below code needs to be changed to getSupportedTokenEndpointSigningAlgorithms() once the
-        // https://github.com/wso2-extensions/identity-inbound-auth-oauth/pull/2162 is merged.
-        return OAuthServerConfiguration.getInstance().getSupportedIdTokenEncryptionAlgorithm();
+        // Below code needs to be changed to OAuthServerConfiguration.getInstance().getSupportedTokenEndpointSigningAlgorithms() 
+        // once the PR https://github.com/wso2-extensions/identity-inbound-auth-oauth/pull/2162 is merged.
+        return new ArrayList<>();
     }
 
 }
