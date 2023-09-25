@@ -66,7 +66,6 @@ import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -89,6 +88,8 @@ public class JWTValidator {
     public static final String PS = "PS";
     private static final String IDP_ENTITY_ID = "IdPEntityId";
     private static final String PROP_ID_TOKEN_ISSUER_ID = "OAuth.OpenIDConnect.IDTokenIssuerID";
+    private static final String FAPI_SIGNATURE_ALG_CONFIGURATION = "OAuth.OpenIDConnect.FAPI." +
+            "SupportedSignatureAlgorithms.SupportedSignatureAlgorithm";
     private boolean preventTokenReuse;
     private String validAudience;
     private String validIssuer;
@@ -168,10 +169,10 @@ public class JWTValidator {
                 issuedTime = issuedAtTime.getTime();
             }
 
-            /** For FAPI compliant applications the allowed JWT signing algorithm should be registered at the application
-             creation and only PS256 and ES256 algorithms are allowed. Therefore these will be checked against the
-             signing algorithm used to sign the JWT in the request.
-             https://openid.net/specs/openid-financial-api-part-2-1_0.html#algorithm-considerations */
+            /* For FAPI compliant applications the allowed JWT signing algorithm should be configured at the
+               application creation and only PS256 and ES256 algorithms are allowed. Therefore these will be checked
+               against the signing algorithm used to sign the JWT in the request.
+               https://openid.net/specs/openid-financial-api-part-2-1_0.html#algorithm-considerations */
             if (OAuth2Util.isFapiConformantApp(consumerKey)) {
                 if (!isValidSignatureAlgorithm(signedJWT, consumerKey)) {
                     throw new OAuthClientAuthnException("Signature algorithm used in the request is invalid.",
@@ -701,20 +702,20 @@ public class JWTValidator {
     }
 
     /**
-     * Validate whether the request signing algorithm is registered for the application.
+     * Validate whether the request signing algorithm is configured for the application.
      *
      * @param signedJWT     The signed JWT.
      * @param clientId      Client ID of the application.
-     * @return whether the request signing algorithm is registered for the application.
+     * @return whether the request signing algorithm is configured for the application.
      * @throws OAuthClientAuthnException OAuth Client Authentication Exception.
      */
     private boolean isValidSignatureAlgorithm(SignedJWT signedJWT, String clientId) throws OAuthClientAuthnException{
 
-        //   Obtain the signing algorithm used to sign the JWT in the request
+        //   Obtain the signing algorithm used to sign the JWT in the request.
         String requestSigningAlgorithm = signedJWT.getHeader().getAlgorithm().getName();
-        //   Obtain the signing algorithm registered for the application
-        List<String> registeredSigningAlgorithms = getRegisteredSigningAlgorithm(clientId);
-        //   Mandating PS256 and ES256 as the JWT signing algorithms
+        //   Obtain the signing algorithm configured for the application.
+        List<String> configuredSigningAlgorithms = getConfiguredSigningAlgorithm(clientId);
+        //   Mandating PS256 and ES256 as the JWT signing algorithms.
         if (!(Constants.ALG_ES256.equals(requestSigningAlgorithm) ||
                 Constants.ALG_PS256.equals(requestSigningAlgorithm))) {
             if (log.isDebugEnabled()) {
@@ -723,25 +724,25 @@ public class JWTValidator {
             }
             return false;
         }
-        //  Validate whether the JWT signing algorithm is registered for the application
-        if (registeredSigningAlgorithms.contains(requestSigningAlgorithm)) {
+        //  Validate whether the JWT signing algorithm is configured for the application.
+        if (configuredSigningAlgorithms.contains(requestSigningAlgorithm)) {
             return true;
         } else {
             if (log.isDebugEnabled()) {
-                log.debug("JWT signed algorithm does not match with the registered algorithms: " +
-                        registeredSigningAlgorithms);
+                log.debug("JWT signed algorithm does not match with the configured algorithms: " +
+                        configuredSigningAlgorithms);
             }
             return false;
         }
     }
 
     /**
-     * Obtain the request signing algorithms registered for the application.
+     * Obtain the request signing algorithms configured for the application.
      *
      * @param clientId   Client ID of the application.
      * @throws OAuthClientAuthnException OAuth Client Authentication Exception.
      */
-    private List<String> getRegisteredSigningAlgorithm(String clientId) throws OAuthClientAuthnException {
+    private List<String> getConfiguredSigningAlgorithm(String clientId) throws OAuthClientAuthnException {
 
         try {
             ServiceProvider serviceProvider = OAuth2Util.getServiceProvider(clientId);
@@ -755,9 +756,8 @@ public class JWTValidator {
             throw new OAuthClientAuthnException("Error occurred while retrieving the service provider.",
                     OAuth2ErrorCodes.INVALID_REQUEST, e);
         }
-        // Below code needs to be changed to OAuthServerConfiguration.getInstance().getSupportedTokenEndpointSigningAlgorithms() 
-        // once the PR https://github.com/wso2-extensions/identity-inbound-auth-oauth/pull/2162 is merged.
-        return new ArrayList<>();
+
+        return IdentityUtil.getPropertyAsList(FAPI_SIGNATURE_ALG_CONFIGURATION);
     }
 
 }
