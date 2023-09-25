@@ -107,6 +107,22 @@ public class PrivateKeyJWTClientAuthenticatorTest {
         boolean received = privateKeyJWTClientAuthenticator.canAuthenticate(httpServletRequest, bodyContent,
                 oAuthClientAuthnContext);
         assertEquals(received, true, "A valid request refused to authenticate.");
+    }
 
+    @Test
+    public void testPrivateKeyJWTFlagAdded() {
+
+        Map<String, List> bodyContent = new HashMap<>();
+        List<String> assertionType = new ArrayList<>();
+        assertionType.add(OAUTH_JWT_BEARER_GRANT_TYPE);
+        bodyContent.put(OAUTH_JWT_ASSERTION, null);
+        bodyContent.put(OAUTH_JWT_ASSERTION_TYPE, assertionType);
+        try {
+            privateKeyJWTClientAuthenticator.authenticateClient(httpServletRequest, bodyContent,
+                    oAuthClientAuthnContext);
+        } catch (OAuthClientAuthnException e) {
+            assertEquals(Constants.AUTHENTICATOR_TYPE_PK_JWT, oAuthClientAuthnContext.getParameter(
+                    Constants.AUTHENTICATOR_TYPE_PARAM));
+        }
     }
 }

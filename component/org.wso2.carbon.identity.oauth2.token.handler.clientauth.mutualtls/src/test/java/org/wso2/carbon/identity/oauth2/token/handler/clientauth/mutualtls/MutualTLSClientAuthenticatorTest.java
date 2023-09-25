@@ -485,7 +485,7 @@ public class MutualTLSClientAuthenticatorTest extends PowerMockTestCase {
         bodyContent.put(OAuth.OAUTH_CLIENT_ID, Arrays.asList(CLIENT_ID));
         OAuthClientAuthnContext oAuthClientAuthnContext = new OAuthClientAuthnContext();
         oAuthClientAuthnContext.addParameter(CommonConstants.AUTHENTICATOR_TYPE_PARAM,
-                CommonConstants.AUTHENTICATOR_TYPE_MTLS);
+                CommonConstants.AUTHENTICATOR_TYPE_PK_JWT);
         HttpServletRequest httpServletRequest = PowerMockito.mock(HttpServletRequest.class);
         assertFalse(mutualTLSClientAuthenticator.canAuthenticate(httpServletRequest, bodyContent,
                 oAuthClientAuthnContext));
