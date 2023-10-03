@@ -709,7 +709,7 @@ public class JWTValidator {
      * @return whether the request signing algorithm is configured for the application.
      * @throws OAuthClientAuthnException OAuth Client Authentication Exception.
      */
-    private boolean isValidSignatureAlgorithm(SignedJWT signedJWT, String clientId) throws OAuthClientAuthnException{
+    private boolean isValidSignatureAlgorithm(SignedJWT signedJWT, String clientId) throws OAuthClientAuthnException {
 
         //   Obtain the signing algorithm used to sign the JWT in the request.
         String requestSigningAlgorithm = signedJWT.getHeader().getAlgorithm().getName();
