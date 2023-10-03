@@ -89,7 +89,7 @@ public class JWTValidator {
     private static final String IDP_ENTITY_ID = "IdPEntityId";
     private static final String PROP_ID_TOKEN_ISSUER_ID = "OAuth.OpenIDConnect.IDTokenIssuerID";
     private static final String FAPI_SIGNATURE_ALG_CONFIGURATION = "OAuth.OpenIDConnect.FAPI." +
-            "SupportedSignatureAlgorithms.SupportedSignatureAlgorithm";
+            "AllowedSignatureAlgorithms.AllowedSignatureAlgorithm";
     private boolean preventTokenReuse;
     private String validAudience;
     private String validIssuer;
