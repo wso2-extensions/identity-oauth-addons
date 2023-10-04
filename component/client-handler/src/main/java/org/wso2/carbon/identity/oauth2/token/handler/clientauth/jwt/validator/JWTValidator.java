@@ -250,7 +250,7 @@ public class JWTValidator {
             }
         }
         if (log.isDebugEnabled()) {
-            log.debug("None of the audience values matched the tokenEndpoint Alias :" + expectedAudiences);
+            log.debug("None of the audience values :" + audience + " matched the expected audiences :" + expectedAudiences);
         }
         throw new OAuthClientAuthnException("Failed to match audience values.", OAuth2ErrorCodes.INVALID_REQUEST);
     }
