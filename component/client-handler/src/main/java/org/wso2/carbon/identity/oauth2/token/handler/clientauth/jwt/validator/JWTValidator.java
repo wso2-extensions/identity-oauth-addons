@@ -240,8 +240,8 @@ public class JWTValidator {
         return true;
     }
 
-    // "The Audience SHOULD be the URL of the Authorization Server's Token Endpoint", if a valid audience is not
-    // specified.
+    // The valid audience value should either be the issuer identifier or the token endpoint URL or the pushed authorization
+    // request endpoint URL
     private boolean validateAudience(List<String> expectedAudiences, List<String> audience) throws OAuthClientAuthnException {
 
         for (String aud : audience) {
@@ -250,7 +250,7 @@ public class JWTValidator {
             }
         }
         if (log.isDebugEnabled()) {
-            log.debug("None of the audience values :" + audience + " matched the expected audiences :" + expectedAudiences);
+            log.debug("None of the audience values : " + audience + " matched the expected audiences : " + expectedAudiences);
         }
         throw new OAuthClientAuthnException("Failed to match audience values.", OAuth2ErrorCodes.INVALID_REQUEST);
     }
@@ -487,7 +487,9 @@ public class JWTValidator {
             parEndpoint = IdentityUtil.getProperty(Constants.OAUTH2_PAR_URL_CONFIG);
         }
 
-        validAudiences.add(validAudience);
+        if (StringUtils.isNotEmpty(validAudience)) {
+            validAudiences.add(validAudience);
+        }
         validAudiences.add(audience);
         validAudiences.add(parEndpoint);
         return validAudiences;
