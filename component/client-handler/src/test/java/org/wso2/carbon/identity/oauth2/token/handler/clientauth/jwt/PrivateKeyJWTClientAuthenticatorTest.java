@@ -19,20 +19,30 @@
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt;
 
 import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.powermock.reflect.internal.WhiteboxImpl;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.wso2.carbon.base.CarbonBaseConstants;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.base.IdentityConstants;
 import org.wso2.carbon.identity.common.testng.WithAxisConfiguration;
 import org.wso2.carbon.identity.common.testng.WithCarbonHome;
 import org.wso2.carbon.identity.common.testng.WithH2Database;
 import org.wso2.carbon.identity.common.testng.WithKeyStore;
 import org.wso2.carbon.identity.common.testng.WithRealmService;
+import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.bean.OAuthClientAuthnContext;
 import org.wso2.carbon.identity.oauth2.client.authentication.OAuthClientAuthnException;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.core.dao.JWTAuthenticationConfigurationDAO;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.core.model.JWTClientAuthenticatorConfig;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceComponent;
+import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceDataHolder;
+import org.wso2.carbon.idp.mgt.internal.IdpMgtServiceComponentHolder;
+import org.wso2.carbon.user.api.UserRealm;
+import org.wso2.carbon.user.core.service.RealmService;
 
 import java.security.Key;
 import java.security.KeyStore;
@@ -110,16 +120,37 @@ public class PrivateKeyJWTClientAuthenticatorTest {
     }
 
     @Test
-    public void testPrivateKeyJWTFlagAdded() {
+    public void testPrivateKeyJWTFlagAdded() throws Exception {
 
         Map<String, List> bodyContent = new HashMap<>();
         List<String> assertionType = new ArrayList<>();
         assertionType.add(OAUTH_JWT_BEARER_GRANT_TYPE);
-        bodyContent.put(OAUTH_JWT_ASSERTION, null);
+        List<String> assertion = new ArrayList<>();
+        assertion.add(buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3000", audience, "RSA265", key1, 0));
+        bodyContent.put(OAUTH_JWT_ASSERTION, assertion);
         bodyContent.put(OAUTH_JWT_ASSERTION_TYPE, assertionType);
+        RealmService realmService = IdentityTenantUtil.getRealmService();
+        UserRealm userRealm = realmService.getTenantUserRealm(SUPER_TENANT_ID);
+        PrivilegedCarbonContext.getThreadLocalCarbonContext().setUserRealm(userRealm);
+        JWTServiceDataHolder.getInstance().setRealmService(realmService);
+        IdpMgtServiceComponentHolder.getInstance().setRealmService(realmService);
+        Map<String, Object> configuration = new HashMap<>();
+        configuration.put("OAuth.OpenIDConnect.IDTokenIssuerID", "http://localhost:9443/oauth2/token");
+        WhiteboxImpl.setInternalState(IdentityUtil.class, "configuration", configuration);
+        JWTClientAuthenticatorConfig jwtClientAuthenticatorConfig = new JWTClientAuthenticatorConfig();
+        jwtClientAuthenticatorConfig.setEnableTokenReuse(true);
+        JWTAuthenticationConfigurationDAO mockDAO = Mockito.mock(JWTAuthenticationConfigurationDAO
+                .class);
+        Mockito.when(mockDAO.getPrivateKeyJWTClientAuthenticationConfigurationByTenantDomain(Mockito.anyString()))
+                .thenReturn(jwtClientAuthenticatorConfig);
+        JWTServiceDataHolder.getInstance()
+                .setJWTAuthenticationConfigurationDAO(mockDAO);
+
         try {
             privateKeyJWTClientAuthenticator.authenticateClient(httpServletRequest, bodyContent,
                     oAuthClientAuthnContext);
+            assertEquals(Constants.AUTHENTICATOR_TYPE_PK_JWT, oAuthClientAuthnContext.getParameter(
+                    Constants.AUTHENTICATOR_TYPE_PARAM));
         } catch (OAuthClientAuthnException e) {
             assertEquals(Constants.AUTHENTICATOR_TYPE_PK_JWT, oAuthClientAuthnContext.getParameter(
                     Constants.AUTHENTICATOR_TYPE_PARAM));

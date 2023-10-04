@@ -182,6 +182,10 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
             // not authenticate the client.
             if (CommonConstants.AUTHENTICATOR_TYPE_PK_JWT.equals((String)
                     context.getParameter(CommonConstants.AUTHENTICATOR_TYPE_PARAM))) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Returning false since the PrivateKeyJWT client authenticator has already authenticated " +
+                            "the request.");
+                }
                 return false;
             }
             if (validCertExistsAsAttribute(request)) {
