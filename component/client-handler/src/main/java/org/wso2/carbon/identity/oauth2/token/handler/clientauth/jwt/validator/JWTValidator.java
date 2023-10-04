@@ -487,11 +487,8 @@ public class JWTValidator {
             parEndpoint = IdentityUtil.getProperty(Constants.OAUTH2_PAR_URL_CONFIG);
         }
 
-        if (StringUtils.isNotEmpty(validAudience)) {
-            validAudiences.add(validAudience);
-        } else {
-            validAudiences.add(audience);
-        }
+        validAudiences.add(validAudience);
+        validAudiences.add(audience);
         validAudiences.add(parEndpoint);
         return validAudiences;
     }
