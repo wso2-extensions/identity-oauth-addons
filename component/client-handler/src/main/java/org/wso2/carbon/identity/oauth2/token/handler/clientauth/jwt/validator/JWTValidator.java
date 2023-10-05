@@ -716,8 +716,8 @@ public class JWTValidator {
         //   Obtain the signing algorithm configured for the application.
         List<String> configuredSigningAlgorithms = getConfiguredSigningAlgorithm(clientId);
         //   Mandating FAPI specified JWT signing algorithms.
-        List<String> fapiSigningAlgorithms = IdentityUtil.getPropertyAsList(FAPI_SIGNATURE_ALG_CONFIGURATION);
-        if (!fapiSigningAlgorithms.contains(requestSigningAlgorithm)) {
+        List<String> fapiAllowedSigningAlgorithms = IdentityUtil.getPropertyAsList(FAPI_SIGNATURE_ALG_CONFIGURATION);
+        if (!fapiAllowedSigningAlgorithms.contains(requestSigningAlgorithm)) {
             if (log.isDebugEnabled()) {
                 log.debug("FAPI unsupported signing algorithm " + requestSigningAlgorithm +
                         " is used to sign the JWT.");
