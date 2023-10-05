@@ -58,6 +58,7 @@ import java.security.KeyStore;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
@@ -67,6 +68,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.mockito.Matchers.anyString;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.ALG_ES256;
+import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.ALG_PS256;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.REJECT_BEFORE_IN_MINUTES;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.buildJWT;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.getJWTValidator;
@@ -145,6 +148,8 @@ public class JWTValidatorTest {
 
         Map<String, Object> configuration = new HashMap<>();
         configuration.put("OAuth.OpenIDConnect.IDTokenIssuerID", ID_TOKEN_ISSUER_ID);
+        configuration.put("OAuth.OpenIDConnect.FAPI.SupportedSignatureAlgorithms.SupportedSignatureAlgorithm",
+                Arrays.asList(ALG_PS256, ALG_ES256));
         WhiteboxImpl.setInternalState(IdentityUtil.class, "configuration", configuration);
     }
 
