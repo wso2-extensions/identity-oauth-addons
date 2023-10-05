@@ -148,7 +148,7 @@ public class JWTValidatorTest {
 
         Map<String, Object> configuration = new HashMap<>();
         configuration.put("OAuth.OpenIDConnect.IDTokenIssuerID", ID_TOKEN_ISSUER_ID);
-        configuration.put("OAuth.OpenIDConnect.FAPI.SupportedSignatureAlgorithms.SupportedSignatureAlgorithm",
+        configuration.put("OAuth.OpenIDConnect.FAPI.AllowedSignatureAlgorithms.AllowedSignatureAlgorithm",
                 Arrays.asList(ALG_PS256, ALG_ES256));
         WhiteboxImpl.setInternalState(IdentityUtil.class, "configuration", configuration);
     }
