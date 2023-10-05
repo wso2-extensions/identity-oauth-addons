@@ -453,7 +453,7 @@ public class JWTValidator {
     private List<String> getValidAudiences(String tenantDomain) throws OAuthClientAuthnException {
 
         List<String> validAudiences = new ArrayList<>();
-        String audience = null;
+        String tokenEndpoint = null;
         String parEndpoint = null;
         IdentityProvider residentIdP;
         try {
@@ -467,21 +467,22 @@ public class JWTValidator {
             Property parEndpointFromResidentIdp = IdentityApplicationManagementUtil.getProperty(oidcFedAuthn
                     .getProperties(), Constants.OAUTH2_PAR_URL_REF);
             if (idpEntityId != null) {
-                audience = idpEntityId.getValue();
+                tokenEndpoint = idpEntityId.getValue();
             }
             if (parEndpointFromResidentIdp != null) {
                 parEndpoint = parEndpointFromResidentIdp.getValue();
             }
         } catch (IdentityProviderManagementException e) {
-            String message = "Error while loading OAuth2TokenEPUrl of the resident IDP of tenant: " + tenantDomain;
+            String message = "Error while loading OAuth2TokenEPUrl and ParEPUrl of the resident IDP of tenant: "
+                    + tenantDomain;
             if (log.isDebugEnabled()) {
                 log.debug(message);
             }
             throw new OAuthClientAuthnException(message, OAuth2ErrorCodes.INVALID_REQUEST);
         }
 
-        if (StringUtils.isEmpty(audience)) {
-            audience = IdentityUtil.getProperty(PROP_ID_TOKEN_ISSUER_ID);
+        if (StringUtils.isEmpty(tokenEndpoint)) {
+            tokenEndpoint = IdentityUtil.getProperty(PROP_ID_TOKEN_ISSUER_ID);
         }
         if (StringUtils.isEmpty(parEndpoint)) {
             parEndpoint = IdentityUtil.getProperty(Constants.OAUTH2_PAR_URL_CONFIG);
@@ -490,7 +491,7 @@ public class JWTValidator {
         if (StringUtils.isNotEmpty(validAudience)) {
             validAudiences.add(validAudience);
         }
-        validAudiences.add(audience);
+        validAudiences.add(tokenEndpoint);
         validAudiences.add(parEndpoint);
         return validAudiences;
     }
