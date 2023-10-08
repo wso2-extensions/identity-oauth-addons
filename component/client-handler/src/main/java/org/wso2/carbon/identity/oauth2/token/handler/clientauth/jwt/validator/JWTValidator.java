@@ -169,14 +169,27 @@ public class JWTValidator {
                 issuedTime = issuedAtTime.getTime();
             }
 
+            //   Obtain the signing algorithm used to sign the JWT in the request.
+            String requestSigningAlgorithm = signedJWT.getHeader().getAlgorithm().getName();
+            if (!isValidSignatureAlgorithm(requestSigningAlgorithm, consumerKey)) {
+                throw new OAuthClientAuthnException("Signature algorithm used in the request is invalid.",
+                        OAuth2ErrorCodes.INVALID_CLIENT);
+            }
+
             /* For FAPI compliant applications the allowed JWT signing algorithm should be configured at the
                application creation and only PS256 and ES256 algorithms are allowed. Therefore these will be checked
                against the signing algorithm used to sign the JWT in the request.
                https://openid.net/specs/openid-financial-api-part-2-1_0.html#algorithm-considerations */
             if (OAuth2Util.isFapiConformantApp(consumerKey)) {
-                if (!isValidSignatureAlgorithm(signedJWT, consumerKey)) {
-                    throw new OAuthClientAuthnException("Signature algorithm used in the request is invalid.",
-                            OAuth2ErrorCodes.INVALID_CLIENT);
+                //   Mandating FAPI specified JWT signing algorithms.
+                List<String> fapiAllowedSigningAlgorithms = IdentityUtil
+                        .getPropertyAsList(FAPI_SIGNATURE_ALG_CONFIGURATION);
+                if (!fapiAllowedSigningAlgorithms.contains(requestSigningAlgorithm)) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("FAPI unsupported signing algorithm " + requestSigningAlgorithm +
+                                " is used to sign the JWT.");
+                    }
+                    return false;
                 }
             }
 
@@ -704,28 +717,18 @@ public class JWTValidator {
     /**
      * Validate whether the request signing algorithm is configured for the application.
      *
-     * @param signedJWT     The signed JWT.
-     * @param clientId      Client ID of the application.
+     * @param requestSigningAlgorithm     The request signed algorithm.
+     * @param clientId                    Client ID of the application.
      * @return whether the request signing algorithm is configured for the application.
      * @throws OAuthClientAuthnException OAuth Client Authentication Exception.
      */
-    private boolean isValidSignatureAlgorithm(SignedJWT signedJWT, String clientId) throws OAuthClientAuthnException {
+    private boolean isValidSignatureAlgorithm(String requestSigningAlgorithm, String clientId)
+            throws OAuthClientAuthnException {
 
-        //   Obtain the signing algorithm used to sign the JWT in the request.
-        String requestSigningAlgorithm = signedJWT.getHeader().getAlgorithm().getName();
         //   Obtain the signing algorithm configured for the application.
         List<String> configuredSigningAlgorithms = getConfiguredSigningAlgorithm(clientId);
-        //   Mandating FAPI specified JWT signing algorithms.
-        List<String> fapiAllowedSigningAlgorithms = IdentityUtil.getPropertyAsList(FAPI_SIGNATURE_ALG_CONFIGURATION);
-        if (!fapiAllowedSigningAlgorithms.contains(requestSigningAlgorithm)) {
-            if (log.isDebugEnabled()) {
-                log.debug("FAPI unsupported signing algorithm " + requestSigningAlgorithm +
-                        " is used to sign the JWT.");
-            }
-            return false;
-        }
         //  Validate whether the JWT signing algorithm is configured for the application.
-        if (configuredSigningAlgorithms.contains(requestSigningAlgorithm)) {
+        if (configuredSigningAlgorithms == null || configuredSigningAlgorithms.contains(requestSigningAlgorithm)) {
             return true;
         } else {
             if (log.isDebugEnabled()) {
@@ -756,8 +759,8 @@ public class JWTValidator {
             throw new OAuthClientAuthnException("Error occurred while retrieving the service provider.",
                     OAuth2ErrorCodes.INVALID_REQUEST, e);
         }
-
-        return IdentityUtil.getPropertyAsList(FAPI_SIGNATURE_ALG_CONFIGURATION);
+        // null is returned when no algorithm is specified for the app and this will be handled accordingly.
+        return null;
     }
 
 }
