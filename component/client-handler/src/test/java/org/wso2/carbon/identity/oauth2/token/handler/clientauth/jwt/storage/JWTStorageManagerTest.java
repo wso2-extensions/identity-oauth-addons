@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.storage;
 
 import org.mockito.Mockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.testng.PowerMockTestCase;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
@@ -34,7 +35,6 @@ import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.dao.JWTEntry
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.dao.JWTStorageManager;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceDataHolder;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil;
-import org.wso2.carbon.identity.testutil.powermock.PowerMockIdentityBaseTest;
 
 import java.util.List;
 
@@ -52,7 +52,7 @@ import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.
 
 
 @PrepareForTest({IdentityUtil.class, JdbcUtils.class, IdentityDatabaseUtil.class, FrameworkUtils.class})
-public class JWTStorageManagerTest extends PowerMockIdentityBaseTest {
+public class JWTStorageManagerTest extends PowerMockTestCase {
 
     private JWTStorageManager JWTStorageManager;
     private Connection spyConnection;
