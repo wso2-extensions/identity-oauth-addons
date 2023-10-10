@@ -732,7 +732,7 @@ public class JWTValidator {
             return true;
         } else {
             if (log.isDebugEnabled()) {
-                log.debug("JWT signed algorithm does not match with the configured algorithms: " +
+                log.debug("JWT signed algorithm: " + requestSigningAlgorithm + " does not match with the configured algorithms: " +
                         configuredSigningAlgorithms);
             }
             return false;
