@@ -219,7 +219,7 @@ public class JWTValidatorTest {
         String jsonWebToken20 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "10010010", audience, "RSA265", key1, 0);
         String jsonWebToken21 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "10010011", audience, ALG_PS256, key1, 0);
         String jsonWebToken22 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "10010012", audience, "RSA265", key1, 0);
-        String jsonWebToken23 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "10010011", PAR_ENDPOINT, "RSA265", key1, 0);
+        String jsonWebToken23 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "10010013", PAR_ENDPOINT, "RSA265", key1, 0);
 
         return new Object[][]{
                 {jsonWebToken0, properties8, false, "Correct authentication request is failed.", null, false},
@@ -248,7 +248,8 @@ public class JWTValidatorTest {
                 {jsonWebToken19, properties1, true, "Unable to use same JTI across tenants.", null, false},
                 {jsonWebToken20, properties1, false, "Duplicated JTI was used in same tenant with " +
                         "preventTokenReuse enabled.", null, false},
-                {jsonWebToken23, properties1, true, "JWT with valid audience from the accepted value list should pass.", null, false},
+                {jsonWebToken23, properties1, true, "JWT with valid audience from the accepted value list should pass.",
+                        null, false},
                 {jsonWebToken22, properties1, true, "JWT with registered signing algorithm should pass.", "RS256", false},
                 {jsonWebToken22, properties1, false, "JWT with unregistered signing algorithm should fail.", "PS256", false},
                 {jsonWebToken21, properties1, true, "JWT with registered signing algorithm and FAPI compliant signing " +
