@@ -245,8 +245,12 @@ public class JWTValidatorTest {
                 {jsonWebToken19, properties1, true, "Unable to use same JTI across tenants.", null, false},
                 {jsonWebToken20, properties1, false, "Duplicated JTI was used in same tenant with " +
                         "preventTokenReuse enabled.", null, false},
-                {jsonWebToken21, properties1, true, "JWT with registered signing algorithm should pass.", ALG_PS256, true},
-                {jsonWebToken22, properties1, false, "JWT with unregistered signing algorithm should fail.", "RSA265", true}
+                {jsonWebToken22, properties1, true, "JWT with registered signing algorithm should pass.", "RS256", false},
+                {jsonWebToken22, properties1, false, "JWT with unregistered signing algorithm should fail.", "PS256", false},
+                {jsonWebToken21, properties1, true, "JWT with registered signing algorithm and FAPI compliant signing " +
+                        "algorithm should pass.", ALG_PS256, true},
+                {jsonWebToken22, properties1, false, "JWT with registered signing algorithm and FAPI non-compliant " +
+                        "signing algorithm should fail.", "RS256", true}
         };
     }
 
