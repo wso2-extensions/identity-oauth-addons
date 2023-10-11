@@ -49,6 +49,7 @@ import java.nio.charset.Charset;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -473,6 +474,21 @@ public class MutualTLSClientAuthenticatorTest extends PowerMockTestCase {
                 new ByteArrayInputStream(DatatypeConverter.parseBase64Binary(CERTIFICATE_CONTENT_2)));
         assertFalse(mutualTLSClientAuthenticator.authenticate(Cert,anotherCert));
 
+    }
+
+    @Test
+    public void testCanAuthenticateWhenPKJWTAuthMethod () {
+
+        HashMap<String, List> bodyContent = new HashMap<>();
+        bodyContent.put(OAuth.OAUTH_ASSERTION_TYPE, Arrays.asList(CommonConstants.OAUTH_JWT_BEARER_GRANT_TYPE));
+        bodyContent.put(OAuth.OAUTH_ASSERTION, Arrays.asList("Test_Assertion"));
+        bodyContent.put(OAuth.OAUTH_CLIENT_ID, Arrays.asList(CLIENT_ID));
+        OAuthClientAuthnContext oAuthClientAuthnContext = new OAuthClientAuthnContext();
+        oAuthClientAuthnContext.addParameter(CommonConstants.AUTHENTICATOR_TYPE_PARAM,
+                CommonConstants.AUTHENTICATOR_TYPE_PK_JWT);
+        HttpServletRequest httpServletRequest = PowerMockito.mock(HttpServletRequest.class);
+        assertFalse(mutualTLSClientAuthenticator.canAuthenticate(httpServletRequest, bodyContent,
+                oAuthClientAuthnContext));
     }
 }
 
