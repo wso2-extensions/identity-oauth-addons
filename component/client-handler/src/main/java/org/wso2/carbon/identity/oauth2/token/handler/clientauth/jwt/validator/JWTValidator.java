@@ -64,13 +64,13 @@ import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static org.apache.commons.lang.StringUtils.isEmpty;
-import static org.apache.commons.lang.StringUtils.isNotEmpty;
 
 /**
  * This class is used to validate the JWT which is coming along with the request.
@@ -153,8 +153,11 @@ public class JWTValidator {
                 return false;
             }
 
-            // Get audience.
-            String validAud = getValidAudience(tenantDomain);
+            /* A list of valid audiences (issuer identifier, token endpoint URL or pushed authorization request
+            endpoint URL) should be supported for PAR and not just a single valid audience.
+            https://datatracker.ietf.org/doc/html/rfc9126 */
+            List<String> acceptedAudienceList = getValidAudiences(tenantDomain);
+
             long expTime = 0;
             long issuedTime = 0;
             if (expirationTime != null) {
@@ -169,7 +172,7 @@ public class JWTValidator {
                     .getPrivateKeyJWTClientAuthenticationConfigurationByTenantDomain(tenantDomain).isEnableTokenReuse();
 
             //Validate signature validation, audience, nbf,exp time, jti.
-            if (!validateAudience(validAud, audience)
+            if (!validateAudience(acceptedAudienceList, audience)
                     || !validateJWTWithExpTime(expirationTime, currentTimeInMillis, timeStampSkewMillis)
                     || !validateNotBeforeClaim(currentTimeInMillis, timeStampSkewMillis, nbf)
                     || !validateAgeOfTheToken(issuedAtTime, currentTimeInMillis, timeStampSkewMillis)
@@ -237,17 +240,17 @@ public class JWTValidator {
         return true;
     }
 
-    // "The Audience SHOULD be the URL of the Authorization Server's Token Endpoint", if a valid audience is not
-    // specified.
-    private boolean validateAudience(String expectedAudience, List<String> audience) throws OAuthClientAuthnException {
+    // The valid audience value should either be the issuer identifier or the token endpoint URL or the pushed authorization
+    // request endpoint URL
+    private boolean validateAudience(List<String> expectedAudiences, List<String> audience) throws OAuthClientAuthnException {
 
         for (String aud : audience) {
-            if (StringUtils.equals(expectedAudience, aud)) {
+            if (expectedAudiences.contains(aud)) {
                 return true;
             }
         }
         if (log.isDebugEnabled()) {
-            log.debug("None of the audience values matched the tokenEndpoint Alias :" + expectedAudience);
+            log.debug("None of the audience values : " + audience + " matched the expected audiences : " + expectedAudiences);
         }
         throw new OAuthClientAuthnException("Failed to match audience values.", OAuth2ErrorCodes.INVALID_REQUEST);
     }
@@ -447,12 +450,11 @@ public class JWTValidator {
         return isValidSignature;
     }
 
-    private String getValidAudience(String tenantDomain) throws OAuthClientAuthnException {
+    private List<String> getValidAudiences(String tenantDomain) throws OAuthClientAuthnException {
 
-        if (isNotEmpty(validAudience)) {
-            return validAudience;
-        }
-        String audience = null;
+        List<String> validAudiences = new ArrayList<>();
+        String tokenEndpoint = null;
+        String parEndpoint = null;
         IdentityProvider residentIdP;
         try {
             residentIdP = IdentityProviderManager.getInstance()
@@ -462,21 +464,36 @@ public class JWTValidator {
                             IdentityApplicationConstants.Authenticator.OIDC.NAME);
             Property idpEntityId = IdentityApplicationManagementUtil.getProperty(oidcFedAuthn.getProperties(),
                     IDP_ENTITY_ID);
+            Property parEndpointFromResidentIdp = IdentityApplicationManagementUtil.getProperty(oidcFedAuthn
+                    .getProperties(), Constants.OAUTH2_PAR_URL_REF);
             if (idpEntityId != null) {
-                audience = idpEntityId.getValue();
+                tokenEndpoint = idpEntityId.getValue();
+            }
+            if (parEndpointFromResidentIdp != null) {
+                parEndpoint = parEndpointFromResidentIdp.getValue();
             }
         } catch (IdentityProviderManagementException e) {
-            String message = "Error while loading OAuth2TokenEPUrl of the resident IDP of tenant: " + tenantDomain;
+            String message = "Error while loading OAuth2TokenEPUrl and ParEPUrl of the resident IDP of tenant: "
+                    + tenantDomain;
             if (log.isDebugEnabled()) {
                 log.debug(message);
             }
             throw new OAuthClientAuthnException(message, OAuth2ErrorCodes.INVALID_REQUEST);
         }
 
-        if (isEmpty(audience)) {
-            audience = IdentityUtil.getProperty(PROP_ID_TOKEN_ISSUER_ID);
+        if (StringUtils.isEmpty(tokenEndpoint)) {
+            tokenEndpoint = IdentityUtil.getProperty(PROP_ID_TOKEN_ISSUER_ID);
         }
-        return audience;
+        if (StringUtils.isEmpty(parEndpoint)) {
+            parEndpoint = IdentityUtil.getProperty(Constants.OAUTH2_PAR_URL_CONFIG);
+        }
+
+        if (StringUtils.isNotEmpty(validAudience)) {
+            validAudiences.add(validAudience);
+        }
+        validAudiences.add(tokenEndpoint);
+        validAudiences.add(parEndpoint);
+        return validAudiences;
     }
 
     /**

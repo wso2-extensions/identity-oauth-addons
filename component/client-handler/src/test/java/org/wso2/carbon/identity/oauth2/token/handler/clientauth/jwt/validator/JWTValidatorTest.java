@@ -92,6 +92,7 @@ public class JWTValidatorTest {
     public static final String ENABLE_CACHE_FOR_JTI = "EnableCacheForJTI";
     public static final String MANDATORY = "mandatory";
     public static final String ID_TOKEN_ISSUER_ID = "http://localhost:9443/oauth2/token";
+    public static final String PAR_ENDPOINT = "https://localhost:9443/oauth2/par";
     private KeyStore clientKeyStore;
     private KeyStore serverKeyStore;
     private X509Certificate cert;
@@ -152,6 +153,7 @@ public class JWTValidatorTest {
 
         Map<String, Object> configuration = new HashMap<>();
         configuration.put("OAuth.OpenIDConnect.IDTokenIssuerID", ID_TOKEN_ISSUER_ID);
+        configuration.put(Constants.OAUTH2_PAR_URL_CONFIG, PAR_ENDPOINT);
         WhiteboxImpl.setInternalState(IdentityUtil.class, "configuration", configuration);
     }
 
@@ -215,6 +217,7 @@ public class JWTValidatorTest {
         String jsonWebToken18 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3011", audience, "RSA265", key1, 0);
         String jsonWebToken19 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "10010010", audience, "RSA265", key1, 0);
         String jsonWebToken20 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "10010010", audience, "RSA265", key1, 0);
+        String jsonWebToken21 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "10010011", PAR_ENDPOINT, "RSA265", key1, 0);
 
         return new Object[][]{
                 {jsonWebToken0, properties8, false, "Correct authentication request is failed."},
@@ -243,6 +246,7 @@ public class JWTValidatorTest {
                 {jsonWebToken19, properties1, true, "Unable to use same JTI across tenants."},
                 {jsonWebToken20, properties1, false, "Duplicated JTI was used in same tenant with " +
                         "preventTokenReuse enabled."},
+                {jsonWebToken21, properties1, true, "JWT with valid audience from the accepted value list should pass."}
         };
     }
 
