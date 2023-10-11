@@ -42,6 +42,8 @@ public class Constants {
     public static final String JWKS_URI = "jwksURI";
     public static final String AUTHENTICATOR_TYPE_PARAM = "authenticatorType";
     public static final String AUTHENTICATOR_TYPE_PK_JWT = "pkJWT";
+    public static final String OAUTH2_PAR_URL_REF = "OAuth2ParEPUrl";
+    public static final String OAUTH2_PAR_URL_CONFIG = "OAuth.OAuth2ParEPUrl";
     public static final String TOKEN_ENDPOINT_AUTH_SIGNING_ALG = "token_endpoint_auth_signing_alg";
     public static final String ALG_ES256 = "ES256";
     public static final String ALG_PS256 = "PS256";
