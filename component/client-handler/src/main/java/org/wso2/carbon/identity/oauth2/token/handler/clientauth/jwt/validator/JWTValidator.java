@@ -22,7 +22,6 @@ import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
-import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.commons.lang.StringUtils;
@@ -624,7 +623,6 @@ public class JWTValidator {
                 PublicKey publicKey = x509Certificate.getPublicKey();
                 if (publicKey instanceof RSAPublicKey) {
                     verifier = new RSASSAVerifier((RSAPublicKey) publicKey);
-                    verifier.getJCAContext().setProvider(BouncyCastleProviderSingleton.getInstance());
                 } else {
                     throw new OAuthClientAuthnException("Signature validation failed. Public key is not an RSA public key.",
                             OAuth2ErrorCodes.INVALID_REQUEST);

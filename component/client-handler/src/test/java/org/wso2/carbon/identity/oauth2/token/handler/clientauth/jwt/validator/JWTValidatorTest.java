@@ -70,8 +70,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.mockito.Matchers.anyString;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
-import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.ALG_ES256;
-import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.ALG_PS256;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.REJECT_BEFORE_IN_MINUTES;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.buildJWT;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.util.JWTTestUtil.getJWTValidator;
@@ -152,8 +150,9 @@ public class JWTValidatorTest {
         Map<String, Object> configuration = new HashMap<>();
         configuration.put("OAuth.OpenIDConnect.IDTokenIssuerID", ID_TOKEN_ISSUER_ID);
         configuration.put(Constants.OAUTH2_PAR_URL_CONFIG, PAR_ENDPOINT);
+        // Assuming that the FAPI allowed signature algorithms are the below algorithms.
         configuration.put("OAuth.OpenIDConnect.FAPI.AllowedSignatureAlgorithms.AllowedSignatureAlgorithm",
-                Arrays.asList(ALG_PS256, ALG_ES256));
+                Arrays.asList("PS256", "ES256", "RS512"));
         WhiteboxImpl.setInternalState(IdentityUtil.class, "configuration", configuration);
     }
 
@@ -217,7 +216,7 @@ public class JWTValidatorTest {
         String jsonWebToken18 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3011", audience, "RSA265", key1, 0);
         String jsonWebToken19 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "10010010", audience, "RSA265", key1, 0);
         String jsonWebToken20 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "10010010", audience, "RSA265", key1, 0);
-        String jsonWebToken21 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "10010011", audience, ALG_PS256, key1, 0);
+        String jsonWebToken21 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "10010011", audience, "RS512", key1, 0);
         String jsonWebToken22 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "10010012", audience, "RSA265", key1, 0);
         String jsonWebToken23 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "10010013", PAR_ENDPOINT, "RSA265", key1, 0);
 
@@ -252,8 +251,9 @@ public class JWTValidatorTest {
                         null, false},
                 {jsonWebToken22, properties1, true, "JWT with registered signing algorithm should pass.", "RS256", false},
                 {jsonWebToken22, properties1, false, "JWT with unregistered signing algorithm should fail.", "PS256", false},
+                // Assuming that RS512 is a FAPI allowed signing algorithm
                 {jsonWebToken21, properties1, true, "JWT with registered signing algorithm and FAPI compliant signing " +
-                        "algorithm should pass.", ALG_PS256, true},
+                        "algorithm should pass.", "RS512", true},
                 {jsonWebToken22, properties1, false, "JWT with registered signing algorithm and FAPI non-compliant " +
                         "signing algorithm should fail.", "RS256", true}
         };
