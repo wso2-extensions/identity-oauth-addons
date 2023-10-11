@@ -40,6 +40,8 @@ public class Constants {
     public static final String ISSUER_CLAIM = "iss";
     public static final String PRIVATE_KEY_JWT = "signedJWT";
     public static final String JWKS_URI = "jwksURI";
+    public static final String AUTHENTICATOR_TYPE_PARAM = "authenticatorType";
+    public static final String AUTHENTICATOR_TYPE_PK_JWT = "pkJWT";
     public static final String OAUTH2_PAR_URL_REF = "OAuth2ParEPUrl";
     public static final String OAUTH2_PAR_URL_CONFIG = "OAuth.OAuth2ParEPUrl";
 

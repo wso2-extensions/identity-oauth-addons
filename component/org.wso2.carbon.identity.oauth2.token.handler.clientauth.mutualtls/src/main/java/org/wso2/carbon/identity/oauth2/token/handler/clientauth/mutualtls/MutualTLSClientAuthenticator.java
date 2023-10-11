@@ -178,6 +178,16 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
 
         String headerName = IdentityUtil.getProperty(CommonConstants.MTLS_AUTH_HEADER);
         if (clientIdExistsAsParam(bodyParams)) {
+            // If the Private key JWT authenticator was hit previously, then the MTLS authenticator should
+            // not authenticate the client.
+            if (CommonConstants.AUTHENTICATOR_TYPE_PK_JWT.equals((String)
+                    context.getParameter(CommonConstants.AUTHENTICATOR_TYPE_PARAM))) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Returning false since the PrivateKeyJWT client authenticator has already authenticated " +
+                            "the request.");
+                }
+                return false;
+            }
             if (validCertExistsAsAttribute(request)) {
                 if (log.isDebugEnabled()) {
                     log.debug("A valid certificate was found in the request attribute hence returning true.");
