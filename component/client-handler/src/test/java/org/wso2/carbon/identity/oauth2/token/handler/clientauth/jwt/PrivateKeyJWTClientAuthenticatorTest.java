@@ -21,6 +21,7 @@ package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.powermock.reflect.internal.WhiteboxImpl;
+import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.wso2.carbon.base.CarbonBaseConstants;
@@ -155,5 +156,13 @@ public class PrivateKeyJWTClientAuthenticatorTest {
             assertEquals(Constants.AUTHENTICATOR_TYPE_PK_JWT, oAuthClientAuthnContext.getParameter(
                     Constants.AUTHENTICATOR_TYPE_PARAM));
         }
+    }
+
+    @Test
+    public void testGetSupportedClientAuthenticationMethods() {
+
+        List<String> supportedAuthMethods = privateKeyJWTClientAuthenticator.getSupportedClientAuthenticationMethods();
+        Assert.assertTrue(supportedAuthMethods.contains("private_key_jwt"));
+        assertEquals(supportedAuthMethods.size(), 1);
     }
 }
