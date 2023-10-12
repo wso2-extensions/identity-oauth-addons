@@ -342,7 +342,7 @@ public class JWTValidator {
         String message = String.format("Error while retrieving OAuth application with provided JWT information with " +
                 "subject '%s' ", jwtSubject);
         try {
-            oAuthAppDO = OAuth2Util.getAppInformationByClientIdOnly(jwtSubject);
+            oAuthAppDO = OAuth2Util.getAppInformationByClientId(jwtSubject);
             if (oAuthAppDO == null) {
                 logAndThrowException(message);
             }
