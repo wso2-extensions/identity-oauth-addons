@@ -251,7 +251,9 @@ public class JWTValidatorTest {
                         null, false},
                 {jsonWebToken22, properties1, true, "JWT with registered signing algorithm should pass.", "RS256", false},
                 {jsonWebToken22, properties1, false, "JWT with unregistered signing algorithm should fail.", "PS256", false},
-                // Assuming that RS512 is a FAPI allowed signing algorithm
+                /* When using PS256 it causes unit test issues unless BouncyCastleProviderSingleton is being used. Therefore 
+                   the unit tests were written assuming that RS512 is a FAPI allowed signing algorithm because that issue 
+                   only exists when running unit tests and what we really need to check is the logic within the methods. */
                 {jsonWebToken21, properties1, true, "JWT with registered signing algorithm and FAPI compliant signing " +
                         "algorithm should pass.", "RS512", true},
                 {jsonWebToken22, properties1, false, "JWT with registered signing algorithm and FAPI non-compliant " +
