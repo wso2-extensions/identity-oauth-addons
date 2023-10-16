@@ -41,6 +41,7 @@ import org.wso2.carbon.identity.oauth.common.OAuth2ErrorCodes;
 import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
 import org.wso2.carbon.identity.oauth.config.OAuthServerConfiguration;
 import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
+import org.wso2.carbon.identity.oauth2.IdentityOAuth2ClientException;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.client.authentication.OAuthClientAuthnException;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants;
@@ -180,14 +181,22 @@ public class JWTValidator {
 
             /* Check whether the request signing algorithm is an allowed algorithm as per the FAPI specification.
                https://openid.net/specs/openid-financial-api-part-2-1_0.html#algorithm-considerations */
-            if (OAuth2Util.isFapiConformantApp(consumerKey)) {
-                //   Mandating FAPI specified JWT signing algorithms.
-                List<String> fapiAllowedSigningAlgorithms = IdentityUtil
-                        .getPropertyAsList(FAPI_SIGNATURE_ALG_CONFIGURATION);
-                if (!fapiAllowedSigningAlgorithms.contains(requestSigningAlgorithm)) {
-                    throw new OAuthClientAuthnException("FAPI unsupported signing algorithm " + requestSigningAlgorithm
-                            + " is used to sign the JWT.", OAuth2ErrorCodes.INVALID_CLIENT);
+            try {
+                if (OAuth2Util.isFapiConformantApp(consumerKey)) {
+                    //   Mandating FAPI specified JWT signing algorithms.
+                    List<String> fapiAllowedSigningAlgorithms = IdentityUtil
+                            .getPropertyAsList(FAPI_SIGNATURE_ALG_CONFIGURATION);
+                    if (!fapiAllowedSigningAlgorithms.contains(requestSigningAlgorithm)) {
+                        throw new OAuthClientAuthnException("FAPI unsupported signing algorithm " + requestSigningAlgorithm
+                                + " is used to sign the JWT.", OAuth2ErrorCodes.INVALID_CLIENT);
+                    }
                 }
+            } catch (IdentityOAuth2ClientException e) {
+                throw new OAuthClientAuthnException("Could not find an existing app for clientId: " + consumerKey,
+                        OAuth2ErrorCodes.INVALID_CLIENT);
+            } catch (IdentityOAuth2Exception e) {
+                throw new OAuthClientAuthnException("Error while obtaining the service provider for client_id: " +
+                        consumerKey, OAuth2ErrorCodes.SERVER_ERROR);
             }
 
             preventTokenReuse = !JWTServiceDataHolder.getInstance()
