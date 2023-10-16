@@ -32,6 +32,7 @@ import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth.common.OAuth2ErrorCodes;
 import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
+import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.bean.OAuthClientAuthnContext;
 import org.wso2.carbon.identity.oauth2.client.authentication.AbstractOAuthClientAuthenticator;
@@ -152,6 +153,12 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
                 }
                 registeredCert = (X509Certificate) OAuth2Util
                         .getX509CertOfOAuthApp(oAuthClientAuthnContext.getClientId(), tenantDomain);
+                OAuthAppDO oAuthAppdo = OAuth2Util.getAppInformationByClientId(
+                        oAuthClientAuthnContext.getClientId(), tenantDomain);
+                if (StringUtils.isNotEmpty(oAuthAppdo.getTlsClientAuthSubjectDN()) &&
+                        !requestCert.getSubjectDN().toString().equals(oAuthAppdo.getTlsClientAuthSubjectDN())) {
+                    return false;
+                }
                 return authenticate(registeredCert, requestCert);
             }
         } catch (IdentityOAuth2Exception e) {
@@ -368,6 +375,7 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
                 return true;
             }
             attributeValue = jsonElement.getAsJsonObject().get(CommonConstants.X5C);
+
             if (attributeValue != null) {
                 CertificateFactory factory = CertificateFactory.getInstance(CommonConstants.X509);
                 X509Certificate cert = (X509Certificate) factory.generateCertificate(

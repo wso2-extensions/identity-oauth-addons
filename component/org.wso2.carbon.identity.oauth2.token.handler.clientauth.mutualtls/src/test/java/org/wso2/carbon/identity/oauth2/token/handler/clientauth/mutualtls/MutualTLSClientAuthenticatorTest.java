@@ -34,6 +34,7 @@ import org.testng.annotations.Test;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.common.testng.WithCarbonHome;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
 import org.wso2.carbon.identity.oauth2.bean.OAuthClientAuthnContext;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils.CommonConstants;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils.MutualTLSUtil;
@@ -56,8 +57,8 @@ import java.util.List;
 import java.util.Map;
 
 import static org.mockito.Matchers.any;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.when;
+import static org.mockito.Matchers.anyString;
+import static org.powermock.api.mockito.PowerMockito.*;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
@@ -299,8 +300,10 @@ public class MutualTLSClientAuthenticatorTest extends PowerMockTestCase {
                                        Object oAuthClientAuthnContextObj, boolean authenticationResult) throws
             Exception {
 
+        OAuthAppDO appDO = new OAuthAppDO();
         PowerMockito.mockStatic(OAuth2Util.class);
         PowerMockito.mockStatic(MutualTLSUtil.class);
+        doReturn(appDO).when(OAuth2Util.class, "getAppInformationByClientId", anyString(), anyString());
         OAuthClientAuthnContext oAuthClientAuthnContext = (OAuthClientAuthnContext) oAuthClientAuthnContextObj;
         HttpServletRequest httpServletRequest = PowerMockito.mock(HttpServletRequest.class);
         PowerMockito.when(MutualTLSUtil.isJwksUriConfigured(any())).thenReturn(false);
