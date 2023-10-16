@@ -57,6 +57,7 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -76,6 +77,7 @@ import static org.wso2.carbon.identity.oauth2.util.OAuth2Util.getServiceProvider
 public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticator {
 
     private static final Log log = LogFactory.getLog(MutualTLSClientAuthenticator.class);
+    private static final String MTLS_CLIENT_AUTHENTICATOR_AUTH_METHOD = "tls_client_auth";
 
     /**
      * @param request                 HttpServletRequest which is the incoming request.
@@ -476,6 +478,17 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
     public String getName() {
 
         return this.getClass().getSimpleName();
+    }
+
+    /**
+     * Retrieve the authentication methods supported by the authenticator.
+     *
+     * @return      Authentication methods supported by the authenticator.
+     */
+    @Override
+    public List<String> getSupportedClientAuthenticationMethods() {
+
+        return Arrays.asList(MTLS_CLIENT_AUTHENTICATOR_AUTH_METHOD);
     }
 }
 

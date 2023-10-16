@@ -29,6 +29,7 @@ import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.testng.PowerMockTestCase;
+import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
@@ -492,6 +493,14 @@ public class MutualTLSClientAuthenticatorTest extends PowerMockTestCase {
         HttpServletRequest httpServletRequest = PowerMockito.mock(HttpServletRequest.class);
         assertFalse(mutualTLSClientAuthenticator.canAuthenticate(httpServletRequest, bodyContent,
                 oAuthClientAuthnContext));
+    }
+
+    @Test
+    public void testGetSupportedClientAuthenticationMethods() {
+
+        List<String> supportedAuthMethods = mutualTLSClientAuthenticator.getSupportedClientAuthenticationMethods();
+        Assert.assertTrue(supportedAuthMethods.contains("tls_client_auth"));
+        assertEquals(supportedAuthMethods.size(), 1);
     }
 }
 
