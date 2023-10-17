@@ -170,6 +170,11 @@ INSERT INTO IDN_OAUTH_CONSUMER_APPS (ID, CONSUMER_KEY, CONSUMER_SECRET, USERNAME
             (2, 'KrVLov4Bl3natUksF2HmWsdw684a', 'testSecret1', 'testUser', -1234, 'PRIMARY',
             'myApp', 'OAuth-2.0', 'http://localhost:8080/redirect',
             'refresh_token password iwa:ntlm client_credentials', 'ACTIVE');
+INSERT INTO IDN_OAUTH_CONSUMER_APPS (ID, CONSUMER_KEY, CONSUMER_SECRET, USERNAME, TENANT_ID, USER_DOMAIN, APP_NAME,
+                                     OAUTH_VERSION, CALLBACK_URL, GRANT_TYPES, APP_STATE) VALUES
+    (3, 'KrVLov4Bl3natUksF2HmWsdw684b', 'testSecret1', 'testUser', -1234, 'PRIMARY',
+     'myApp', 'OAuth-2.0', 'http://localhost:8080/redirect',
+     'refresh_token password iwa:ntlm client_credentials', 'ACTIVE');
 
 CREATE TABLE IF NOT EXISTS IDN_OIDC_PROPERTY (
             ID INTEGER NOT NULL AUTO_INCREMENT,
@@ -185,3 +190,6 @@ CREATE TABLE IF NOT EXISTS IDN_OAUTH2_SCOPE_VALIDATORS (
             SCOPE_VALIDATOR VARCHAR (128) NOT NULL,
             PRIMARY KEY (APP_ID,SCOPE_VALIDATOR),
             FOREIGN KEY (APP_ID) REFERENCES IDN_OAUTH_CONSUMER_APPS(ID) ON DELETE CASCADE);
+
+INSERT INTO IDN_OIDC_PROPERTY (TENANT_ID,CONSUMER_KEY,PROPERTY_KEY,PROPERTY_VALUE) VALUES (-1234, 'KrVLov4Bl3natUksF2HmWsdw684a', 'tokenEndpointAuthSigningAlg', 'RS256');
+INSERT INTO IDN_OIDC_PROPERTY (TENANT_ID,CONSUMER_KEY,PROPERTY_KEY,PROPERTY_VALUE) VALUES (-1234, 'KrVLov4Bl3natUksF2HmWsdw684b', 'tokenEndpointAuthSigningAlg', 'RS512');

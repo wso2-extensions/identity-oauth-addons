@@ -28,11 +28,11 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.base.MultitenantConstants;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.core.util.KeyStoreManager;
 import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorConfig;
 import org.wso2.carbon.identity.application.common.model.IdentityProvider;
 import org.wso2.carbon.identity.application.common.model.Property;
-import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationManagementUtil;
@@ -767,20 +767,17 @@ public class JWTValidator {
     private List<String> getConfiguredSigningAlgorithm(String clientId) throws OAuthClientAuthnException {
 
         List<String> configuredSigningAlgorithms = new ArrayList<>();
-
+        String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
         try {
-            ServiceProvider serviceProvider = OAuth2Util.getServiceProvider(clientId);
-            ServiceProviderProperty[] serviceProviderProperties = serviceProvider.getSpProperties();
-            for (ServiceProviderProperty serviceProviderProperty : serviceProviderProperties) {
-                if (Constants.TOKEN_ENDPOINT_AUTH_SIGNING_ALG.equals(serviceProviderProperty.getName())) {
-                    configuredSigningAlgorithms = Arrays.asList(serviceProviderProperty.getValue());
-                }
+            OAuthAppDO oAuthAppDO = OAuth2Util.getAppInformationByClientId(clientId, tenantDomain);
+            String tokenEndpointAuthSignatureAlgorithm = oAuthAppDO.getTokenEndpointAuthSignatureAlgorithm();
+            if (StringUtils.isNotBlank(tokenEndpointAuthSignatureAlgorithm)) {
+                configuredSigningAlgorithms = Arrays.asList(tokenEndpointAuthSignatureAlgorithm);
             }
-        } catch (IdentityOAuth2Exception e) {
-            throw new OAuthClientAuthnException("Error occurred while retrieving the service provider.",
-                    OAuth2ErrorCodes.INVALID_REQUEST, e);
+        } catch (IdentityOAuth2Exception | InvalidOAuthClientException e) {
+            throw new OAuthClientAuthnException("Error occurred while retrieving app information for client id: " +
+                    clientId + " of tenantDomain: " + tenantDomain, OAuth2ErrorCodes.INVALID_REQUEST, e);
         }
-
         return configuredSigningAlgorithms;
     }
 
