@@ -167,7 +167,7 @@ INSERT INTO IDN_OIDC_JTI (JWT_ID,TENANT_ID,EXP_TIME,TIME_CREATED)VALUES ('100100
 
 INSERT INTO IDN_OAUTH_CONSUMER_APPS (ID, CONSUMER_KEY, CONSUMER_SECRET, USERNAME, TENANT_ID, USER_DOMAIN, APP_NAME,
             OAUTH_VERSION, CALLBACK_URL, GRANT_TYPES, APP_STATE) VALUES
-            (2, 'KrVLov4Bl3natUksF2HmWsdw684a', 'testSecret1', 'testUser', 1234, 'PRIMARY',
+            (2, 'KrVLov4Bl3natUksF2HmWsdw684a', 'testSecret1', 'testUser', -1234, 'PRIMARY',
             'myApp', 'OAuth-2.0', 'http://localhost:8080/redirect',
             'refresh_token password iwa:ntlm client_credentials', 'ACTIVE');
 
