@@ -35,11 +35,13 @@ import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationManagementUtil;
+import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth.common.OAuth2ErrorCodes;
 import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
 import org.wso2.carbon.identity.oauth.config.OAuthServerConfiguration;
 import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
+import org.wso2.carbon.identity.oauth2.IdentityOAuth2ClientException;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.client.authentication.OAuthClientAuthnException;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants;
@@ -64,6 +66,7 @@ import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -85,6 +88,8 @@ public class JWTValidator {
     public static final String PS = "PS";
     private static final String IDP_ENTITY_ID = "IdPEntityId";
     private static final String PROP_ID_TOKEN_ISSUER_ID = "OAuth.OpenIDConnect.IDTokenIssuerID";
+    private static final String FAPI_SIGNATURE_ALG_CONFIGURATION = "OAuth.OpenIDConnect.FAPI." +
+            "AllowedSignatureAlgorithms.AllowedSignatureAlgorithm";
     private boolean preventTokenReuse;
     private String validAudience;
     private String validIssuer;
@@ -165,6 +170,33 @@ public class JWTValidator {
             }
             if (issuedAtTime != null) {
                 issuedTime = issuedAtTime.getTime();
+            }
+
+            //   Obtain the signing algorithm used to sign the JWT in the request.
+            String requestSigningAlgorithm = signedJWT.getHeader().getAlgorithm().getName();
+            if (!isValidSignatureAlgorithm(requestSigningAlgorithm, consumerKey)) {
+                throw new OAuthClientAuthnException("Signature algorithm used in the request is invalid.",
+                        OAuth2ErrorCodes.INVALID_CLIENT);
+            }
+
+            /* Check whether the request signing algorithm is an allowed algorithm as per the FAPI specification.
+               https://openid.net/specs/openid-financial-api-part-2-1_0.html#algorithm-considerations */
+            try {
+                if (OAuth2Util.isFapiConformantApp(consumerKey)) {
+                    //   Mandating FAPI specified JWT signing algorithms.
+                    List<String> fapiAllowedSigningAlgorithms = IdentityUtil
+                            .getPropertyAsList(FAPI_SIGNATURE_ALG_CONFIGURATION);
+                    if (!fapiAllowedSigningAlgorithms.contains(requestSigningAlgorithm)) {
+                        throw new OAuthClientAuthnException("FAPI unsupported signing algorithm " + requestSigningAlgorithm
+                                + " is used to sign the JWT.", OAuth2ErrorCodes.INVALID_CLIENT);
+                    }
+                }
+            } catch (IdentityOAuth2ClientException e) {
+                throw new OAuthClientAuthnException("Could not find an existing app for clientId: " + consumerKey,
+                        OAuth2ErrorCodes.INVALID_CLIENT);
+            } catch (IdentityOAuth2Exception e) {
+                throw new OAuthClientAuthnException("Error while obtaining the service provider for client_id: " +
+                        consumerKey, OAuth2ErrorCodes.SERVER_ERROR);
             }
 
             preventTokenReuse = !JWTServiceDataHolder.getInstance()
@@ -700,4 +732,53 @@ public class JWTValidator {
         }
         return true;
     }
+
+    /**
+     * Validate whether the request signing algorithm is configured for the application.
+     *
+     * @param requestSigningAlgorithm     The request signed algorithm.
+     * @param clientId                    Client ID of the application.
+     * @return whether the request signing algorithm is configured for the application.
+     * @throws OAuthClientAuthnException OAuth Client Authentication Exception.
+     */
+    private boolean isValidSignatureAlgorithm(String requestSigningAlgorithm, String clientId)
+            throws OAuthClientAuthnException {
+
+        //   Obtain the signing algorithm configured for the application.
+        List<String> configuredSigningAlgorithms = getConfiguredSigningAlgorithm(clientId);
+        //  Validate whether the JWT signing algorithm is configured for the application.
+        if (configuredSigningAlgorithms.isEmpty() || configuredSigningAlgorithms.contains(requestSigningAlgorithm)) {
+            return true;
+        } else {
+            if (log.isDebugEnabled()) {
+                log.debug("JWT signed algorithm: " + requestSigningAlgorithm + " does not match with the configured algorithms: " +
+                        configuredSigningAlgorithms);
+            }
+            return false;
+        }
+    }
+
+    /**
+     * Obtain the request signing algorithms configured for the application.
+     *
+     * @param clientId   Client ID of the application.
+     * @throws OAuthClientAuthnException OAuth Client Authentication Exception.
+     */
+    private List<String> getConfiguredSigningAlgorithm(String clientId) throws OAuthClientAuthnException {
+
+        List<String> configuredSigningAlgorithms = new ArrayList<>();
+        String tenantDomain = IdentityTenantUtil.resolveTenantDomain();
+        try {
+            OAuthAppDO oAuthAppDO = OAuth2Util.getAppInformationByClientId(clientId, tenantDomain);
+            String tokenEndpointAuthSignatureAlgorithm = oAuthAppDO.getTokenEndpointAuthSignatureAlgorithm();
+            if (StringUtils.isNotBlank(tokenEndpointAuthSignatureAlgorithm)) {
+                configuredSigningAlgorithms = Arrays.asList(tokenEndpointAuthSignatureAlgorithm);
+            }
+        } catch (IdentityOAuth2Exception | InvalidOAuthClientException e) {
+            throw new OAuthClientAuthnException("Error occurred while retrieving app information for client id: " +
+                    clientId + " of tenantDomain: " + tenantDomain, OAuth2ErrorCodes.INVALID_REQUEST, e);
+        }
+        return configuredSigningAlgorithms;
+    }
+
 }
