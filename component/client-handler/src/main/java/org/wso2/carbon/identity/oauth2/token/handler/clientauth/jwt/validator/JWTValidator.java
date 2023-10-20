@@ -126,7 +126,7 @@ public class JWTValidator {
 
         if (signedJWT == null) {
             errorMessage = "No valid JWT assertion found for " + Constants.OAUTH_JWT_BEARER_GRANT_TYPE;
-            return logAndThrowException(errorMessage, OAuth2ErrorCodes.INVALID_REQUEST);
+            return logAndThrowException(errorMessage);
         }
         try {
             JWTClaimsSet claimsSet = getClaimSet(signedJWT);
@@ -219,7 +219,7 @@ public class JWTValidator {
         } catch (IdentityOAuth2Exception e) {
             return logAndThrowException(e.getMessage(), e.getErrorCode());
         } catch (UserStoreException | JWTClientAuthenticatorServiceServerException e) {
-            return logAndThrowException(e.getMessage(), OAuth2ErrorCodes.INVALID_REQUEST);
+            return logAndThrowException(e.getMessage());
         }
     }
 
@@ -228,7 +228,7 @@ public class JWTValidator {
         for (String mandatoryClaim : mandatoryClaims) {
             if (claimsSet.getClaim(mandatoryClaim) == null) {
                 String errorMessage = "Mandatory field :" + mandatoryClaim + " is missing in the JWT assertion.";
-                return logAndThrowException(errorMessage, OAuth2ErrorCodes.INVALID_REQUEST);
+                return logAndThrowException(errorMessage);
             }
         }
         return true;
@@ -328,7 +328,7 @@ public class JWTValidator {
             return true;
         } else if (preventTokenReuse) {
             String message = "JWT Token with JTI: " + jti + " has been replayed.";
-            return logAndThrowException(message, OAuth2ErrorCodes.INVALID_REQUEST);
+            return logAndThrowException(message);
         }
         // Token reuse is allowed. Here we are logging whether the token is reused within the allowed expiry time.
         if (currentTimeInMillis + timeStampSkewMillis < jwtEntry.getExp()) {
@@ -378,12 +378,20 @@ public class JWTValidator {
         try {
             oAuthAppDO = OAuth2Util.getAppInformationByClientId(jwtSubject);
             if (oAuthAppDO == null) {
-                logAndThrowException(message, OAuth2ErrorCodes.INVALID_REQUEST);
+                logAndThrowException(message);
             }
         } catch (InvalidOAuthClientException | IdentityOAuth2Exception e) {
-            logAndThrowException(message, OAuth2ErrorCodes.INVALID_REQUEST);
+            logAndThrowException(message);
         }
         return oAuthAppDO;
+    }
+
+    private boolean logAndThrowException(String detailedMessage) throws OAuthClientAuthnException {
+
+        if (log.isDebugEnabled()) {
+            log.debug(detailedMessage);
+        }
+        throw new OAuthClientAuthnException(detailedMessage, OAuth2ErrorCodes.INVALID_REQUEST);
     }
 
     private boolean logAndThrowException(String detailedMessage, String errorCode) throws OAuthClientAuthnException {
