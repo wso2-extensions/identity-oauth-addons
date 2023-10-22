@@ -102,7 +102,7 @@ public class JWTTestUtil {
             dataSource.close();
         }
     }
-    public static String buildJWT(String issuer, String subject, String jti, String audience, String algorythm,
+    public static String buildJWT(String issuer, String subject, String jti, String audience, String algorithm,
                                   Key privateKey, long notBeforeMillis)
             throws IdentityOAuth2Exception {
 
@@ -122,8 +122,10 @@ public class JWTTestUtil {
             jwtClaimsSetBuilder.notBeforeTime(new Date(curTimeInMillis + notBeforeMillis));
         }
         JWTClaimsSet jwtClaimsSet = jwtClaimsSetBuilder.build();
-        if (JWSAlgorithm.NONE.getName().equals(algorythm)) {
+        if (JWSAlgorithm.NONE.getName().equals(algorithm)) {
             return new PlainJWT(jwtClaimsSet).serialize();
+        } else if (JWSAlgorithm.RS512.getName().equals(algorithm)) {
+            return signJWTWithRSA512(jwtClaimsSet, privateKey);
         }
 
         return signJWTWithRSA(jwtClaimsSet, privateKey);
@@ -211,6 +213,27 @@ public class JWTTestUtil {
             return signedJWT.serialize();
         } catch (JOSEException e) {
             throw new IdentityOAuth2Exception("Error occurred while signing JWT", e);
+        }
+    }
+
+    /**
+     * Sign JWT using the RS512 algorithm.
+     *
+     * @param jwtClaimsSet    Set of claims to be included in the JWT.
+     * @param privateKey      Private key used to sign the JWT.
+     * @return Signed JWT value.
+     * @throws IdentityOAuth2Exception An exception is thrown if an error occurs while signing the JWT.
+     */
+    public static String signJWTWithRSA512(JWTClaimsSet jwtClaimsSet, Key privateKey)
+            throws IdentityOAuth2Exception {
+
+        try {
+            JWSSigner signer = new RSASSASigner((RSAPrivateKey) privateKey);
+            SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.RS512), jwtClaimsSet);
+            signedJWT.sign(signer);
+            return signedJWT.serialize();
+        } catch (JOSEException e) {
+            throw new IdentityOAuth2Exception("Error occurred while signing JWT.", e);
         }
     }
 

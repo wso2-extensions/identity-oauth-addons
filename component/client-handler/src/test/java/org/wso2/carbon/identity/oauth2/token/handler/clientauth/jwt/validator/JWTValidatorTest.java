@@ -30,6 +30,7 @@ import org.wso2.carbon.base.CarbonBaseConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.core.util.KeyStoreManager;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
+import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.common.testng.WithAxisConfiguration;
 import org.wso2.carbon.identity.common.testng.WithCarbonHome;
@@ -38,6 +39,7 @@ import org.wso2.carbon.identity.common.testng.WithKeyStore;
 import org.wso2.carbon.identity.common.testng.WithRealmService;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.oauth.common.OAuthConstants;
 import org.wso2.carbon.identity.oauth2.client.authentication.OAuthClientAuthnException;
 import org.wso2.carbon.identity.oauth2.internal.OAuth2ServiceComponentHolder;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants;
@@ -56,8 +58,11 @@ import java.security.KeyStore;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
@@ -82,6 +87,7 @@ import static org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENA
 public class JWTValidatorTest {
 
     public static final String TEST_CLIENT_ID_1 = "KrVLov4Bl3natUksF2HmWsdw684a";
+    public static final String TEST_CLIENT_ID_2 = "KrVLov4Bl3natUksF2HmWsdw684b";
     public static final String TEST_SECRET_1 = "testSecret1";
     public static final String VALID_ISSUER_VAL = "valid-issuer";
     public static final String VALID_ISSUER = "ValidIssuer";
@@ -136,15 +142,6 @@ public class JWTValidatorTest {
         Mockito.when(keyStoreManager.getPrimaryKeyStore()).thenReturn(serverKeyStore);
         Mockito.when(keyStoreManager.getKeyStore("wso2carbon.jks")).thenReturn(serverKeyStore);
 
-        ServiceProvider mockedServiceProvider = Mockito.mock(ServiceProvider.class);
-        Mockito.when(mockedServiceProvider.getCertificateContent()).thenReturn(CERTIFICATE);
-
-        ApplicationManagementService mockedApplicationManagementService = Mockito.mock(ApplicationManagementService
-                .class);
-        Mockito.when(mockedApplicationManagementService.getServiceProviderByClientId(anyString(), anyString(),
-                anyString())).thenReturn(mockedServiceProvider);
-        OAuth2ServiceComponentHolder.setApplicationMgtService(mockedApplicationManagementService);
-
         RealmService realmService = IdentityTenantUtil.getRealmService();
         UserRealm userRealm = realmService.getTenantUserRealm(SUPER_TENANT_ID);
         PrivilegedCarbonContext.getThreadLocalCarbonContext().setUserRealm(userRealm);
@@ -154,6 +151,9 @@ public class JWTValidatorTest {
         Map<String, Object> configuration = new HashMap<>();
         configuration.put("OAuth.OpenIDConnect.IDTokenIssuerID", ID_TOKEN_ISSUER_ID);
         configuration.put(Constants.OAUTH2_PAR_URL_CONFIG, PAR_ENDPOINT);
+        // Assuming that the FAPI allowed signature algorithms are the below algorithms.
+        configuration.put("OAuth.OpenIDConnect.FAPI.AllowedSignatureAlgorithms.AllowedSignatureAlgorithm",
+                Arrays.asList("PS256", "ES256", "RS512"));
         WhiteboxImpl.setInternalState(IdentityUtil.class, "configuration", configuration);
     }
 
@@ -217,43 +217,62 @@ public class JWTValidatorTest {
         String jsonWebToken18 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3011", audience, "RSA265", key1, 0);
         String jsonWebToken19 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "10010010", audience, "RSA265", key1, 0);
         String jsonWebToken20 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "10010010", audience, "RSA265", key1, 0);
-        String jsonWebToken21 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "10010011", PAR_ENDPOINT, "RSA265", key1, 0);
+        String jsonWebToken21 = buildJWT(TEST_CLIENT_ID_2, TEST_CLIENT_ID_2, "10010011", audience, "RS512", key1, 0);
+        String jsonWebToken22 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "10010012", audience, "RSA265", key1, 0);
+        String jsonWebToken23 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "10010013", PAR_ENDPOINT, "RSA265", key1, 0);
 
         return new Object[][]{
-                {jsonWebToken0, properties8, false, "Correct authentication request is failed."},
-                {jsonWebToken1, properties1, true, "Correct authentication request is failed."},
+                {jsonWebToken0, properties8, false, "Correct authentication request is failed.", false},
+                {jsonWebToken1, properties1, true, "Correct authentication request is failed.", false},
                 {jsonWebToken2, properties1, false, "JWT replay with preventTokenReuse enabled is not " +
-                        "failed. "},
-                {jsonWebToken3, properties3, false, "JWT with Invalid field Issuer must be fail."},
-                {jsonWebToken4, properties3, false, "Request with non existing SP client-id should fail."},
+                        "failed.", false},
+                {jsonWebToken3, properties3, false, "JWT with Invalid field Issuer must be fail.", false},
+                {jsonWebToken4, properties3, false, "Request with non existing SP client-id should fail.", false},
                 {jsonWebToken5, properties5, true, "JWT replay with preventTokenReuse disabled but " +
-                        "not-expired is not failed"},
-                {jsonWebToken6, properties2, true, "Valid JWT token with custom issuer validation should pass."},
+                        "not-expired is not failed", false},
+                {jsonWebToken6, properties2, true, "Valid JWT token with custom issuer validation should pass.", false},
                 {jsonWebToken7, properties3, false, "JWT persisted in database with preventTokenReuse " +
-                        "enabled is not failed."},
+                        "enabled is not failed.", false},
                 {jsonWebToken9, properties1, false, "JWT persisted in database with preventTokenReuse " +
-                        "disabled is not failed."},
-                {jsonWebToken10, properties4, true, "Valid JWT token with custom audience validation should pass" +
-                        "."},
-                {jsonWebToken11, properties1, false, ""},
-                {jsonWebToken12, properties5, true, ""},
-                {jsonWebToken12, properties5, true, ""},
-                {jsonWebToken13, properties1, false, ""},
-                {jsonWebToken15, properties1, false, ""},
-                {jsonWebToken16, properties4, false, ""},
-                {jsonWebToken17, properties6, false, ""},
-                {jsonWebToken18, properties7, false, ""},
-                {jsonWebToken19, properties1, true, "Unable to use same JTI across tenants."},
+                        "disabled is not failed.", false},
+                {jsonWebToken10, properties4, true, "Valid JWT token with custom audience validation should pass.", false},
+                {jsonWebToken11, properties1, false, "", false},
+                {jsonWebToken12, properties5, true, "", false},
+                {jsonWebToken12, properties5, true, "", false},
+                {jsonWebToken13, properties1, false, "", false},
+                {jsonWebToken15, properties1, false, "", false},
+                {jsonWebToken16, properties4, false, "", false},
+                {jsonWebToken17, properties6, false, "", false},
+                {jsonWebToken18, properties7, false, "", false},
+                {jsonWebToken19, properties1, true, "Unable to use same JTI across tenants.", false},
                 {jsonWebToken20, properties1, false, "Duplicated JTI was used in same tenant with " +
-                        "preventTokenReuse enabled."},
-                {jsonWebToken21, properties1, true, "JWT with valid audience from the accepted value list should pass."}
+                        "preventTokenReuse enabled.", false},
+                {jsonWebToken23, properties1, true, "JWT with valid audience from the accepted value list should pass.", false},
+                {jsonWebToken22, properties1, true, "JWT with registered signing algorithm should pass.", false},
+                {jsonWebToken22, properties1, false, "JWT with unregistered signing algorithm should fail.", false},
+                /* When using PS256 it causes unit test issues unless BouncyCastleProviderSingleton is being used. Therefore 
+                   the unit tests were written assuming that RS512 is a FAPI allowed signing algorithm because that issue 
+                   only exists when running unit tests and what we really need to check is the logic within the methods. */
+                {jsonWebToken21, properties1, true, "JWT with registered signing algorithm and FAPI compliant signing " +
+                        "algorithm should pass.", true},
+                {jsonWebToken22, properties1, false, "JWT with registered signing algorithm and FAPI non-compliant " +
+                        "signing algorithm should fail.", true}
         };
     }
 
     @Test(dataProvider = "provideJWT")
-    public void testValidateToken(String jwt, Object properties, boolean expected,
-                                  String errorMsg) throws Exception {
+    public void testValidateToken(String jwt, Object properties, boolean expected, String errorMsg,
+                                  boolean isFAPIApplication) throws Exception {
 
+        ServiceProvider mockedServiceProvider = Mockito.mock(ServiceProvider.class);
+        Mockito.when(mockedServiceProvider.getCertificateContent()).thenReturn(CERTIFICATE);
+        Mockito.when(mockedServiceProvider.getSpProperties()).thenReturn(
+                getServiceProviderProperties(String.valueOf(isFAPIApplication)));
+        ApplicationManagementService mockedApplicationManagementService = Mockito.mock(ApplicationManagementService
+                .class);
+        Mockito.when(mockedApplicationManagementService.getServiceProviderByClientId(anyString(), anyString(),
+                anyString())).thenReturn(mockedServiceProvider);
+        OAuth2ServiceComponentHolder.setApplicationMgtService(mockedApplicationManagementService);
         try {
             checkIfTenantIdColumnIsAvailableInIdnOidcAuthTable();
             boolean  preventTokenReuse = true;
@@ -308,5 +327,15 @@ public class JWTValidatorTest {
                 "5hdFVrc0YySG1Xc2R3Njg0YSIsImp0aSI6MTAwOCwiZXhwIjoiMjU1NDQ0MDEzMjAwMCIsImF1ZCI6WyJzb21lLWF1ZGllbmNlIl19." +
                 "m0RrVUrZHr1M7R4I_4dzpoWD8jNA2fKkOadEsFg9Wj4";
         SignedJWT signedJWT = SignedJWT.parse(hsSignedJWT);
+    }
+
+    private ServiceProviderProperty[] getServiceProviderProperties(String isFapiApplication) {
+
+        List<ServiceProviderProperty> spProperties = new ArrayList<>();
+        ServiceProviderProperty fapiAppSpProperty = new ServiceProviderProperty();
+        fapiAppSpProperty.setName(OAuthConstants.IS_FAPI_CONFORMANT_APP);
+        fapiAppSpProperty.setValue(isFapiApplication);
+        spProperties.add(fapiAppSpProperty);
+        return spProperties.toArray(new ServiceProviderProperty[0]);
     }
 }
