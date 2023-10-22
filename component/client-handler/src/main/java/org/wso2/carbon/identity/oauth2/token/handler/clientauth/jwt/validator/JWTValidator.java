@@ -388,10 +388,7 @@ public class JWTValidator {
 
     private boolean logAndThrowException(String detailedMessage) throws OAuthClientAuthnException {
 
-        if (log.isDebugEnabled()) {
-            log.debug(detailedMessage);
-        }
-        throw new OAuthClientAuthnException(detailedMessage, OAuth2ErrorCodes.INVALID_REQUEST);
+        return logAndThrowException(detailedMessage, OAuth2ErrorCodes.INVALID_REQUEST);
     }
 
     private boolean logAndThrowException(String detailedMessage, String errorCode) throws OAuthClientAuthnException {
