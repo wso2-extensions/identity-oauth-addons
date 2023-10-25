@@ -158,7 +158,7 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
                 OAuthAppDO oAuthAppdo = OAuth2Util.getAppInformationByClientId(
                         oAuthClientAuthnContext.getClientId(), tenantDomain);
                 if (StringUtils.isNotEmpty(oAuthAppdo.getTlsClientAuthSubjectDN()) &&
-                        !requestCert.getSubjectDN().toString().equals(oAuthAppdo.getTlsClientAuthSubjectDN())) {
+                        !oAuthAppdo.getTlsClientAuthSubjectDN().equals(registeredCert.getSubjectDN().toString())) {
                     return false;
                 }
                 return authenticate(registeredCert, requestCert);
