@@ -216,7 +216,9 @@ public class JWTValidator {
 
             return true;
 
-        } catch (IdentityOAuth2Exception | UserStoreException | JWTClientAuthenticatorServiceServerException e) {
+        } catch (IdentityOAuth2Exception e) {
+            return logAndThrowException(e.getMessage(), e.getErrorCode());
+        } catch (UserStoreException | JWTClientAuthenticatorServiceServerException e) {
             return logAndThrowException(e.getMessage());
         }
     }
@@ -386,10 +388,15 @@ public class JWTValidator {
 
     private boolean logAndThrowException(String detailedMessage) throws OAuthClientAuthnException {
 
+        return logAndThrowException(detailedMessage, OAuth2ErrorCodes.INVALID_REQUEST);
+    }
+
+    private boolean logAndThrowException(String detailedMessage, String errorCode) throws OAuthClientAuthnException {
+
         if (log.isDebugEnabled()) {
             log.debug(detailedMessage);
         }
-        throw new OAuthClientAuthnException(detailedMessage, OAuth2ErrorCodes.INVALID_REQUEST);
+        throw new OAuthClientAuthnException(detailedMessage, errorCode);
     }
 
     private boolean validateJWTWithExpTime(Date expTime, long currentTimeInMillis, long timeStampSkewMillis)
