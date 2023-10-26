@@ -35,6 +35,7 @@ import org.testng.annotations.Test;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.common.testng.WithCarbonHome;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
 import org.wso2.carbon.identity.oauth2.bean.OAuthClientAuthnContext;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils.CommonConstants;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils.MutualTLSUtil;
@@ -57,6 +58,8 @@ import java.util.List;
 import java.util.Map;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.powermock.api.mockito.PowerMockito.doReturn;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 import static org.testng.Assert.assertEquals;
@@ -278,30 +281,39 @@ public class MutualTLSClientAuthenticatorTest extends PowerMockTestCase {
         clientIdList.add(CLIENT_ID);
         bodyParamsWithClientId.put(OAuth.OAUTH_CLIENT_ID, clientIdList);
         OAuthClientAuthnContext oAuthClientAuthnContext = new OAuthClientAuthnContext();
+        String subjectDN = "CN=travelocity.com, OU=wso2, O=wso2, L=Colombo, ST=WP, C=SL";
+        String incorrectSubjectDN = "CN=app.com, OU=wso2, O=wso2, L=Colombo, ST=WP, C=SL";
 
         return new Object[][]{
 
                 // Correct  client certificate present with client Id in request body.
-                {getCertificate(CERTIFICATE_CONTENT), new HashMap<String, List>(), buildOAuthClientAuthnContext(CLIENT_ID), true},
+                {getCertificate(CERTIFICATE_CONTENT), new HashMap<String, List>(), buildOAuthClientAuthnContext(CLIENT_ID), true, subjectDN },
 
                 // Correct  client certificate present with client Id in request body.
-                {getCertificate(CERTIFICATE_CONTENT), bodyParamsWithClientId, buildOAuthClientAuthnContext(CLIENT_ID), true},
+                {getCertificate(CERTIFICATE_CONTENT), bodyParamsWithClientId, buildOAuthClientAuthnContext(CLIENT_ID), true, subjectDN},
 
                 // Incorrect  client certificate present without client Id in request body.
-                {getCertificate("CERTIFICATE_CONTENT"), bodyParamsWithClientId, oAuthClientAuthnContext, false},
+                {getCertificate("CERTIFICATE_CONTENT"), bodyParamsWithClientId, oAuthClientAuthnContext, false, subjectDN},
 
                 // Correct client certificate not provided.
-                {null, new HashMap<String, List>(), buildOAuthClientAuthnContext(null), false},
+                {null, new HashMap<String, List>(), buildOAuthClientAuthnContext(null), false, subjectDN},
+
+                //Different subjectDN registered in application
+                {getCertificate(CERTIFICATE_CONTENT), bodyParamsWithClientId, buildOAuthClientAuthnContext(CLIENT_ID), false, incorrectSubjectDN},
+
         };
     }
 
     @Test(dataProvider = "testClientAuthnData")
     public void testAuthenticateClient(Object certificate, HashMap<String, List> bodyContent,
-                                       Object oAuthClientAuthnContextObj, boolean authenticationResult) throws
-            Exception {
+                                       Object oAuthClientAuthnContextObj, boolean authenticationResult,
+                                       String subjectDN) throws Exception {
 
+        OAuthAppDO appDO = new OAuthAppDO();
+        appDO.setTlsClientAuthSubjectDN(subjectDN);
         PowerMockito.mockStatic(OAuth2Util.class);
         PowerMockito.mockStatic(MutualTLSUtil.class);
+        doReturn(appDO).when(OAuth2Util.class, "getAppInformationByClientId", anyString(), anyString());
         OAuthClientAuthnContext oAuthClientAuthnContext = (OAuthClientAuthnContext) oAuthClientAuthnContextObj;
         HttpServletRequest httpServletRequest = PowerMockito.mock(HttpServletRequest.class);
         PowerMockito.when(MutualTLSUtil.isJwksUriConfigured(any())).thenReturn(false);
