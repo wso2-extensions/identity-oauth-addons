@@ -242,7 +242,8 @@
                             version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.core.util; version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.identity.application.authentication.framework.cache; version="${carbon.identity.package.import.version.range}",
-                            org.wso2.carbon.identity.core.cache; version="${carbon.identity.package.import.version.range}"
+                            org.wso2.carbon.identity.core.cache; version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.oauth.dao; version="${identity.inbound.auth.oauth.imp.pkg.version}"
                         </Import-Package>
                         <Export-Package>
                             !org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.internal,
