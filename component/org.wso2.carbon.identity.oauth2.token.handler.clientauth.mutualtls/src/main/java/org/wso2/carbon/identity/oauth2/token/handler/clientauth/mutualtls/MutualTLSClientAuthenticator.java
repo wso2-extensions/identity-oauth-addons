@@ -139,6 +139,8 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
 
             String tenantDomain = OAuth2Util.getTenantDomainOfOauthApp(oAuthClientAuthnContext.getClientId());
             ServiceProvider serviceProvider = getServiceProvider(oAuthClientAuthnContext.getClientId(), tenantDomain );
+            OAuthAppDO oAuthAppdo = OAuth2Util.getAppInformationByClientId(
+                    oAuthClientAuthnContext.getClientId(), tenantDomain);
             if (isJwksUriConfigured(serviceProvider)) {
                 if (log.isDebugEnabled()) {
                     log.debug("Public certificate not configured for Service Provider with client_id: "
@@ -146,7 +148,7 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
                             + "Fetching the jwks endpoint for validating request certificate");
                 }
                 jwksUri = getJWKSEndpointOfSP(serviceProvider, oAuthClientAuthnContext.getClientId());
-                return authenticate(jwksUri, requestCert);
+                return authenticate(jwksUri, requestCert, oAuthAppdo);
             } else {
                 if (log.isDebugEnabled()) {
                     log.debug("Public certificate configured for Service Provider with client_id: "
@@ -155,13 +157,7 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
                 }
                 registeredCert = (X509Certificate) OAuth2Util
                         .getX509CertOfOAuthApp(oAuthClientAuthnContext.getClientId(), tenantDomain);
-                OAuthAppDO oAuthAppdo = OAuth2Util.getAppInformationByClientId(
-                        oAuthClientAuthnContext.getClientId(), tenantDomain);
-                if (StringUtils.isNotEmpty(oAuthAppdo.getTlsClientAuthSubjectDN()) &&
-                        !oAuthAppdo.getTlsClientAuthSubjectDN().equals(registeredCert.getSubjectDN().toString())) {
-                    return false;
-                }
-                return authenticate(registeredCert, requestCert);
+                return authenticate(registeredCert, requestCert, oAuthAppdo);
             }
         } catch (IdentityOAuth2Exception e) {
             throw new OAuthClientAuthnException(OAuth2ErrorCodes.SERVER_ERROR, "Error occurred while retrieving " +
@@ -311,7 +307,7 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
      * @param requestCert    X.509 certificate presented to server during TLS hand shake.
      * @return Whether the client was successfully authenticated or not.
      */
-    protected boolean authenticate(X509Certificate registeredCert, X509Certificate requestCert)
+    protected boolean authenticate(X509Certificate registeredCert, X509Certificate requestCert, OAuthAppDO oAuthAppDO)
             throws OAuthClientAuthnException {
 
         boolean trustedCert = false;
@@ -321,6 +317,12 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
             if (StringUtils.equals(publicKeyOfRegisteredCert, publicKeyOfRequestCert)) {
                 if (log.isDebugEnabled()) {
                     log.debug("Client certificate thumbprint matched with the registered certificate thumbprint.");
+                }
+                if (StringUtils.isNotEmpty(oAuthAppDO.getTlsClientAuthSubjectDN()) &&
+                        !oAuthAppDO.getTlsClientAuthSubjectDN().equals(requestCert.getSubjectDN().toString())) {
+                    log.debug("Client certificate subjectDN does not match with the registered certificate " +
+                            "thumbprint.");
+                    return false;
                 }
                 trustedCert = true;
             } else {
@@ -344,10 +346,11 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
      * @param requestCert X.509 certificate presented to server during TLS hand shake.
      * @return Whether the client was successfully authenticated or not.
      */
-    private boolean authenticate(URL jwksUri, X509Certificate requestCert) throws OAuthClientAuthnException {
+    private boolean authenticate(URL jwksUri, X509Certificate requestCert, OAuthAppDO oAuthAppDO)
+            throws OAuthClientAuthnException {
 
         try {
-            return isAuthenticated(getResourceContent(jwksUri), requestCert);
+            return isAuthenticated(getResourceContent(jwksUri), requestCert, oAuthAppDO);
         } catch (IOException e) {
             throw new OAuthClientAuthnException(OAuth2ErrorCodes.SERVER_ERROR,
                     "Error occurred while opening HTTP connection for the JWKS URL : " + jwksUri, e);
@@ -364,7 +367,7 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
      * @param requestCert   X.509 certificate presented to server during TLS hand shake.
      * @return Whether the client was successfully authenticated or not.
      */
-    private boolean isAuthenticated(JsonArray resourceArray, X509Certificate requestCert)
+    private boolean isAuthenticated(JsonArray resourceArray, X509Certificate requestCert, OAuthAppDO oAuthAppDO)
             throws CertificateException, OAuthClientAuthnException {
 
         for (JsonElement jsonElement : resourceArray) {
@@ -382,7 +385,7 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
                 CertificateFactory factory = CertificateFactory.getInstance(CommonConstants.X509);
                 X509Certificate cert = (X509Certificate) factory.generateCertificate(
                         new ByteArrayInputStream(DatatypeConverter.parseBase64Binary(attributeValue.getAsString())));
-                if (authenticate(cert, requestCert)) {
+                if (authenticate(cert, requestCert, oAuthAppDO)) {
                     if (log.isDebugEnabled()) {
                         log.debug("Client authentication successful using the attribute: " + CommonConstants.X5C);
                     }
