@@ -24,12 +24,14 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.nimbusds.jose.util.DefaultResourceRetriever;
 import com.nimbusds.jose.util.Resource;
+import com.nimbusds.jwt.SignedJWT;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.oltu.oauth2.common.OAuth;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.oauth.RequestObjectValidatorUtil;
 import org.wso2.carbon.identity.oauth.common.OAuth2ErrorCodes;
 import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
 import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
@@ -297,6 +299,40 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
 
         Object certObject = request.getAttribute(JAVAX_SERVLET_REQUEST_CERTIFICATE);
         return (certObject instanceof X509Certificate[] || certObject instanceof X509Certificate);
+    }
+
+    /**
+     * @deprecated use @{@link # authenticate(X509Certificate registeredCert, X509Certificate requestCert, OAuthAppDO oAuthAppDO)}} instead
+     * Authenticate the client by comparing the public key of the registered public certificate against the public
+     * key of the certificate presented at TLS hand shake for authentication.
+     *
+     * @param registeredCert X.509 certificate registered at service provider configuration.
+     * @param requestCert    X.509 certificate presented to server during TLS hand shake.
+     * @return Whether the client was successfully authenticated or not.
+     */
+    protected boolean authenticate(X509Certificate registeredCert, X509Certificate requestCert)
+            throws OAuthClientAuthnException {
+
+        boolean trustedCert = false;
+        try {
+            String publicKeyOfRegisteredCert = MutualTLSUtil.getThumbPrint(registeredCert, null);
+            String publicKeyOfRequestCert = MutualTLSUtil.getThumbPrint(requestCert, null);
+            if (StringUtils.equals(publicKeyOfRegisteredCert, publicKeyOfRequestCert)) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Client certificate thumbprint matched with the registered certificate thumbprint.");
+                }
+                trustedCert = true;
+            } else {
+                if (log.isDebugEnabled()) {
+                    log.debug("Client Authentication failed. Client certificate thumbprint did not match with the " +
+                            "registered certificate thumbprint.");
+                }
+            }
+        } catch (CertificateEncodingException e) {
+            throw new OAuthClientAuthnException(OAuth2ErrorCodes.INVALID_GRANT, "Error occurred while " +
+                    "generating certificate thumbprint. Error: " + e.getMessage(), e);
+        }
+        return trustedCert;
     }
 
     /**
