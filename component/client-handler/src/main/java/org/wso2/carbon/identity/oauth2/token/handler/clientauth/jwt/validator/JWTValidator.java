@@ -41,7 +41,6 @@ import org.wso2.carbon.identity.oauth.common.OAuth2ErrorCodes;
 import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
 import org.wso2.carbon.identity.oauth.config.OAuthServerConfiguration;
 import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
-import org.wso2.carbon.identity.oauth2.IdentityOAuth2ClientException;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.client.authentication.OAuthClientAuthnException;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants;
@@ -191,7 +190,7 @@ public class JWTValidator {
                                 + " is used to sign the JWT.", OAuth2ErrorCodes.INVALID_CLIENT);
                     }
                 }
-            } catch (IdentityOAuth2ClientException e) {
+            } catch (InvalidOAuthClientException e) {
                 throw new OAuthClientAuthnException("Could not find an existing app for clientId: " + consumerKey,
                         OAuth2ErrorCodes.INVALID_CLIENT);
             } catch (IdentityOAuth2Exception e) {
