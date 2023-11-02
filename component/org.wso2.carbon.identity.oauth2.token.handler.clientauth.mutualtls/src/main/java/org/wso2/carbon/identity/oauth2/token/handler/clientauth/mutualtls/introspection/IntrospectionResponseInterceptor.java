@@ -22,6 +22,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONObject;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth.event.AbstractOAuthEventInterceptor;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2IntrospectionResponseDTO;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2TokenValidationRequestDTO;
@@ -74,15 +75,17 @@ public class IntrospectionResponseInterceptor extends AbstractOAuthEventIntercep
             oAuth2IntrospectionResponseDTO.setScope(String.join(" ", scopeList));
         }
 
-        Map<String, Object> introspectionResponseProperties = oAuth2IntrospectionResponseDTO.getProperties();
-        if (introspectionResponseProperties == null) {
-            introspectionResponseProperties = new HashMap<>();
-        }
+        if (Boolean.parseBoolean(IdentityUtil.getProperty(CommonConstants.ENABLE_TLS_CERT_TOKEN_BINDING))) {
+            Map<String, Object> introspectionResponseProperties = oAuth2IntrospectionResponseDTO.getProperties();
+            if (introspectionResponseProperties == null) {
+                introspectionResponseProperties = new HashMap<>();
+            }
 
-        // If the MTLS cert hash is present as a scope, add the cert hash under cnf parameter.
-        if (cnf != null) {
-            introspectionResponseProperties.put(CommonConstants.CONFIRMATION_CLAIM_ATTRIBUTE, cnf);
+            // If the MTLS cert hash is present as a scope, add the cert hash under cnf parameter.
+            if (cnf != null) {
+                introspectionResponseProperties.put(CommonConstants.CONFIRMATION_CLAIM_ATTRIBUTE, cnf);
+            }
+            oAuth2IntrospectionResponseDTO.setProperties(introspectionResponseProperties);
         }
-        oAuth2IntrospectionResponseDTO.setProperties(introspectionResponseProperties);
     }
 }
