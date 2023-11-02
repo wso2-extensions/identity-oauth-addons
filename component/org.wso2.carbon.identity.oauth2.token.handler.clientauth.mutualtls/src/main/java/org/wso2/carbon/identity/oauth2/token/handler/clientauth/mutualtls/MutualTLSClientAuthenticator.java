@@ -353,7 +353,8 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
             String publicKeyOfRequestCert = MutualTLSUtil.getThumbPrint(requestCert, null);
             if (StringUtils.equals(publicKeyOfRegisteredCert, publicKeyOfRequestCert)) {
                 if (log.isDebugEnabled()) {
-                    log.debug("Client certificate thumbprint matched with the registered certificate thumbprint.");
+                    log.debug(String.format("Client certificate thumbprint %s matched with the registered " +
+                            "certificate thumbprint %s.", publicKeyOfRequestCert, publicKeyOfRegisteredCert));
                 }
                 Principal requestCertificateSubjectDN = requestCert.getSubjectDN();
                 if (StringUtils.isNotEmpty(oAuthAppDO.getTlsClientAuthSubjectDN())) {
