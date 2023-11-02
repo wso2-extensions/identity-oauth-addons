@@ -55,6 +55,7 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.security.Principal;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -354,11 +355,15 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
                 if (log.isDebugEnabled()) {
                     log.debug("Client certificate thumbprint matched with the registered certificate thumbprint.");
                 }
-                if (StringUtils.isNotEmpty(oAuthAppDO.getTlsClientAuthSubjectDN()) &&
-                        !oAuthAppDO.getTlsClientAuthSubjectDN().equals(requestCert.getSubjectDN().toString())) {
-                    log.debug("Client certificate subjectDN does not match with the registered certificate " +
-                            "subjectDN.");
-                    return false;
+                Principal requestCertificateSubjectDN = requestCert.getSubjectDN();
+                if (StringUtils.isNotEmpty(oAuthAppDO.getTlsClientAuthSubjectDN())) {
+                    if (requestCertificateSubjectDN != null &&
+                            oAuthAppDO.getTlsClientAuthSubjectDN().equals(requestCertificateSubjectDN.toString())) {
+                        log.debug(String.format("Client certificate subjectDN %s does not match with the registered " +
+                                        "certificate subjectDN %s.", oAuthAppDO.getTlsClientAuthSubjectDN(),
+                                requestCertificateSubjectDN));
+                        return false;
+                    }
                 }
                 trustedCert = true;
             } else {
