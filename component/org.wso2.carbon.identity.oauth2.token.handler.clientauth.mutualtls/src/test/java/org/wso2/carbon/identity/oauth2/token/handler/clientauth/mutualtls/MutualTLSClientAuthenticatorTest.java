@@ -37,6 +37,7 @@ import org.wso2.carbon.identity.common.testng.WithCarbonHome;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
 import org.wso2.carbon.identity.oauth2.bean.OAuthClientAuthnContext;
+import org.wso2.carbon.identity.oauth2.model.ClientAuthenticationMethodModel;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils.CommonConstants;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils.MutualTLSUtil;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
@@ -506,8 +507,12 @@ public class MutualTLSClientAuthenticatorTest extends PowerMockTestCase {
 
     @Test
     public void testGetSupportedClientAuthenticationMethods() {
-
-        List<String> supportedAuthMethods = mutualTLSClientAuthenticator.getSupportedClientAuthenticationMethods();
+;
+        List<String> supportedAuthMethods = new ArrayList<>();
+        for (ClientAuthenticationMethodModel clientAuthenticationMethodModel : mutualTLSClientAuthenticator
+                .getSupportedClientAuthenticationMethods()) {
+            supportedAuthMethods.add(clientAuthenticationMethodModel.getName());
+        }
         Assert.assertTrue(supportedAuthMethods.contains("tls_client_auth"));
         assertEquals(supportedAuthMethods.size(), 1);
     }
