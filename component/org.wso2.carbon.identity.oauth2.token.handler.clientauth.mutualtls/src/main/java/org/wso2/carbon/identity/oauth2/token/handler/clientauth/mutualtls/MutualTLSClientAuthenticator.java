@@ -361,8 +361,8 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
                     if (requestCertificateSubjectDN != null &&
                             !oAuthAppDO.getTlsClientAuthSubjectDN().equals(requestCertificateSubjectDN.toString())) {
                         log.debug(String.format("Client certificate subjectDN %s does not match with the registered " +
-                                        "certificate subjectDN %s.", oAuthAppDO.getTlsClientAuthSubjectDN(),
-                                requestCertificateSubjectDN));
+                                        "certificate subjectDN %s.", requestCertificateSubjectDN,
+                                oAuthAppDO.getTlsClientAuthSubjectDN()));
                         return false;
                     }
                 }
