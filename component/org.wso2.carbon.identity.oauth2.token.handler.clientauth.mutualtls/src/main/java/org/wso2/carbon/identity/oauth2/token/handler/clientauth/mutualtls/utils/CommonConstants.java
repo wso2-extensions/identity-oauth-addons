@@ -46,6 +46,6 @@ public class CommonConstants {
     public static final String OAUTH_JWT_BEARER_GRANT_TYPE = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
     public static final String AUTHENTICATOR_TYPE_PK_JWT = "pkJWT";
     public static final String ENABLE_TLS_CERT_TOKEN_BINDING = "OAuth.OpenIDConnect." +
-            "EnableTLSCertificateBoundAccessTokens";
+            "EnableTLSCertificateBoundAccessTokensViaBindingType";
 
 }
