@@ -369,8 +369,9 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
                 trustedCert = true;
             } else {
                 if (log.isDebugEnabled()) {
-                    log.debug("Client Authentication failed. Client certificate thumbprint did not match with the " +
-                            "registered certificate thumbprint.");
+                    log.debug(String.format("Client Authentication failed. Client certificate thumbprint " +
+                            "%s did not match with the registered certificate thumbprint %s.",
+                            publicKeyOfRequestCert, publicKeyOfRegisteredCert));
                 }
             }
         } catch (CertificateEncodingException e) {
