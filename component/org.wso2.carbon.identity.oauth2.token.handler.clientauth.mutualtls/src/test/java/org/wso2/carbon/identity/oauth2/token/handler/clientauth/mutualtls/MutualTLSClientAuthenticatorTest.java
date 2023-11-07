@@ -445,6 +445,8 @@ public class MutualTLSClientAuthenticatorTest extends PowerMockTestCase {
         PowerMockito.when(MutualTLSUtil.getThumbPrint(any(), any())).thenReturn(
                 "da39a3ee5e6b4b0d3255bfef95601890afd80709");
         PowerMockito.when(httpServletRequest.getAttribute(JAVAX_SERVLET_REQUEST_CERTIFICATE)).thenReturn(certificate);
+        OAuthAppDO appDO = new OAuthAppDO();
+        doReturn(appDO).when(OAuth2Util.class, "getAppInformationByClientId", anyString(), anyString());
         assertEquals(mutualTLSClientAuthenticator1
                         .authenticateClient(httpServletRequest, bodyContent, oAuthClientAuthnContext), authenticationResult,
                 "Expected client authentication with JWKS expected result was not received");
@@ -474,7 +476,8 @@ public class MutualTLSClientAuthenticatorTest extends PowerMockTestCase {
         CertificateFactory factory = CertificateFactory.getInstance("X.509");
         X509Certificate Cert = (X509Certificate) factory.generateCertificate(
                 new ByteArrayInputStream(DatatypeConverter.parseBase64Binary(CERTIFICATE_CONTENT)));
-        assertTrue(mutualTLSClientAuthenticator.authenticate(Cert,Cert));
+        OAuthAppDO appDO = new OAuthAppDO();
+        assertTrue(mutualTLSClientAuthenticator.authenticate(Cert,Cert, appDO));
 
     }
 
@@ -485,7 +488,8 @@ public class MutualTLSClientAuthenticatorTest extends PowerMockTestCase {
                 new ByteArrayInputStream(DatatypeConverter.parseBase64Binary(CERTIFICATE_CONTENT)));
         X509Certificate anotherCert = (X509Certificate) factory.generateCertificate(
                 new ByteArrayInputStream(DatatypeConverter.parseBase64Binary(CERTIFICATE_CONTENT_2)));
-        assertFalse(mutualTLSClientAuthenticator.authenticate(Cert,anotherCert));
+        OAuthAppDO appDO = new OAuthAppDO();
+        assertFalse(mutualTLSClientAuthenticator.authenticate(Cert,anotherCert, appDO));
 
     }
 
