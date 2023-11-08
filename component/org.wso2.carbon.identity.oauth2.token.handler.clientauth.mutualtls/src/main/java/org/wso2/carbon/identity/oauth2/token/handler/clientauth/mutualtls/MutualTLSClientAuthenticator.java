@@ -39,6 +39,7 @@ import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.bean.OAuthClientAuthnContext;
 import org.wso2.carbon.identity.oauth2.client.authentication.AbstractOAuthClientAuthenticator;
 import org.wso2.carbon.identity.oauth2.client.authentication.OAuthClientAuthnException;
+import org.wso2.carbon.identity.oauth2.model.ClientAuthenticationMethodModel;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.cache.MutualTLSJWKSCache;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.cache.MutualTLSJWKSCacheEntry;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.cache.MutualTLSJWKSCacheKey;
@@ -81,6 +82,7 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
 
     private static final Log log = LogFactory.getLog(MutualTLSClientAuthenticator.class);
     private static final String MTLS_CLIENT_AUTHENTICATOR_AUTH_METHOD = "tls_client_auth";
+    private static final String MTLS_CLIENT_AUTHENTICATOR_DISPLAY_NAME = "Mutual TLS";
 
     /**
      * @param request                 HttpServletRequest which is the incoming request.
@@ -532,9 +534,10 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
      * @return      Authentication methods supported by the authenticator.
      */
     @Override
-    public List<String> getSupportedClientAuthenticationMethods() {
+    public List<ClientAuthenticationMethodModel> getSupportedClientAuthenticationMethods() {
 
-        return Arrays.asList(MTLS_CLIENT_AUTHENTICATOR_AUTH_METHOD);
+        return Arrays.asList(new ClientAuthenticationMethodModel(MTLS_CLIENT_AUTHENTICATOR_AUTH_METHOD,
+                MTLS_CLIENT_AUTHENTICATOR_DISPLAY_NAME));
     }
 }
 

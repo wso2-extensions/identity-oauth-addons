@@ -37,6 +37,7 @@ import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.bean.OAuthClientAuthnContext;
 import org.wso2.carbon.identity.oauth2.client.authentication.OAuthClientAuthnException;
+import org.wso2.carbon.identity.oauth2.model.ClientAuthenticationMethodModel;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.core.dao.JWTAuthenticationConfigurationDAO;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.core.model.JWTClientAuthenticatorConfig;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceComponent;
@@ -161,7 +162,11 @@ public class PrivateKeyJWTClientAuthenticatorTest {
     @Test
     public void testGetSupportedClientAuthenticationMethods() {
 
-        List<String> supportedAuthMethods = privateKeyJWTClientAuthenticator.getSupportedClientAuthenticationMethods();
+        List<String> supportedAuthMethods = new ArrayList<>();
+        for (ClientAuthenticationMethodModel clientAuthenticationMethodModel : privateKeyJWTClientAuthenticator
+                .getSupportedClientAuthenticationMethods()) {
+            supportedAuthMethods.add(clientAuthenticationMethodModel.getName());
+        }
         Assert.assertTrue(supportedAuthMethods.contains("private_key_jwt"));
         assertEquals(supportedAuthMethods.size(), 1);
     }

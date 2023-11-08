@@ -28,6 +28,7 @@ import org.wso2.carbon.identity.oauth.common.OAuth2ErrorCodes;
 import org.wso2.carbon.identity.oauth2.bean.OAuthClientAuthnContext;
 import org.wso2.carbon.identity.oauth2.client.authentication.AbstractOAuthClientAuthenticator;
 import org.wso2.carbon.identity.oauth2.client.authentication.OAuthClientAuthnException;
+import org.wso2.carbon.identity.oauth2.model.ClientAuthenticationMethodModel;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceDataHolder;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator.JWTValidator;
 
@@ -64,6 +65,7 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
 
     private static final Log log = LogFactory.getLog(PrivateKeyJWTClientAuthenticator.class);
     private static final String PRIVATE_KEY_JWT_CLIENT_AUTHENTICATOR_AUTH_METHOD = "private_key_jwt";
+    private static final String PRIVATE_KEY_JWT_CLIENT_AUTHENTICATOR_DISPLAY_NAME = "Private Key JWT";
     private JWTValidator jwtValidator;
 
     private int rejectBeforePeriod = DEFAULT_VALIDITY_PERIOD_IN_MINUTES;
@@ -209,8 +211,9 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
      * @return      Authentication methods supported by the authenticator.
      */
     @Override
-    public List<String> getSupportedClientAuthenticationMethods() {
+    public List<ClientAuthenticationMethodModel> getSupportedClientAuthenticationMethods() {
 
-        return Arrays.asList(PRIVATE_KEY_JWT_CLIENT_AUTHENTICATOR_AUTH_METHOD);
+        return Arrays.asList(new ClientAuthenticationMethodModel(PRIVATE_KEY_JWT_CLIENT_AUTHENTICATOR_AUTH_METHOD,
+                PRIVATE_KEY_JWT_CLIENT_AUTHENTICATOR_DISPLAY_NAME));
     }
 }
