@@ -83,8 +83,13 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
                     log.debug(String.format("Bearer access token request received from client: %s.", consumerKey));
                 }
             }
-        } catch (InvalidOAuthClientException e) {
+        }
+        catch (InvalidOAuthClientException e) {
             throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_CLIENT, DPoPConstants.INVALID_CLIENT_ERROR);
+        }
+        catch (DPoPHeaderValidator.MultipleDPoPHeadersException e) {
+            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF,
+                    e.getMessage());
         }
     }
 
