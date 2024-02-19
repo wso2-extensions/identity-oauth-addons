@@ -70,10 +70,8 @@ public class DPoPHeaderValidator {
                 if (header != null && DPoPConstants.OAUTH_DPOP_HEADER.equalsIgnoreCase(header.getName())) {
                     if (ArrayUtils.isNotEmpty(header.getValue())){
                         if (header.getValue().length>1) {
-                            String error = "Multiple DPoP Proofs";
-                            if (log.isDebugEnabled()) {
-                                log.debug(error);
-                            }
+                            String error = "Request contains multiple DPoP headers.";
+                            log.error("Exception occurred while extracting the DPoP proof header: " + error);
                             throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, error);
                         }
                         return header.getValue()[0];
