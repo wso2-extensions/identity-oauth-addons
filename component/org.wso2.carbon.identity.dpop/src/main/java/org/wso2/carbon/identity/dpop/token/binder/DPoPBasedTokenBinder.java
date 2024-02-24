@@ -117,7 +117,7 @@ public class DPoPBasedTokenBinder extends AbstractTokenBinder {
                 return validateDPoPHeader(request, tokenBinding);
             }
         } catch (IdentityOAuth2Exception | ParseException e) {
-            log.error("Error while getting the token binding value", e);
+            log.error(e.getMessage(), e);
             return false;
         }
         return false;
@@ -225,7 +225,6 @@ public class DPoPBasedTokenBinder extends AbstractTokenBinder {
                 log.debug("DPoP header is empty.");
             }
             return false;
-
         }
 
         String httpMethod = (((HttpServletRequest) request).getMethod());

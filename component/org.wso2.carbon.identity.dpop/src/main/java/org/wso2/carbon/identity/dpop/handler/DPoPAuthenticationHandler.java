@@ -26,6 +26,7 @@ import org.wso2.carbon.identity.auth.service.AuthenticationContext;
 import org.wso2.carbon.identity.auth.service.AuthenticationRequest;
 import org.wso2.carbon.identity.auth.service.AuthenticationResult;
 import org.wso2.carbon.identity.auth.service.AuthenticationStatus;
+import org.wso2.carbon.identity.auth.service.exception.AuthClientException;
 import org.wso2.carbon.identity.auth.service.exception.AuthenticationFailException;
 import org.wso2.carbon.identity.auth.service.handler.AuthenticationHandler;
 import org.wso2.carbon.identity.auth.service.util.AuthConfigurationUtil;
@@ -47,7 +48,7 @@ public class DPoPAuthenticationHandler extends AuthenticationHandler {
 
     @Override
     protected AuthenticationResult doAuthenticate(MessageContext messageContext) throws
-            AuthenticationFailException {
+            AuthenticationFailException, AuthClientException {
 
         AuthenticationResult authenticationResult = new AuthenticationResult(AuthenticationStatus.FAILED);
         AuthenticationContext authenticationContext = (AuthenticationContext) messageContext;
@@ -78,6 +79,9 @@ public class DPoPAuthenticationHandler extends AuthenticationHandler {
                 if (!responseDTO.isValid()) {
                     if (log.isDebugEnabled()) {
                         log.debug(responseDTO.getErrorMsg());
+                    }
+                    if (responseDTO.getErrorMsg().startsWith(DPoPConstants.INVALID_DPOP_PROOF)) {
+                        throw new AuthClientException(responseDTO.getErrorMsg());
                     }
                     return authenticationResult;
                 }
