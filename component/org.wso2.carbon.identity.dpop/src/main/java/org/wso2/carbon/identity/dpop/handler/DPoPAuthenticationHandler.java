@@ -26,12 +26,14 @@ import org.wso2.carbon.identity.auth.service.AuthenticationContext;
 import org.wso2.carbon.identity.auth.service.AuthenticationRequest;
 import org.wso2.carbon.identity.auth.service.AuthenticationResult;
 import org.wso2.carbon.identity.auth.service.AuthenticationStatus;
+import org.wso2.carbon.identity.auth.service.exception.AuthClientException;
 import org.wso2.carbon.identity.auth.service.exception.AuthenticationFailException;
 import org.wso2.carbon.identity.auth.service.handler.AuthenticationHandler;
 import org.wso2.carbon.identity.auth.service.util.AuthConfigurationUtil;
 import org.wso2.carbon.identity.core.bean.context.MessageContext;
 import org.wso2.carbon.identity.dpop.constant.DPoPConstants;
 import org.wso2.carbon.identity.dpop.token.binder.DPoPBasedTokenBinder;
+import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.OAuth2TokenValidationService;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2ClientApplicationDTO;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2TokenValidationRequestDTO;
@@ -48,7 +50,7 @@ public class DPoPAuthenticationHandler extends AuthenticationHandler {
 
     @Override
     protected AuthenticationResult doAuthenticate(MessageContext messageContext) throws
-            AuthenticationFailException {
+            AuthenticationFailException, AuthClientException {
 
         AuthenticationResult authenticationResult = new AuthenticationResult(AuthenticationStatus.FAILED);
         AuthenticationContext authenticationContext = (AuthenticationContext) messageContext;
@@ -85,11 +87,11 @@ public class DPoPAuthenticationHandler extends AuthenticationHandler {
 
                 //check token binding
                 DPoPBasedTokenBinder dPoPBasedTokenBinder = new DPoPBasedTokenBinder();
-                if(!dPoPBasedTokenBinder.isValidTokenBinding(authenticationRequest,responseDTO.getTokenBinding())){
+                if(!dPoPBasedTokenBinder.isValidTokenBinding(requestDTO,responseDTO.getTokenBinding())){
                     if (log.isDebugEnabled()) {
                         log.debug("Token binding validation failed.");
-                    }
-                    return authenticationResult;
+                        throw new AuthClientException(DPoPConstants.INVALID_DPOP_PROOF);
+                    };
                 }
                 authenticationResult.setAuthenticationStatus(AuthenticationStatus.SUCCESS);
                 return authenticationResult;

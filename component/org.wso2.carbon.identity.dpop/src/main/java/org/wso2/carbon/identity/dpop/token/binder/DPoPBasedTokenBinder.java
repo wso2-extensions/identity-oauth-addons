@@ -22,7 +22,6 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wso2.carbon.identity.auth.service.AuthenticationRequest;
 import org.wso2.carbon.identity.core.handler.AbstractIdentityHandler;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.dpop.constant.DPoPConstants;
@@ -34,6 +33,7 @@ import org.wso2.carbon.identity.dpop.validators.DPoPHeaderValidator;
 import org.wso2.carbon.identity.oauth.config.OAuthServerConfiguration;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2AccessTokenReqDTO;
+import org.wso2.carbon.identity.oauth2.dto.OAuth2TokenValidationRequestDTO;
 import org.wso2.carbon.identity.oauth2.model.HttpRequestHeader;
 import org.wso2.carbon.identity.oauth2.token.bindings.TokenBinding;
 import org.wso2.carbon.identity.oauth2.token.bindings.impl.AbstractTokenBinder;
@@ -115,11 +115,10 @@ public class DPoPBasedTokenBinder extends AbstractTokenBinder {
 
         try {
             if (tokenBinding != null && DPoPConstants.OAUTH_DPOP_HEADER.equals(tokenBinding.getBindingType())) {
-                return validateDPoPHeader((AuthenticationRequest) request, tokenBinding);
+                return validateDPoPHeader((OAuth2TokenValidationRequestDTO) request, tokenBinding);
             }
         } catch (IdentityOAuth2Exception | ParseException e) {
             log.error(e.getMessage(), e);
-
             return false;
         }
         return false;
@@ -204,25 +203,20 @@ public class DPoPBasedTokenBinder extends AbstractTokenBinder {
         return thumbprintOfPublicKey;
     }
 
-    private boolean validateDPoPHeader(AuthenticationRequest request, TokenBinding tokenBinding) throws IdentityOAuth2Exception,
-            ParseException {
+    private boolean validateDPoPHeader(OAuth2TokenValidationRequestDTO request, TokenBinding tokenBinding) throws IdentityOAuth2Exception,
+        ParseException{
 
-        if (request.getRequestUri().equals(DPoPConstants.OAUTH_REVOKE_ENDPOINT) &&
+        String httpMethod = request.getContext()[0].getValue();
+        String httpUrl = request.getContext()[1].getValue();
+
+        if (httpUrl.equals(DPoPConstants.OAUTH_REVOKE_ENDPOINT) &&
                 skipDPoPValidationInRevoke()){
             return true;
         }
 
-        if (!request.getRequestUri().equals(DPoPConstants.OAUTH_REVOKE_ENDPOINT) &&
-                !request.getHeader(DPoPConstants.AUTHORIZATION_HEADER)
-                        .startsWith(DPoPConstants.OAUTH_DPOP_HEADER)) {
-            if (log.isDebugEnabled()) {
-                log.debug("DPoP prefix is not defined correctly in the Authorization header.");
-            }
-            return false;
-        }
-        String dpopHeader = request.getHeader(DPoPConstants.OAUTH_DPOP_HEADER);
+        String dpopProof = request.getContext()[2].getValue();
 
-        if (StringUtils.isBlank(dpopHeader)) {
+        if (StringUtils.isBlank(dpopProof)) {
             if (log.isDebugEnabled()) {
                 log.debug("DPoP header is empty.");
             }
@@ -230,13 +224,11 @@ public class DPoPBasedTokenBinder extends AbstractTokenBinder {
 
         }
 
-        String httpMethod = request.getMethod();
-        String httpUrl = request.getRequestUri().toString();
-        if (!DPoPHeaderValidator.isValidDPoPProof(httpMethod, httpUrl, dpopHeader)) {
+        if (!DPoPHeaderValidator.isValidDPoPProof(httpMethod, httpUrl, dpopProof)) {
             return false;
         }
 
-        String thumbprintOfPublicKey = Utils.getThumbprintOfKeyFromDpopProof(dpopHeader);
+        String thumbprintOfPublicKey = Utils.getThumbprintOfKeyFromDpopProof(dpopProof);
 
         if (StringUtils.isBlank(thumbprintOfPublicKey)) {
             if (log.isDebugEnabled()) {
