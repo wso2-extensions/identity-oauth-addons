@@ -70,9 +70,9 @@ public class DPoPHeaderValidator {
                 if (header != null && DPoPConstants.OAUTH_DPOP_HEADER.equalsIgnoreCase(header.getName())) {
                     if (ArrayUtils.isNotEmpty(header.getValue())){
                         if (header.getValue().length>1) {
-                            String error = "Exception occurred while extracting the DPoP proof header: Request contains multiple DPoP headers.";
+                            String error = "Request contains multiple DPoP headers.";
                             log.error(error);
-                            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, error);
+                            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF,DPoPConstants.INVALID_DPOP_PROOF + " : " + error);
                         }
                         return header.getValue()[0];
                     }
@@ -166,10 +166,11 @@ public class DPoPHeaderValidator {
     private static boolean checkJwk(JWSHeader header) throws IdentityOAuth2ClientException {
 
         if (header.getJWK() == null) {
+            String error = "'jwk' is not presented in the DPoP Proof header";
             if (log.isDebugEnabled()) {
-                log.debug("'jwk' is not presented in the DPoP Proof header");
+                log.debug(error);
             }
-            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
+            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_PROOF +" : " + error);
         }
         return true;
     }
@@ -178,10 +179,11 @@ public class DPoPHeaderValidator {
 
         JWSAlgorithm algorithm = header.getAlgorithm();
         if (algorithm == null) {
+            String error = "'algorithm' is not presented in the DPoP Proof header";
             if (log.isDebugEnabled()) {
-                log.debug("'algorithm' is not presented in the DPoP Proof header");
+                log.debug(error);
             }
-            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
+            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_PROOF +" : " + error);
         }
         return true;
     }
@@ -189,10 +191,11 @@ public class DPoPHeaderValidator {
     private static boolean checkHeaderType(JWSHeader header) throws IdentityOAuth2ClientException {
 
         if (!DPoPConstants.DPOP_JWT_TYPE.equalsIgnoreCase(header.getType().toString())) {
+            String error = " typ field value in the DPoP Proof header  is not equal to 'dpop+jwt'";
             if (log.isDebugEnabled()) {
-                log.debug(" typ field value in the DPoP Proof header  is not equal to 'dpop+jwt'");
+                log.debug(error);
             }
-            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
+            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_PROOF +" : " + error);
         }
 
         return true;
@@ -201,10 +204,11 @@ public class DPoPHeaderValidator {
     private static boolean checkJwtClaimSet(JWTClaimsSet jwtClaimsSet) throws IdentityOAuth2ClientException {
 
         if (jwtClaimsSet == null) {
+            String error = "JWT Claim Set is missing in the DPoP proof.";
             if (log.isDebugEnabled()) {
-                log.debug("'jwtClaimsSet' is missing in the body of a DPoP proof.");
+                log.debug(error);
             }
-            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
+            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_PROOF +" : " + error);
         }
         return true;
     }
@@ -214,18 +218,19 @@ public class DPoPHeaderValidator {
         Timestamp currentTimestamp = new Timestamp(new Date().getTime());
         Date issuedAt = (Date) jwtClaimsSet.getClaim(DPoPConstants.DPOP_ISSUED_AT);
         if (issuedAt == null) {
-            if (log.isDebugEnabled()) {
-                log.debug("DPoP Proof missing the 'iat' field.");
-            }
-            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
-        }
-        boolean isExpired = (currentTimestamp.getTime() - issuedAt.getTime()) > getDPoPValidityPeriod();
-        if (isExpired) {
-            String error = "Expired DPoP Proof";
+            String error = "DPoP Proof missing the 'iat' field.";
             if (log.isDebugEnabled()) {
                 log.debug(error);
             }
-            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, error);
+            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_PROOF +" : " + error);
+        }
+        boolean isExpired = (currentTimestamp.getTime() - issuedAt.getTime()) > getDPoPValidityPeriod();
+        if (isExpired) {
+            String error = "Expired DPoP Proof.";
+            if (log.isDebugEnabled()) {
+                log.debug(error);
+            }
+            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_PROOF +" : " + error);
         }
         return true;
     }
@@ -233,10 +238,11 @@ public class DPoPHeaderValidator {
     private static boolean checkJti(JWTClaimsSet jwtClaimsSet) throws IdentityOAuth2ClientException {
 
         if (!jwtClaimsSet.getClaims().containsKey(DPoPConstants.JTI)) {
+            String error = "'jti' is missing in the 'jwtClaimsSet' of the DPoP proof body.";
             if (log.isDebugEnabled()) {
-                log.debug("'jti' is missing in the 'jwtClaimsSet' of the DPoP proof body.");
+                log.debug(error);
             }
-            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
+            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_PROOF +" : " + error);
         }
         return true;
     }
@@ -247,18 +253,20 @@ public class DPoPHeaderValidator {
 
         // Check if the DPoP proof HTTP method is empty.
         if (dPoPHttpMethod == null) {
+            String error = "DPoP Proof HTTP method empty.";
             if (log.isDebugEnabled()) {
-                log.debug("DPoP Proof HTTP method empty.");
+                log.debug(error);
             }
-            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
+            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_PROOF +" : " + error);
         }
 
         // Validate if the DPoP proof HTTP method matches that of the request.
         if (!httpMethod.equalsIgnoreCase(dPoPHttpMethod.toString())) {
+            String error = "DPoP Proof HTTP method mismatch.";
             if (log.isDebugEnabled()) {
-                log.debug("DPoP Proof HTTP method mismatch.");
+                log.debug(error);
             }
-            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
+            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_PROOF +" : " + error);
         }
 
         return true;
@@ -269,18 +277,20 @@ public class DPoPHeaderValidator {
         Object dPoPContextPath = jwtClaimsSet.getClaim(DPoPConstants.DPOP_HTTP_URI);
 
         if (dPoPContextPath == null) {
+            String error = "DPoP Proof context path empty.";
             if (log.isDebugEnabled()) {
-                log.debug("DPoP Proof context path empty.");
+                log.debug(error);
             }
-            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
+            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_PROOF +" : " + error);
         }
 
         // Validate if the DPoP proof HTTP URI matches that of the request.
         if (!httpUrl.equalsIgnoreCase(dPoPContextPath.toString())) {
+            String error = "DPoP Proof context path mismatch.";
             if (log.isDebugEnabled()) {
-                log.debug("DPoP Proof context path mismatch.");
+                log.debug(error);
             }
-            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
+            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_PROOF +" : " + error);
         }
         return true;
     }

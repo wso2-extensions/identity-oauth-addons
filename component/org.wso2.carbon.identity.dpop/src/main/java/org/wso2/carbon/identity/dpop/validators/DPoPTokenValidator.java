@@ -106,7 +106,7 @@ public class DPoPTokenValidator implements OAuth2TokenValidator {
 
             checkNotBeforeTime(claimsSet.getNotBeforeTime());
         } catch (JOSEException | ParseException e) {
-            throw new IdentityOAuth2Exception("Error while validating Token.", e);
+            throw new IdentityOAuth2Exception(DPoPConstants.INVALID_DPOP_PROOF+ ": DPoP roof is not a properly formed JWT.", e);
         }
         return true;
     }
@@ -327,7 +327,7 @@ public class DPoPTokenValidator implements OAuth2TokenValidator {
                 if (log.isDebugEnabled()) {
                     log.debug("DPoP header is empty.");
                 }
-                return false;
+                throw new IdentityOAuth2Exception(DPoPConstants.INVALID_DPOP_PROOF +" : DPoP header is empty.");
             }
 
             if (!DPoPHeaderValidator.isValidDPoPProof(httpMethod, httpUrl, dpopProof)) {

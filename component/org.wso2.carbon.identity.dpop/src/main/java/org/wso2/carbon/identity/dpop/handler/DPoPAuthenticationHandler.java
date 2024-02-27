@@ -32,8 +32,6 @@ import org.wso2.carbon.identity.auth.service.handler.AuthenticationHandler;
 import org.wso2.carbon.identity.auth.service.util.AuthConfigurationUtil;
 import org.wso2.carbon.identity.core.bean.context.MessageContext;
 import org.wso2.carbon.identity.dpop.constant.DPoPConstants;
-import org.wso2.carbon.identity.dpop.token.binder.DPoPBasedTokenBinder;
-import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.OAuth2TokenValidationService;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2ClientApplicationDTO;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2TokenValidationRequestDTO;
@@ -82,17 +80,12 @@ public class DPoPAuthenticationHandler extends AuthenticationHandler {
                     if (log.isDebugEnabled()) {
                         log.debug(responseDTO.getErrorMsg());
                     }
+                    if (responseDTO.getErrorMsg().startsWith(DPoPConstants.INVALID_DPOP_PROOF)) {
+                        throw new AuthClientException(responseDTO.getErrorMsg());
+                    }
                     return authenticationResult;
                 }
 
-                //check token binding
-                DPoPBasedTokenBinder dPoPBasedTokenBinder = new DPoPBasedTokenBinder();
-                if(!dPoPBasedTokenBinder.isValidTokenBinding(requestDTO,responseDTO.getTokenBinding())){
-                    if (log.isDebugEnabled()) {
-                        log.debug("Token binding validation failed.");
-                        throw new AuthClientException(DPoPConstants.INVALID_DPOP_PROOF);
-                    };
-                }
                 authenticationResult.setAuthenticationStatus(AuthenticationStatus.SUCCESS);
                 return authenticationResult;
             }
@@ -113,7 +106,7 @@ public class DPoPAuthenticationHandler extends AuthenticationHandler {
     }
 
     private void setContextParam(AuthenticationRequest authenticationRequest,
-                                 OAuth2TokenValidationRequestDTO requestDTO) {
+                                 OAuth2TokenValidationRequestDTO requestDTO) throws AuthClientException {
 
         HttpServletRequest request = authenticationRequest.getRequest();
         String dpopHeader = request.getHeader(DPoPConstants.OAUTH_DPOP_HEADER);
