@@ -106,7 +106,7 @@ public class DPoPAuthenticationHandler extends AuthenticationHandler {
     }
 
     private void setContextParam(AuthenticationRequest authenticationRequest,
-                                 OAuth2TokenValidationRequestDTO requestDTO) throws AuthClientException {
+                                 OAuth2TokenValidationRequestDTO requestDTO)  {
 
         HttpServletRequest request = authenticationRequest.getRequest();
         String dpopHeader = request.getHeader(DPoPConstants.OAUTH_DPOP_HEADER);
