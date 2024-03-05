@@ -43,8 +43,12 @@ import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
 import org.wso2.carbon.identity.oauth2.token.bindings.TokenBinding;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.Timestamp;
 import java.text.ParseException;
+import java.util.Base64;
 import java.util.Date;
 
 import javax.servlet.http.HttpServletRequest;
@@ -118,6 +122,26 @@ public class DPoPHeaderValidator {
     }
 
     /**
+     * Validate dpop proof header.
+     *
+     * @param httpMethod HTTP method of the request.
+     * @param httpURL HTTP URL of the request,
+     * @param dPoPProof DPoP header of the request.
+     * @param token Access token / Refresh token.
+     * @return
+     * @throws ParseException Error while retrieving the signedJwt.
+     * @throws IdentityOAuth2Exception Error while validating the dpop proof.
+     */
+    public static boolean isValidDPoPProof(String httpMethod, String httpURL, String dPoPProof, String token)
+            throws ParseException, IdentityOAuth2Exception  {
+
+        SignedJWT signedJwt = SignedJWT.parse(dPoPProof);
+        JWSHeader header = signedJwt.getHeader();
+
+        return validateDPoPPayload(httpMethod, httpURL, signedJwt.getJWTClaimsSet(),token) && validateDPoPHeader(header) ;
+    }
+
+    /**
      * Set token binder information if dpop proof is valid.
      *
      * @param dPoPProof DPoP proof header.
@@ -156,11 +180,20 @@ public class DPoPHeaderValidator {
         return checkJwk(header) && checkAlg(header) && checkHeaderType(header);
     }
 
+    //Authorization server side validator without "ath" claim validation
     private static boolean validateDPoPPayload(String httpMethod, String httpURL, JWTClaimsSet jwtClaimsSet)
             throws IdentityOAuth2Exception {
 
         return checkJwtClaimSet(jwtClaimsSet) && checkDPoPHeaderValidity(jwtClaimsSet) && checkJti(jwtClaimsSet) &&
                 checkHTTPMethod(httpMethod, jwtClaimsSet) && checkHTTPURI(httpURL, jwtClaimsSet);
+    }
+
+    //Resource server side validator with "ath" claim validation
+    private static boolean validateDPoPPayload(String httpMethod, String httpURL, JWTClaimsSet jwtClaimsSet, String token)
+            throws IdentityOAuth2Exception {
+
+        return checkJwtClaimSet(jwtClaimsSet) && checkDPoPHeaderValidity(jwtClaimsSet) && checkJti(jwtClaimsSet) &&
+                checkHTTPMethod(httpMethod, jwtClaimsSet) && checkHTTPURI(httpURL, jwtClaimsSet) && checkAth(token, jwtClaimsSet);
     }
 
     private static boolean checkJwk(JWSHeader header) throws IdentityOAuth2ClientException {
@@ -312,5 +345,28 @@ public class DPoPHeaderValidator {
         JSONObject obj = new JSONObject();
         obj.put(DPoPConstants.JWK_THUMBPRINT, tokenBindingValue);
         tokReqMsgCtx.addProperty(DPoPConstants.CNF, obj);
+    }
+
+    private static boolean checkAth(String token, JWTClaimsSet jwtClaimsSet) throws IdentityOAuth2ClientException {
+
+        Object ath = jwtClaimsSet.getClaim(DPoPConstants.DPOP_ACCESS_TOKEN_HASH);
+        if (ath == null) {
+            log.error("DPoP Proof access token hash is empty.");
+            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
+        }
+        MessageDigest digest = null;
+        try {
+            digest = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {
+            log.error("Error while getting the SHA-256 algorithm.", e);
+        }
+        byte[] hashBytes = digest.digest(token.getBytes(StandardCharsets.US_ASCII));
+        // Encode the hash using base64url encoding
+        String hashFromToken = Base64.getUrlEncoder().withoutPadding().encodeToString(hashBytes);
+        if (!StringUtils.equals(ath.toString(),hashFromToken)) {
+            log.error("DPoP Proof access token hash mismatch.");
+            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_PROOF);
+        }
+        return true;
     }
 }

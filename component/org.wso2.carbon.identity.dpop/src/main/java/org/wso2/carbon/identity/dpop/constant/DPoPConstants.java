@@ -28,6 +28,7 @@ public class DPoPConstants {
     public static final String DPOP_ISSUED_AT = "iat";
     public static final String DPOP_HTTP_URI = "htu";
     public static final String DPOP_HTTP_METHOD = "htm";
+    public static final String DPOP_ACCESS_TOKEN_HASH = "ath";
     public static final String DPOP_JWT_TYPE = "dpop+jwt";
     public static final String DPOP_TOKEN_TYPE = "DPoP";
     public static final String INVALID_DPOP_PROOF = "invalid_dpop_proof";
