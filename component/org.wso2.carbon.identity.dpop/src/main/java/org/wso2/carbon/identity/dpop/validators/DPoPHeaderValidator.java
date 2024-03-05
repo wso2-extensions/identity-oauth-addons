@@ -62,13 +62,21 @@ public class DPoPHeaderValidator {
      * @param tokReqMsgCtx Message context of token request.
      * @return DPoP header.
      */
-    public static String getDPoPHeader(OAuthTokenReqMessageContext tokReqMsgCtx) {
+    public static String getDPoPHeader(OAuthTokenReqMessageContext tokReqMsgCtx) throws IdentityOAuth2ClientException {
 
         HttpRequestHeader[] httpRequestHeaders = tokReqMsgCtx.getOauth2AccessTokenReqDTO().getHttpRequestHeaders();
         if (httpRequestHeaders != null) {
             for (HttpRequestHeader header : httpRequestHeaders) {
                 if (header != null && DPoPConstants.OAUTH_DPOP_HEADER.equalsIgnoreCase(header.getName())) {
-                    return ArrayUtils.isNotEmpty(header.getValue()) ? header.getValue()[0] : null;
+                    if (ArrayUtils.isNotEmpty(header.getValue())){
+                        if (header.getValue().length > 1) {
+                            String error = "Exception occurred while extracting the DPoP proof header: Request contains multiple DPoP headers.";
+                            log.error(error);
+                            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, error);
+                        }
+                        return header.getValue()[0];
+                    }
+                    return null;
                 }
             }
         }
