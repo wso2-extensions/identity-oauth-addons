@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.dpop.validators;
 
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -165,13 +166,22 @@ public class DPoPHeaderValidator {
 
     private static boolean checkJwk(JWSHeader header) throws IdentityOAuth2ClientException {
 
-        if (header.getJWK() == null) {
-            if (log.isDebugEnabled()) {
-                log.debug("'jwk' is not presented in the DPoP Proof header");
+        JWK jwk = header.getJWK();
+        if (jwk != null) {
+            if (!header.getJWK().isPrivate()) {
+                return true;
             }
-            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
+            String error = "Private key is used in the DPoP Proof header.";
+            if (log.isDebugEnabled()) {
+                log.debug(error);
+            }
+            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_PROOF +" : " + error);
         }
-        return true;
+        String error = "'jwk' is not presented in the DPoP Proof header";
+        if (log.isDebugEnabled()) {
+            log.debug(error);
+        }
+        throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_PROOF +" : " + error);
     }
 
     private static boolean checkAlg(JWSHeader header) throws IdentityOAuth2ClientException {
