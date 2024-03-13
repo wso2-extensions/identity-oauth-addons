@@ -138,7 +138,7 @@ public class DPoPHeaderValidator {
         SignedJWT signedJwt = SignedJWT.parse(dPoPProof);
         JWSHeader header = signedJwt.getHeader();
 
-        return validateDPoPPayload(httpMethod, httpURL, signedJwt.getJWTClaimsSet(),token) && validateDPoPHeader(header) ;
+        return validateDPoPPayload(httpMethod, httpURL, signedJwt.getJWTClaimsSet(), token) && validateDPoPHeader(header) ;
     }
 
     /**
@@ -363,7 +363,7 @@ public class DPoPHeaderValidator {
         byte[] hashBytes = digest.digest(token.getBytes(StandardCharsets.US_ASCII));
         // Encode the hash using base64url encoding
         String hashFromToken = Base64.getUrlEncoder().withoutPadding().encodeToString(hashBytes);
-        if (!StringUtils.equals(ath.toString(),hashFromToken)) {
+        if (!StringUtils.equals(ath.toString(), hashFromToken)) {
             log.error("DPoP Proof access token hash mismatch.");
             throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_PROOF);
         }
