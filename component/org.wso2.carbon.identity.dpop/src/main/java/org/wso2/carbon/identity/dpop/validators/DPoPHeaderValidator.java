@@ -171,17 +171,15 @@ public class DPoPHeaderValidator {
             if (!header.getJWK().isPrivate()) {
                 return true;
             }
-            String error = "Private key is used in the DPoP Proof header.";
             if (log.isDebugEnabled()) {
-                log.debug(error);
+                log.debug("Private key is used in the DPoP Proof header.");
             }
-            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_PROOF +" : " + error);
+            throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
         }
-        String error = "'jwk' is not presented in the DPoP Proof header";
         if (log.isDebugEnabled()) {
-            log.debug(error);
+            log.debug("'jwk' is not presented in the DPoP Proof header");
         }
-        throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_PROOF +" : " + error);
+        throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
     }
 
     private static boolean checkAlg(JWSHeader header) throws IdentityOAuth2ClientException {
