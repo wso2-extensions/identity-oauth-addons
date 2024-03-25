@@ -400,7 +400,7 @@
         <carbon.identity.version>5.20.322</carbon.identity.version>
         <carbon.identity.application.common.version>5.25.305</carbon.identity.application.common.version>
         <carbon.utils.version>4.9.10</carbon.utils.version>
-        <identity.inbound.auth.oauth.version>6.11.188</identity.inbound.auth.oauth.version>
+        <identity.inbound.auth.oauth.version>7.0.35</identity.inbound.auth.oauth.version>
         <org.wso2.carbon.identity.core.version>5.25.383</org.wso2.carbon.identity.core.version>
         <org.wso2.carbon.database.utils.version>2.0.7</org.wso2.carbon.database.utils.version>
         <org.wso2.carbon.database.utils.version.range>[2.0.0,2.2.0)</org.wso2.carbon.database.utils.version.range>

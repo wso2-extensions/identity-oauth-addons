@@ -44,7 +44,9 @@ public class DPoPConstants {
     public static final String CNF = "cnf";
     public static final String TOKEN_TYPE = "token_type";
     public static final String JWK_THUMBPRINT = "jkt";
+    public static final String DPOP_JKT = "dpop_jkt";
     public static final String AUTHORIZATION_HEADER = "authorization";
+    public static final String OAUTH_AUTHZ_REQUEST_PARAMS = "authzRequestParams";
     public static final String OAUTH_REVOKE_ENDPOINT = "/oauth2/revoke";
     public static final String SKIP_DPOP_VALIDATION_IN_REVOKE = "skip_dpop_validation_in_revoke";
     public static final boolean DEFAULT_SKIP_DPOP_VALIDATION_IN_REVOKE_VALUE = true;

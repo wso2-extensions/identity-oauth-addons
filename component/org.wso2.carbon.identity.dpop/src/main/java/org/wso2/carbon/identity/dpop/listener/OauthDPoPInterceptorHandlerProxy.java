@@ -32,8 +32,10 @@ import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientExcepti
 import org.wso2.carbon.identity.oauth.event.AbstractOAuthEventInterceptor;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2ClientException;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
+import org.wso2.carbon.identity.oauth2.authz.OAuthAuthzReqMessageContext;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2AccessTokenReqDTO;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2AccessTokenRespDTO;
+import org.wso2.carbon.identity.oauth2.model.AuthzCodeDO;
 import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
 import org.wso2.carbon.identity.oauth2.token.bindings.TokenBinding;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
@@ -49,6 +51,23 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
     private static final Log log = LogFactory.getLog(OauthDPoPInterceptorHandlerProxy.class);
     private DPoPTokenManagerDAO
             tokenBindingTypeManagerDao = DPoPDataHolder.getInstance().getTokenBindingTypeManagerDao();
+
+    @Override
+    public void onPostAuthzCodeIssue(OAuthAuthzReqMessageContext oAuthAuthzMsgCtx, AuthzCodeDO authzCodeDO)
+            throws IdentityOAuth2Exception {
+
+        Map<String, String[]> requestparams = (Map<String, String[]>) oAuthAuthzMsgCtx.getAuthorizationReqDTO()
+                .getProperty(DPoPConstants.OAUTH_AUTHZ_REQUEST_PARAMS);
+        if (requestparams == null) {
+            throw new IdentityOAuth2Exception("Error while retrieving request parameters.");
+        }
+        if (requestparams.containsKey(DPoPConstants.DPOP_JKT)) {
+            //create cache entry for dpop jkt
+            //retrive at preTokenIssue and compare
+            log.info("DPoP JWK thumbprint value is received in the authorization request : " +
+                    requestparams.get(DPoPConstants.DPOP_JKT)[0]);
+        }
+    }
 
     /**
      * {@inheritdoc}
