@@ -1,0 +1,14 @@
+{
+    "name": "Mutual TLS Client Authenticator",
+    "owner": "WSO2",
+    "category": "OAuth Client Authenticator",
+    "documentationUrl": "https://docs.wso2.com/display/IS570/Mutual+TLS+for+OAuth+Clients",
+    "description": "Mutual TLS Client Authenticator allows the authentication of OAuth 2.0 clients using their X509 certificates.",
+    "status": "Active",
+    "labels": [
+        "mutual-TLS",
+        "oauth2",
+        "client-authentication"
+    ],
+    "releases": []
+}
