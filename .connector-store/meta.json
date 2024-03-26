@@ -1,14 +1,10 @@
 {
-    "name": "Mutual TLS Client Authenticator",
+    "name": "Private Key JWT Client Authenticator",
     "owner": "WSO2",
     "category": "OAuth Client Authenticator",
-    "documentationUrl": "https://docs.wso2.com/display/IS570/Mutual+TLS+for+OAuth+Clients",
-    "description": "Mutual TLS Client Authenticator allows the authentication of OAuth 2.0 clients using their X509 certificates.",
+    "documentationUrl": "https://is.docs.wso2.com/en/5.10.0/learn/private-key-jwt-client-authentication-for-oidc/",
+    "description": "This is one of the Client Authentication methods that can be used by Clients to authenticate to the Authorization Server when using the Token Endpoint.",
     "status": "Active",
-    "labels": [
-        "mutual-TLS",
-        "oauth2",
-        "client-authentication"
-    ],
+    "labels": [],
     "releases": []
 }
