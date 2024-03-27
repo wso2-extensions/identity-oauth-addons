@@ -24,9 +24,13 @@ import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.core.handler.AbstractIdentityHandler;
 import org.wso2.carbon.identity.core.model.IdentityEventListenerConfig;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.dpop.cache.DPoPJKTCache;
+import org.wso2.carbon.identity.dpop.cache.DPoPJKTCacheEntry;
+import org.wso2.carbon.identity.dpop.cache.DPoPJKTCacheKey;
 import org.wso2.carbon.identity.dpop.constant.DPoPConstants;
 import org.wso2.carbon.identity.dpop.dao.DPoPTokenManagerDAO;
 import org.wso2.carbon.identity.dpop.internal.DPoPDataHolder;
+import org.wso2.carbon.identity.dpop.util.Utils;
 import org.wso2.carbon.identity.dpop.validators.DPoPHeaderValidator;
 import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
 import org.wso2.carbon.identity.oauth.event.AbstractOAuthEventInterceptor;
@@ -56,16 +60,30 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
     public void onPostAuthzCodeIssue(OAuthAuthzReqMessageContext oAuthAuthzMsgCtx, AuthzCodeDO authzCodeDO)
             throws IdentityOAuth2Exception {
 
-        Map<String, String[]> requestparams = (Map<String, String[]>) oAuthAuthzMsgCtx.getAuthorizationReqDTO()
-                .getProperty(DPoPConstants.OAUTH_AUTHZ_REQUEST_PARAMS);
-        if (requestparams == null) {
-            throw new IdentityOAuth2Exception("Error while retrieving request parameters.");
-        }
-        if (requestparams.containsKey(DPoPConstants.DPOP_JKT)) {
-            //create cache entry for dpop jkt
-            //retrive at preTokenIssue and compare
-            log.info("DPoP JWK thumbprint value is received in the authorization request : " +
-                    requestparams.get(DPoPConstants.DPOP_JKT)[0]);
+        try {
+            String tokenBindingType = DPoPHeaderValidator.getApplicationBindingType(authzCodeDO.getConsumerKey());
+            if (DPoPConstants.DPOP_TOKEN_TYPE.equals(tokenBindingType)) {
+                Map<String, String[]> requestparams = (Map<String, String[]>) oAuthAuthzMsgCtx.getAuthorizationReqDTO()
+                        .getProperty(DPoPConstants.OAUTH_AUTHZ_REQUEST_PARAMS);
+                if (requestparams == null) {
+                    throw new IdentityOAuth2Exception("Error while retrieving request parameters.");
+                }
+                if (requestparams.containsKey(DPoPConstants.DPOP_JKT)) {
+                    if (true) { //TODO: check if cache enabled
+                        DPoPJKTCacheKey dPoPJKTCacheKey =
+                                new DPoPJKTCacheKey(authzCodeDO.getConsumerKey(), authzCodeDO.getAuthorizationCode());
+                        DPoPJKTCacheEntry dPoPJKTCacheEntry =
+                                new DPoPJKTCacheEntry(requestparams.get(DPoPConstants.DPOP_JKT)[0]);
+                        DPoPJKTCache.getInstance().addToCache(dPoPJKTCacheKey, dPoPJKTCacheEntry);
+                        if (log.isDebugEnabled()) {
+                            log.debug("dpop_jkt was added to the cache for client id : " +
+                                    authzCodeDO.getConsumerKey());
+                        }
+                    }
+                }
+            }
+        } catch (InvalidOAuthClientException e) {
+            throw new IdentityOAuth2Exception(DPoPConstants.INVALID_CLIENT, DPoPConstants.INVALID_CLIENT_ERROR);
         }
     }
 

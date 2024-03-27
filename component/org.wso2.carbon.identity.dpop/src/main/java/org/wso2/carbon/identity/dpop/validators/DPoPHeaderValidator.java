@@ -31,6 +31,9 @@ import org.apache.commons.logging.LogFactory;
 import org.json.simple.JSONObject;
 import org.wso2.carbon.identity.core.handler.AbstractIdentityHandler;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.dpop.cache.DPoPJKTCache;
+import org.wso2.carbon.identity.dpop.cache.DPoPJKTCacheEntry;
+import org.wso2.carbon.identity.dpop.cache.DPoPJKTCacheKey;
 import org.wso2.carbon.identity.dpop.constant.DPoPConstants;
 import org.wso2.carbon.identity.dpop.listener.OauthDPoPInterceptorHandlerProxy;
 import org.wso2.carbon.identity.dpop.util.Utils;
@@ -161,6 +164,7 @@ public class DPoPHeaderValidator {
             if (isValidDPoPProof(httpMethod, httpURL, dPoPProof)) {
                 String thumbprint = Utils.getThumbprintOfKeyFromDpopProof(dPoPProof);
                 if (StringUtils.isNotBlank(thumbprint)) {
+                    validateDPoPJKT(tokenReqDTO, thumbprint);
                     TokenBinding tokenBinding = new TokenBinding();
                     tokenBinding.setBindingType(DPoPConstants.DPOP_TOKEN_TYPE);
                     tokenBinding.setBindingValue(thumbprint);
@@ -376,5 +380,27 @@ public class DPoPHeaderValidator {
             throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_PROOF);
         }
         return true;
+    }
+
+    private static void validateDPoPJKT(OAuth2AccessTokenReqDTO tokenReqDTO, String thumbprint)
+            throws IdentityOAuth2Exception {
+
+        if (StringUtils.equals(tokenReqDTO.getGrantType(),DPoPConstants.AUTHORIZATION_CODE_GRANT_TYPE)) {
+            DPoPJKTCacheKey cacheKey = new DPoPJKTCacheKey(tokenReqDTO.getClientId(), tokenReqDTO.getAuthorizationCode());
+            DPoPJKTCacheEntry cacheEntry = DPoPJKTCache.getInstance().getValueFromCache(cacheKey);
+            if (cacheEntry != null) {
+                String dpopJKT   = cacheEntry.getDpopJkt();
+                DPoPJKTCache.getInstance().clearCacheEntry(cacheKey);
+                if (!StringUtils.equals(dpopJKT, thumbprint)) {
+                    throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF,
+                            DPoPConstants.INVALID_DPOP_ERROR+" : dpop_jkt does not match the thumbprint.");
+                }
+            } else {
+                if (log.isDebugEnabled()) {
+                    log.debug("dpop_jkt info was not available in cache for client id : "
+                            + tokenReqDTO.getClientId());
+                }
+            }
+        }
     }
 }

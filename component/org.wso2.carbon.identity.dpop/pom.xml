@@ -34,6 +34,16 @@
             <artifactId>org.wso2.carbon.database.utils</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.wso2.carbon</groupId>
+            <artifactId>org.wso2.carbon.utils</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>xalan</groupId>
+                    <artifactId>xalan</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
             <groupId>org.wso2.eclipse.osgi</groupId>
             <artifactId>org.eclipse.osgi.services</artifactId>
         </dependency>
@@ -56,6 +66,10 @@
         <dependency>
             <groupId>org.wso2.carbon.identity.framework</groupId>
             <artifactId>org.wso2.carbon.identity.base</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.framework</groupId>
+            <artifactId>org.wso2.carbon.identity.application.authentication.framework</artifactId>
         </dependency>
         <dependency>
             <groupId>com.googlecode.json-simple.wso2</groupId>
@@ -124,10 +138,14 @@
                             version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.user.core.*;
                             version="${carbon.kernel.package.import.version.range}",
-                            org.wso2.carbon.identity.application.common.*;
+                            org.wso2.carbon.identity.application.common.*; org.wso2.carbon.identity.application.common.cache.*;
+                            version="${carbon.identity.package.import.version.range}",
+                            org.wso2.carbon.identity.application.authentication.framework.*;
                             version="${carbon.identity.package.import.version.range}",
                             org.wso2.carbon.utils.multitenancy;
                             version="${carbon.kernel.package.import.version.range}",
+                            org.wso2.carbon.utils;
+                            version="${carbon.kernel.imp.pkg.version.range}",
                             org.apache.catalina.*;version="${apache.catalina.version}",
                             org.wso2.carbon.database.utils.*;
                             version="${org.wso2.carbon.database.utils.version.range}",
