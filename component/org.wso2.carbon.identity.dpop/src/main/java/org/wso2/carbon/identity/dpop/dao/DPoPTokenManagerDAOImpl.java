@@ -59,7 +59,7 @@ public class DPoPTokenManagerDAOImpl implements DPoPTokenManagerDAO {
         try {
             String finalRefreshToken = refreshToken;
             List<TokenBinding> tokenBindingList = jdbcTemplate.executeQuery(
-                    DPoPConstants.SQLQueries.RETRIEVE_TOKEN_BINDING_BY_REFRESH_TOKEN,
+                    SQLQueries.RETRIEVE_TOKEN_BINDING_BY_REFRESH_TOKEN,
                     (resultSet, rowNumber) -> {
                         TokenBinding tokenBinding = new TokenBinding();
                         tokenBinding.setBindingType(resultSet.getString(1));

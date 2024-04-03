@@ -51,16 +51,4 @@ public class DPoPConstants {
     public static final String OAUTH_REVOKE_ENDPOINT = "/oauth2/revoke";
     public static final String SKIP_DPOP_VALIDATION_IN_REVOKE = "skip_dpop_validation_in_revoke";
     public static final boolean DEFAULT_SKIP_DPOP_VALIDATION_IN_REVOKE_VALUE = true;
-
-    /**
-     * This class defines SQLQueries.
-     */
-    public static class SQLQueries {
-
-        public static final String RETRIEVE_TOKEN_BINDING_BY_REFRESH_TOKEN =
-                "SELECT BINDING.TOKEN_BINDING_TYPE,BINDING.TOKEN_BINDING_VALUE,BINDING.TOKEN_BINDING_REF " +
-                        "FROM IDN_OAUTH2_ACCESS_TOKEN TOKEN LEFT JOIN IDN_OAUTH2_TOKEN_BINDING BINDING ON " +
-                        "TOKEN.TOKEN_ID=BINDING.TOKEN_ID WHERE TOKEN.REFRESH_TOKEN = ? " +
-                        "AND BINDING.TOKEN_BINDING_TYPE = ?";
-    }
 }

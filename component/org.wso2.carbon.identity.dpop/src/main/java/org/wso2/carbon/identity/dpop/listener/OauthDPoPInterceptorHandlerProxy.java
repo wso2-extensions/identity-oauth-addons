@@ -28,10 +28,11 @@ import org.wso2.carbon.identity.dpop.cache.DPoPJKTCache;
 import org.wso2.carbon.identity.dpop.cache.DPoPJKTCacheEntry;
 import org.wso2.carbon.identity.dpop.cache.DPoPJKTCacheKey;
 import org.wso2.carbon.identity.dpop.constant.DPoPConstants;
+import org.wso2.carbon.identity.dpop.dao.DPoPJKTDAOImpl;
 import org.wso2.carbon.identity.dpop.dao.DPoPTokenManagerDAO;
 import org.wso2.carbon.identity.dpop.internal.DPoPDataHolder;
-import org.wso2.carbon.identity.dpop.util.Utils;
 import org.wso2.carbon.identity.dpop.validators.DPoPHeaderValidator;
+import org.wso2.carbon.identity.oauth.cache.OAuthCache;
 import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
 import org.wso2.carbon.identity.oauth.event.AbstractOAuthEventInterceptor;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2ClientException;
@@ -69,7 +70,7 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
                     throw new IdentityOAuth2Exception("Error while retrieving request parameters.");
                 }
                 if (requestparams.containsKey(DPoPConstants.DPOP_JKT)) {
-                    if (true) { //TODO: check if cache enabled
+                    if (OAuthCache.getInstance().isEnabled()) {
                         DPoPJKTCacheKey dPoPJKTCacheKey =
                                 new DPoPJKTCacheKey(authzCodeDO.getConsumerKey(), authzCodeDO.getAuthorizationCode());
                         DPoPJKTCacheEntry dPoPJKTCacheEntry =
@@ -80,6 +81,8 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
                                     authzCodeDO.getConsumerKey());
                         }
                     }
+                    DPoPJKTDAOImpl dpopJKTDAO = new DPoPJKTDAOImpl();
+                    dpopJKTDAO.insertDPoPJKT(authzCodeDO, requestparams.get(DPoPConstants.DPOP_JKT)[0]);
                 }
             }
         } catch (InvalidOAuthClientException e) {

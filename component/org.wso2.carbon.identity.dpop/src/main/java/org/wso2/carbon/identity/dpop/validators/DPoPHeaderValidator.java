@@ -35,13 +35,16 @@ import org.wso2.carbon.identity.dpop.cache.DPoPJKTCache;
 import org.wso2.carbon.identity.dpop.cache.DPoPJKTCacheEntry;
 import org.wso2.carbon.identity.dpop.cache.DPoPJKTCacheKey;
 import org.wso2.carbon.identity.dpop.constant.DPoPConstants;
+import org.wso2.carbon.identity.dpop.dao.DPoPJKTDAOImpl;
 import org.wso2.carbon.identity.dpop.listener.OauthDPoPInterceptorHandlerProxy;
 import org.wso2.carbon.identity.dpop.util.Utils;
+import org.wso2.carbon.identity.oauth.cache.OAuthCache;
 import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
 import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2ClientException;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2AccessTokenReqDTO;
+import org.wso2.carbon.identity.oauth2.model.AuthzCodeDO;
 import org.wso2.carbon.identity.oauth2.model.HttpRequestHeader;
 import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
 import org.wso2.carbon.identity.oauth2.token.bindings.TokenBinding;
@@ -386,21 +389,38 @@ public class DPoPHeaderValidator {
             throws IdentityOAuth2Exception {
 
         if (StringUtils.equals(tokenReqDTO.getGrantType(),DPoPConstants.AUTHORIZATION_CODE_GRANT_TYPE)) {
-            DPoPJKTCacheKey cacheKey = new DPoPJKTCacheKey(tokenReqDTO.getClientId(), tokenReqDTO.getAuthorizationCode());
+           String dpopJKT = getPersistedDPoPJKT(tokenReqDTO.getClientId(), tokenReqDTO.getAuthorizationCode());
+           if (dpopJKT != null) {
+               if (!StringUtils.equals(dpopJKT, thumbprint)) {
+                   throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF,
+                           DPoPConstants.INVALID_DPOP_ERROR+" : dpop_jkt does not match the thumbprint.");
+               }
+           }
+        }
+    }
+
+    private static String getPersistedDPoPJKT(String clientId, String authzCode)
+            throws IdentityOAuth2Exception {
+
+        if (OAuthCache.getInstance().isEnabled()) {
+            DPoPJKTCacheKey cacheKey = new DPoPJKTCacheKey(clientId, authzCode);
             DPoPJKTCacheEntry cacheEntry = DPoPJKTCache.getInstance().getValueFromCache(cacheKey);
             if (cacheEntry != null) {
-                String dpopJKT   = cacheEntry.getDpopJkt();
+                String dpopJKT = cacheEntry.getDpopJkt();
                 DPoPJKTCache.getInstance().clearCacheEntry(cacheKey);
-                if (!StringUtils.equals(dpopJKT, thumbprint)) {
-                    throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF,
-                            DPoPConstants.INVALID_DPOP_ERROR+" : dpop_jkt does not match the thumbprint.");
-                }
+                //ensures the function returns null only when there is no entry in DB for the given authzCode
+                return (dpopJKT == null) ? "" : dpopJKT;
             } else {
                 if (log.isDebugEnabled()) {
                     log.debug("dpop_jkt info was not available in cache for client id : "
-                            + tokenReqDTO.getClientId());
+                            + clientId);
                 }
             }
         }
+        if (log.isDebugEnabled()) {
+            log.debug("Retrieving authorization code information from db for client id : " + clientId);
+        }
+        DPoPJKTDAOImpl dpopJKTDAO = new DPoPJKTDAOImpl();
+        return dpopJKTDAO.getDPoPJKTFromAuthzCode(authzCode);
     }
 }
