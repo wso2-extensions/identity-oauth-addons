@@ -160,7 +160,7 @@
             <dependency>
                 <groupId>org.wso2.carbon.identity.framework</groupId>
                 <artifactId>org.wso2.carbon.identity.application.mgt</artifactId>
-                <version>${carbon.identity.version}</version>
+                <version>${carbon.identity.application.mgt.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.oltu.oauth2</groupId>
@@ -399,6 +399,7 @@
 
         <carbon.identity.version>5.20.322</carbon.identity.version>
         <carbon.identity.application.common.version>5.25.305</carbon.identity.application.common.version>
+        <carbon.identity.application.mgt.version>7.1.6</carbon.identity.application.mgt.version>
         <carbon.utils.version>4.9.10</carbon.utils.version>
         <identity.inbound.auth.oauth.version>7.0.35</identity.inbound.auth.oauth.version>
         <org.wso2.carbon.identity.core.version>5.25.383</org.wso2.carbon.identity.core.version>
