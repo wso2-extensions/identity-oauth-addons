@@ -36,6 +36,7 @@ import org.wso2.carbon.identity.dpop.cache.DPoPJKTCacheEntry;
 import org.wso2.carbon.identity.dpop.cache.DPoPJKTCacheKey;
 import org.wso2.carbon.identity.dpop.constant.DPoPConstants;
 import org.wso2.carbon.identity.dpop.dao.DPoPJKTDAOImpl;
+import org.wso2.carbon.identity.dpop.internal.DPoPDataHolder;
 import org.wso2.carbon.identity.dpop.listener.OauthDPoPInterceptorHandlerProxy;
 import org.wso2.carbon.identity.dpop.util.Utils;
 import org.wso2.carbon.identity.oauth.cache.OAuthCache;
@@ -388,13 +389,13 @@ public class DPoPHeaderValidator {
     private static void validateDPoPJKT(OAuth2AccessTokenReqDTO tokenReqDTO, String thumbprint)
             throws IdentityOAuth2Exception {
 
-        if (StringUtils.equals(tokenReqDTO.getGrantType(),DPoPConstants.AUTHORIZATION_CODE_GRANT_TYPE)) {
+        if (StringUtils.equals(tokenReqDTO.getGrantType(),DPoPConstants.AUTHORIZATION_CODE_GRANT_TYPE) &&
+                DPoPDataHolder.isDPoPJKTTableEnabled()) {
+
            String dpopJKT = getPersistedDPoPJKT(tokenReqDTO.getClientId(), tokenReqDTO.getAuthorizationCode());
-           if (dpopJKT != null) {
-               if (!StringUtils.equals(dpopJKT, thumbprint)) {
-                   throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF,
-                           DPoPConstants.INVALID_DPOP_ERROR+" : dpop_jkt does not match the thumbprint.");
-               }
+           if (dpopJKT != null && !StringUtils.equals(dpopJKT, thumbprint)) {
+               throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF,
+                       DPoPConstants.INVALID_DPOP_ERROR+" : dpop_jkt does not match the thumbprint.");
            }
         }
     }
@@ -408,7 +409,7 @@ public class DPoPHeaderValidator {
             if (cacheEntry != null) {
                 String dpopJKT = cacheEntry.getDpopJkt();
                 DPoPJKTCache.getInstance().clearCacheEntry(cacheKey);
-                //ensures the function returns null only when there is no entry in DB for the given authzCode
+                //ensures the function returns null only when there is no entry in cache for the given authzCode
                 return (dpopJKT == null) ? "" : dpopJKT;
             } else {
                 if (log.isDebugEnabled()) {

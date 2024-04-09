@@ -63,7 +63,7 @@ public class OauthDPoPInterceptorHandlerProxy extends AbstractOAuthEventIntercep
 
         try {
             String tokenBindingType = DPoPHeaderValidator.getApplicationBindingType(authzCodeDO.getConsumerKey());
-            if (DPoPConstants.DPOP_TOKEN_TYPE.equals(tokenBindingType)) {
+            if (DPoPConstants.DPOP_TOKEN_TYPE.equals(tokenBindingType) && DPoPDataHolder.isDPoPJKTTableEnabled()) {
                 Map<String, String[]> requestparams = (Map<String, String[]>) oAuthAuthzMsgCtx.getAuthorizationReqDTO()
                         .getProperty(DPoPConstants.OAUTH_AUTHZ_REQUEST_PARAMS);
                 if (requestparams == null) {

@@ -24,6 +24,7 @@ import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.wso2.carbon.identity.auth.service.handler.AuthenticationHandler;
+import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.dpop.dao.DPoPTokenManagerDAOImpl;
 import org.wso2.carbon.identity.dpop.handler.DPoPAuthenticationHandler;
 import org.wso2.carbon.identity.dpop.introspection.dataprovider.DPoPIntrospectionDataProvider;
@@ -34,6 +35,8 @@ import org.wso2.carbon.identity.oauth.common.token.bindings.TokenBinderInfo;
 import org.wso2.carbon.identity.oauth.event.OAuthEventInterceptor;
 import org.wso2.carbon.identity.oauth2.IntrospectionDataProvider;
 import org.wso2.carbon.identity.oauth2.validators.OAuth2TokenValidator;
+
+import static org.wso2.carbon.identity.dpop.constant.DPoPConstants.DPOP_JKT_TABLE_NAME;
 
 @Component(
         name = "org.wso2.carbon.identity.oauth.dpop",
@@ -59,6 +62,20 @@ public class DPoPServiceComponent {
                     new DPoPTokenValidator(), null);
             if (log.isDebugEnabled()) {
                 log.debug("DPoPService is activated.");
+            }
+            //TODO: remove true || condition after fixing database context issue
+            if (true || IdentityDatabaseUtil.isTableExists(DPOP_JKT_TABLE_NAME)) {
+                if (log.isDebugEnabled()) {
+                    log.debug(DPOP_JKT_TABLE_NAME+" is available in database. " +
+                            "Setting isDPoPJKTTableEnabled to true.");
+                }
+                DPoPDataHolder.setDPoPJKTTableEnabled(true);
+            } else {
+                if (log.isDebugEnabled()) {
+                    log.debug(DPOP_JKT_TABLE_NAME+" is not available in database. " +
+                            "Setting isDPoPJKTTableEnabled to false.");
+                }
+                DPoPDataHolder.setDPoPJKTTableEnabled(false);
             }
         } catch (Throwable e) {
             log.error("Error while activating DPoPServiceComponent.", e);

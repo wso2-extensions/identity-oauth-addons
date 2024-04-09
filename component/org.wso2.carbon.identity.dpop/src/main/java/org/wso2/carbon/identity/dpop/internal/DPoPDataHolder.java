@@ -27,6 +27,7 @@ public class DPoPDataHolder {
 
     private static final DPoPDataHolder dPoPDataHolder = new DPoPDataHolder();
     private DPoPTokenManagerDAO tokenBindingTypeManagerDao;
+    private static boolean isDPoPJKTTableEnabled = false;
 
     public static DPoPDataHolder getInstance() {
 
@@ -57,5 +58,15 @@ public class DPoPDataHolder {
             DPoPTokenManagerDAO tokenBindingTypeManagerDao) {
 
         this.tokenBindingTypeManagerDao = tokenBindingTypeManagerDao;
+    }
+
+    public static boolean isDPoPJKTTableEnabled() {
+
+        return isDPoPJKTTableEnabled;
+    }
+
+    public static void setDPoPJKTTableEnabled(boolean isDPoPJKTTableEnabled) {
+
+        DPoPDataHolder.isDPoPJKTTableEnabled = isDPoPJKTTableEnabled;
     }
 }
