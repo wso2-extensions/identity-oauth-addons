@@ -1,12 +1,14 @@
 {
-    "name": "OAuth2 DPoP Connector",
-    "owner": "WSO2 Inc.",
-    "category": "OAuth 2.0 grant type",
-    "documentationUrl": "https://github.com/wso2-extensions/identity-oauth-addons/tree/master/component/org.wso2.carbon.identity.dpop",
-    "description": "DPoP ( Demonstrating Proof of Possession ) is an additional security mechanism for the token generation which overcomes the issue of bearer tokens which will not validate between who is requesting the token and who is actually using the token for access to a particular resource. The specification defines a mechanism to prevent illegal API calls from succeeding only with a stolen access token.",
+    "name": "Mutual TLS Client Authenticator",
+    "owner": "WSO2",
+    "category": "OAuth Client Authenticator",
+    "documentationUrl": "https://docs.wso2.com/display/IS570/Mutual+TLS+for+OAuth+Clients",
+    "description": "Mutual TLS Client Authenticator allows the authentication of OAuth 2.0 clients using their X509 certificates.",
     "status": "Active",
     "labels": [
-        "Oauth2-Add-ons"
+        "mutual-TLS",
+        "oauth2",
+        "client-authentication"
     ],
     "releases": []
 }
