@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.dpop.validators;
 
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -198,13 +199,20 @@ public class DPoPHeaderValidator {
 
     private static boolean checkJwk(JWSHeader header) throws IdentityOAuth2ClientException {
 
-        if (header.getJWK() == null) {
+        JWK jwk = header.getJWK();
+        if (jwk != null) {
+            if (!header.getJWK().isPrivate()) {
+                return true;
+            }
             if (log.isDebugEnabled()) {
-                log.debug("'jwk' is not presented in the DPoP Proof header");
+                log.debug("Private key is used in the DPoP Proof header.");
             }
             throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
         }
-        return true;
+        if (log.isDebugEnabled()) {
+            log.debug("'jwk' is not presented in the DPoP Proof header");
+        }
+        throw new IdentityOAuth2ClientException(DPoPConstants.INVALID_DPOP_PROOF, DPoPConstants.INVALID_DPOP_ERROR);
     }
 
     private static boolean checkAlg(JWSHeader header) throws IdentityOAuth2ClientException {
