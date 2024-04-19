@@ -275,12 +275,13 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
 
         // Trim extra spaces.
         String decodedContent = StringUtils.trim(content);
-
         // Remove Certificate Headers.
-        byte[] decoded = Base64.getDecoder().decode(StringUtils.trim(decodedContent
-                .replaceAll(CommonConstants.BEGIN_CERT, StringUtils.EMPTY)
-                .replaceAll(CommonConstants.END_CERT, StringUtils.EMPTY)
-        ));
+        String certBody = decodedContent.replaceAll(CommonConstants.BEGIN_CERT, StringUtils.EMPTY)
+                .replaceAll(CommonConstants.END_CERT, StringUtils.EMPTY);
+        // Removing all whitespaces and new lines.
+        certBody = certBody.replaceAll("\\s", "");
+
+        byte[] decoded = Base64.getDecoder().decode(certBody);
 
         return (java.security.cert.X509Certificate) CertificateFactory.getInstance(CommonConstants.X509)
                 .generateCertificate(new ByteArrayInputStream(decoded));
