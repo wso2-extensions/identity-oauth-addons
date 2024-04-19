@@ -19,16 +19,17 @@ import static org.testng.Assert.assertEquals;
 @PowerMockIgnore({"org.mockito.*", "jdk.internal.reflect.*"})
 public class UtilsTest extends PowerMockTestCase {
 
-    private String mockHttpMethod = "mockHttpMethod";
+    private final String dummyHttpMethod = "mockHttpMethod";
 
-    private String mockHttpUrl = "mockHttpUrl";
+    private final String dummyHttpUrl = "mockHttpUrl";
 
     @DataProvider(name = "dpopProofProvider")
     public Object[][] dpopProofProvider() throws Exception {
+
         return new Object[][]{
-                {TestUtils.genarateDPoPProof("RSA","some_jti", mockHttpMethod, mockHttpUrl, new Date(), true),
+                {TestUtils.genarateDPoPProof("RSA","some_jti", dummyHttpMethod, dummyHttpUrl, new Date(), true),
                         TestUtils.RSA_DPOP_JWK_THUMBPRINT},
-                {TestUtils.genarateDPoPProof("EC","some_jti", mockHttpMethod, mockHttpUrl, new Date(), true),
+                {TestUtils.genarateDPoPProof("EC","some_jti", dummyHttpMethod, dummyHttpUrl, new Date(), true),
                         TestUtils.EC_DPOP_JWK_THUMBPRINT},
                 {anyString(), anyString()},
         };

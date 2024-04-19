@@ -37,6 +37,7 @@ public class TestUtils {
             "NbKvC3IQ+pbFOmW9mnGCSO2YqPN/zS1G1X76CdGxtJzVIpdjj4/HgoKCo+RAysMnnKDQz3+lm"+
             "d+kQBqXzvVx0ZNuPY/B7nBzT6kvKqNBRwduPwzEgkH3rBpIBv0Ve+pHdI6Tm/2c6bC1NRlu+b"+
             "/g8CeZDE0tZ4IyhTVsAIQIDAQAB";
+
     private static final String rsaPrivateKey =
             "MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC33HwD8llvfXcey7CdQ0xq3"+
             "nZw1BKgjsd8e2/YjAztAW26r8fMwvCVhqNg8iRoKIiEbru8ZK01ABg9Qb7Pt9bq5cjdwtf73C"+
@@ -61,12 +62,15 @@ public class TestUtils {
             "LWTebgLlQ2ox80sXTdCdweSdHv8tIAZGZUs97BcPpTujyVldx7bRgLpcV93FpBafPIN5FjU1H"+
             "uihfak3h0SQi2WxyCJpZiH+XNK/9tabN2MKQji7wjbrQRN06jNuUXeo6X18vcBVVVj2TogFJL"+
             "fQqNUgIMZN35pyBtja";
+
     private static final String ecPublicKey =
             "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE+6F4irv76jwSiLHebVzksLfjtXYplS9RwmvJF"+
             "dRp+rcZtUIbQLcscH1SjsIigl4Ha80CG14Y0OofBVwwS7IAjQ==";
+
     public static final String ecPrivateKey =
             "MEECAQAwEwYHKoZIzj0CAQYIKoZIzj0DAQcEJzAlAgEBBCAfBD6WwWEgj5FQ01/2zqR4NNu/i"+
             "MEB/6fwhaMMh3GQFw==";
+
     public static final String jwtAccessToken =
             "eyJ4NXQiOiJyVDVGYi1Cd1doWUZYWE9JQjlnaG9NZDhfSWsiL"+
             "CJraWQiOiJPV1JpTXpaaVlURXhZVEl4WkdGa05UVTJOVE0zTW"+
