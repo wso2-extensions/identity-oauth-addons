@@ -33,6 +33,7 @@ public class DPoPConstants {
     public static final String DPOP_TOKEN_TYPE = "DPoP";
     public static final String INVALID_DPOP_PROOF = "invalid_dpop_proof";
     public static final String INVALID_DPOP_ERROR = "Invalid DPoP Proof";
+    public static final String EXPIRED_DPOP_PROOF = "Expired DPoP Proof";
     public static final String INVALID_CLIENT = "invalid_client";
     public static final String INVALID_CLIENT_ERROR = "Invalid Client";
     public static final String ECDSA_ENCRYPTION = "EC";

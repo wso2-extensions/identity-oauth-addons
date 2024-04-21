@@ -1,6 +1,23 @@
-package org.wso2.carbon.identity.dpop;
+/*
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com).
+ *
+ * WSO2 LLC. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
-import java.io.IOException;
+package org.wso2.carbon.identity.dpop.util;
+
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
@@ -12,6 +29,7 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.Date;
+import java.util.UUID;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSHeader;
@@ -27,8 +45,9 @@ import com.nimbusds.jwt.SignedJWT;
 
 import static com.nimbusds.jose.JWSAlgorithm.ES256;
 import static com.nimbusds.jose.JWSAlgorithm.RS384;
+import static org.wso2.carbon.identity.dpop.util.DPoPTestConstants.*;
 
-public class TestUtils {
+public class DPoPProofUtil {
 
     private static final String rsaPublicKey =
             "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAt9x8A/JZb313HsuwnUNMat52cNQSo"+
@@ -63,51 +82,89 @@ public class TestUtils {
             "uihfak3h0SQi2WxyCJpZiH+XNK/9tabN2MKQji7wjbrQRN06jNuUXeo6X18vcBVVVj2TogFJL"+
             "fQqNUgIMZN35pyBtja";
 
+
     private static final String ecPublicKey =
             "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE+6F4irv76jwSiLHebVzksLfjtXYplS9RwmvJF"+
             "dRp+rcZtUIbQLcscH1SjsIigl4Ha80CG14Y0OofBVwwS7IAjQ==";
 
-    public static final String ecPrivateKey =
+    private static final String ecPrivateKey =
             "MEECAQAwEwYHKoZIzj0CAQYIKoZIzj0DAQcEJzAlAgEBBCAfBD6WwWEgj5FQ01/2zqR4NNu/i"+
             "MEB/6fwhaMMh3GQFw==";
 
-    public static final String jwtAccessToken =
-            "eyJ4NXQiOiJyVDVGYi1Cd1doWUZYWE9JQjlnaG9NZDhfSWsiL"+
-            "CJraWQiOiJPV1JpTXpaaVlURXhZVEl4WkdGa05UVTJOVE0zTW"+
-            "pkaFltTmxNVFZrTnpRMU56a3paVGc1TVRrNE0yWmxOMkZoWkd"+
-            "aalpURmlNemxsTTJJM1l6ZzJNZ19SUzI1NiIsInR5cCI6ImF0"+
-            "K2p3dCIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiI5MTAwMjEwZ"+
-            "C1mOWRlLTQyMGYtYmQzMy0wZDJlNDdhMzBmMWEiLCJhdXQiOi"+
-            "JBUFBMSUNBVElPTl9VU0VSIiwiYmluZGluZ190eXBlIjoiRFB"+
-            "vUCIsImlzcyI6Imh0dHBzOlwvXC9sb2NhbGhvc3Q6OTQ0M1wv"+
-            "b2F1dGgyXC90b2tlbiIsImNsaWVudF9pZCI6InFNeFZKcXFRZ"+
-            "GUzYTJQQTR2ZjdYUFJ0dHVRZ2EiLCJhdWQiOiJxTXhWSnFxUW"+
-            "RlM2EyUEE0dmY3WFBSdHR1UWdhIiwibmJmIjoxNzEzMTY2ODk"+
-            "0LCJhenAiOiJxTXhWSnFxUWRlM2EyUEE0dmY3WFBSdHR1UWdh"+
-            "Iiwib3JnX2lkIjoiMTAwODRhOGQtMTEzZi00MjExLWEwZDUtZ"+
-            "WZlMzZiMDgyMjExIiwic2NvcGUiOiJvcGVuaWQiLCJjbmYiOn"+
-            "siamt0IjoiUERmaEM3Tmd5LXRjTU1qNUtaLVI1QU9ESnJySTJ"+
-            "5NmNOTXVPRE81VWlLQSJ9LCJleHAiOjE3MTMxNzA0OTQsIm9y"+
-            "Z19uYW1lIjoiU3VwZXIiLCJpYXQiOjE3MTMxNjY4OTQsImJpb"+
-            "mRpbmdfcmVmIjoiNzcwNGFkNmRlMThjZDFmNmRjZjBiNDI4Yz"+
-            "c0MjNlNTQiLCJqdGkiOiJkNTAyMTZjOC04OWE1LTQ0OGItODY"+
-            "wOC1lZmMwY2E2MmM3YjkifQ.eFLih6yMjruvded38eGb9Sopr"+
-            "_a3lJKKLIalZkp2QTChZTtba67Gue_yZ2OkK-0KiTsFx9MU0w"+
-            "i1dVzEr-2UQSj6Mt7pyp5y_bQp4kP2OY7RgNgMIXTDnHh6PQ4"+
-            "Ve5W0UmcNFso4Uc3uQPvbQuLoYomTxDqnWebXMbWFqdu1Df_g"+
-            "IbaYJEjaDPkj91x-86ajU41wDKb1S4sGzh4HE_f5akMWVb5D0"+
-            "p6szJ-9ieM-HEYcv0zs-0OiwgVPxdpT_uIy2GL9ca6eIeHSBI"+
-            "me_l_8fqNnkYB0LQD9hIzvdNDOpQhKallPucchkjUF3tXXEnF"+
-            "QPe6xT-Qc1y-OhTWk-ActXw";
-
-    public static final String accessTokenHash = "AGYGxGwNMSqZMpwTtCJsKPP42Q8paPyfMWshrnoZFe0";
+    private static final String DPOP_JWT_TYPE = "dpop+jwt";
 
     public static final String EC_DPOP_JWK_THUMBPRINT = "C07a9MZgz5wYywPc39Tw81gE8QzhkpC14sjx-2pAwbI";
 
     public static final String RSA_DPOP_JWK_THUMBPRINT = "_Z3DHS03lCZVeRs-J9fO7JHuTE0BmVYuBF6Rdc5qjII";
 
-    public static String genarateDPoPProof(String keyPairType, String jti, String httpMethod, String httpUrl, Date iat, boolean includeAccessTokenHash)
-            throws NoSuchAlgorithmException, JOSEException, IOException, InvalidKeySpecException {
+    /*
+        * Generate a DPoP proof with the default values.
+        * @return DPoP proof.
+        * @throws NoSuchAlgorithmException
+        * @throws JOSEException
+        * @throws InvalidKeySpecException
+     */
+    public static String genarateDPoPProof()
+            throws NoSuchAlgorithmException, JOSEException, InvalidKeySpecException {
+
+        return genarateDPoPProof("RSA", DUMMY_JTI, DUMMY_HTTP_METHOD, DUMMY_HTTP_URL, new Date(System.currentTimeMillis()),
+                DPoPTestConstants.ACCESS_TOKEN_HASH, DPOP_JWT_TYPE);
+    }
+
+    /*
+        * Generate a DPoP proof by passing keyPairType, jti, httpMethod, httpUrl.
+        * @param keyPairType
+        * @param jti
+        * @param httpMethod
+        * @param httpUrl
+        * @return DPoP proof.
+        * @throws NoSuchAlgorithmException
+        * @throws JOSEException
+        * @throws InvalidKeySpecException
+     */
+    public static String genarateDPoPProof(String keyPairType, String jti, String httpMethod, String httpUrl)
+            throws NoSuchAlgorithmException, JOSEException, InvalidKeySpecException {
+
+        return genarateDPoPProof(keyPairType, jti, httpMethod, httpUrl, new Date(System.currentTimeMillis()),
+                DPoPTestConstants.ACCESS_TOKEN_HASH, DPOP_JWT_TYPE);
+    }
+
+    /*
+        * Generate a DPoP proof by passing keyPairType, jti, httpMethod, httpUrl, iat.
+        * @param keyPairType
+        * @param jti
+        * @param httpMethod
+        * @param httpUrl
+        * @param iat
+        * @return DPoP proof.
+        * @throws NoSuchAlgorithmException
+        * @throws JOSEException
+        * @throws InvalidKeySpecException
+     */
+    public static String genarateDPoPProof(String keyPairType, String jti, String httpMethod, String httpUrl,Date iat)
+            throws NoSuchAlgorithmException, JOSEException, InvalidKeySpecException{
+
+        return genarateDPoPProof(keyPairType, jti, httpMethod, httpUrl, iat, DPoPTestConstants.ACCESS_TOKEN_HASH,
+                DPOP_JWT_TYPE);
+    }
+
+    /*
+        * Generate a DPoP proof by passing keyPairType, jti, httpMethod, httpUrl, iat, accessTokenHash, jwtType.
+        * @param keyPairType
+        * @param jti
+        * @param httpMethod
+        * @param httpUrl
+        * @param iat
+        * @param accessTokenHash
+        * @param jwtType
+        * @return DPoP proof.
+        * @throws NoSuchAlgorithmException
+        * @throws JOSEException
+        * @throws InvalidKeySpecException
+     */
+    public static String genarateDPoPProof(String keyPairType, String jti, String httpMethod, String httpUrl, Date iat,
+                                           String accessTokenHash, String jwtType)
+            throws NoSuchAlgorithmException, JOSEException, InvalidKeySpecException {
 
         /* Read all bytes from the private key file */
         String privateKeyString = keyPairType.equals("RSA") ? rsaPrivateKey : ecPrivateKey;
@@ -133,7 +190,6 @@ public class TestUtils {
         }
         else {
             jwk = new RSAKey.Builder((RSAPublicKey) publicCert).build();
-
         }
 
         JWTClaimsSet.Builder jwtClaimsSetBuilder = new JWTClaimsSet.Builder();
@@ -141,9 +197,7 @@ public class TestUtils {
         jwtClaimsSetBuilder.jwtID(jti);
         jwtClaimsSetBuilder.claim("htm", httpMethod);
         jwtClaimsSetBuilder.claim("htu", httpUrl);
-        if (includeAccessTokenHash) {
-            jwtClaimsSetBuilder.claim("ath", accessTokenHash);
-        }
+        jwtClaimsSetBuilder.claim("ath", accessTokenHash);
 
         JWSHeader.Builder headerBuilder;
         if ("EC".equals(keyPairType)) {
@@ -151,7 +205,7 @@ public class TestUtils {
         } else {
             headerBuilder = new JWSHeader.Builder(RS384);
         }
-        headerBuilder.type(new JOSEObjectType("dpop+jwt"));
+        headerBuilder.type(new JOSEObjectType(jwtType));
         headerBuilder.jwk(jwk);
         SignedJWT signedJWT = new SignedJWT(headerBuilder.build(), jwtClaimsSetBuilder.build());
 
