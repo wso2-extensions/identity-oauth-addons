@@ -137,6 +137,10 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
         return jwtValidator.resolveSubject(claimsSet);
     }
 
+    protected void setJwtValidator(JWTValidator jwtValidator) {
+        this.jwtValidator = jwtValidator;
+    }
+
     private SignedJWT getSignedJWT(Map<String, List> bodyParameters, OAuthClientAuthnContext oAuthClientAuthnContext)
             throws OAuthClientAuthnException {
 

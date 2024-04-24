@@ -242,6 +242,7 @@ public class JWTValidatorTest {
                                   String errorMsg) throws Exception {
 
         try {
+            // TODO: write tests for other JWTValidator implementations
             JWTValidator jwtValidator = getJWTValidator((Properties) properties);
             SignedJWT signedJWT = SignedJWT.parse(jwt);
             assertEquals(jwtValidator.isValidAssertion(signedJWT),

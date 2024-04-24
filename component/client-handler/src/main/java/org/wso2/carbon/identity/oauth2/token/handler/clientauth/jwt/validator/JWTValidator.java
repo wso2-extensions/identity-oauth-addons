@@ -60,6 +60,7 @@ import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -82,7 +83,7 @@ public class JWTValidator {
     private static final String IDP_ENTITY_ID = "IdPEntityId";
     private static final String PROP_ID_TOKEN_ISSUER_ID = "OAuth.OpenIDConnect.IDTokenIssuerID";
     private boolean preventTokenReuse;
-    private String validAudience;
+    private List<String> validAudiences;
     private String validIssuer;
     private int rejectBeforeInMinutes;
     List<String> mandatoryClaims;
@@ -91,11 +92,25 @@ public class JWTValidator {
 
     private JWTStorageManager jwtStorageManager;
 
+    @Deprecated
     public JWTValidator(boolean preventTokenReuse, String validAudience, int rejectBefore, String validIssuer,
                         List<String> mandatoryClaims, boolean enableJTICache) {
 
         this.preventTokenReuse = preventTokenReuse;
-        this.validAudience = validAudience;
+        this.validAudiences = StringUtils.isNotEmpty(validAudience) ? Collections.singletonList(validAudience) : null;
+        this.validIssuer = validIssuer;
+        this.jwtStorageManager = new JWTStorageManager();
+        this.mandatoryClaims = mandatoryClaims;
+        this.rejectBeforeInMinutes = rejectBefore;
+        this.enableJTICache = enableJTICache;
+        this.jwtCache = JWTCache.getInstance();
+    }
+
+    public JWTValidator(boolean preventTokenReuse, List<String> validAudiences, int rejectBefore, String validIssuer,
+                        List<String> mandatoryClaims, boolean enableJTICache) {
+
+        this.preventTokenReuse = preventTokenReuse;
+        this.validAudiences = validAudiences;
         this.validIssuer = validIssuer;
         this.jwtStorageManager = new JWTStorageManager();
         this.mandatoryClaims = mandatoryClaims;
@@ -164,7 +179,7 @@ public class JWTValidator {
             }
 
             // Get audience.
-            List<String> validAud = getValidAudience(tenantDomain, isBackchannelCall);
+            List<String> validAuds = getValidAudience(tenantDomain, isBackchannelCall);
             long expTime = 0;
             long issuedTime = 0;
             if (expirationTime != null) {
@@ -176,7 +191,7 @@ public class JWTValidator {
 
             //Validate signature validation, audience, nbf,exp time, jti.
             if (!validateJTI(signedJWT, jti, currentTimeInMillis, timeStampSkewMillis, expTime, issuedTime) ||
-                    !validateAudience(validAud, audience) || !validateJWTWithExpTime(expirationTime, currentTimeInMillis
+                    !validateAudience(validAuds, audience) || !validateJWTWithExpTime(expirationTime, currentTimeInMillis
                     , timeStampSkewMillis) || !validateNotBeforeClaim(currentTimeInMillis, timeStampSkewMillis, nbf) ||
                     !validateAgeOfTheToken(issuedAtTime, currentTimeInMillis, timeStampSkewMillis) || !isValidSignature
                     (consumerKey, signedJWT, tenantDomain, jwtSubject)) {
@@ -440,11 +455,10 @@ public class JWTValidator {
     private List<String> getValidAudience(String tenantDomain, boolean isBackchannelCall)
             throws OAuthClientAuthnException {
 
-        if (isNotEmpty(validAudience)) {
-            List<String> validAudiences = new ArrayList<>();
-            validAudiences.add(validAudience);
+        if (validAudiences != null && !validAudiences.isEmpty()) {
             return validAudiences;
         }
+
         List<String> audience = new ArrayList<>();
         IdentityProvider residentIdP;
         try {
