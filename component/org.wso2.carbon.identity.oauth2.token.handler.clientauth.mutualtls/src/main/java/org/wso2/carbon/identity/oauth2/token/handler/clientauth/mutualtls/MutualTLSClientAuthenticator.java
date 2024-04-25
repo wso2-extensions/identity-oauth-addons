@@ -281,6 +281,7 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
         try {
             decoded = Base64.getDecoder().decode(sanitizedCertificate);
         } catch (IllegalArgumentException e) {
+            log.debug("Error while base64 decoding the certificate. Trying URL decoding first.");
             String urlDecodedContent = URLDecoder.decode(content, StandardCharsets.UTF_8.name());
             sanitizedCertificate = sanitizeCertificate(urlDecodedContent);
             decoded = Base64.getDecoder().decode(sanitizedCertificate);
