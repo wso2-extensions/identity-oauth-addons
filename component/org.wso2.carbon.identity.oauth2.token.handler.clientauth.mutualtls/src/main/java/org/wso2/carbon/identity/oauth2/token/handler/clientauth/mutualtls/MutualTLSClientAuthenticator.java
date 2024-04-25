@@ -53,8 +53,10 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.security.cert.CertificateEncodingException;
@@ -256,7 +258,7 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
 
             try {
                 return Optional.of(parseCertificate(headerString));
-            } catch (CertificateException e) {
+            } catch (CertificateException | UnsupportedEncodingException e) {
                 log.error("Unable to parse the certificate sent in header", e);
             }
         }
@@ -271,19 +273,40 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
      * @return X509Certificate X.509 certificate after decoding the certificate content.
      * @throws CertificateException Certificate Exception.
      */
-    private X509Certificate parseCertificate(String content) throws CertificateException {
+    private X509Certificate parseCertificate(String content) throws CertificateException, UnsupportedEncodingException {
 
-        // Trim extra spaces.
-        String decodedContent = StringUtils.trim(content);
-        // Remove Certificate Headers.
-        String certBody = decodedContent.replaceAll(CommonConstants.BEGIN_CERT, StringUtils.EMPTY)
-                .replaceAll(CommonConstants.END_CERT, StringUtils.EMPTY);
-        // Removing all whitespaces and new lines.
-        certBody = certBody.replaceAll("\\s", StringUtils.EMPTY).replace("\\n", StringUtils.EMPTY);
-        byte[] decoded = Base64.getDecoder().decode(certBody);
+        if (log.isDebugEnabled()) {
+            log.debug("Trying to parse the client certificate: " + content);
+        }
+        byte[] decoded;
+        String sanitizedCertificate = sanitizeCertificate(content);
+        // First we try to Base64 decode, if it is not decodable, we try to url decode first and then Base64 decode.
+        try {
+            decoded = Base64.getDecoder().decode(sanitizedCertificate);
+        } catch (IllegalArgumentException e) {
+            log.debug("Error while base64 decoding the certificate. Trying URL decoding first.");
+            String urlDecodedContent = URLDecoder.decode(content, StandardCharsets.UTF_8.name());
+            sanitizedCertificate = sanitizeCertificate(urlDecodedContent);
+            decoded = Base64.getDecoder().decode(sanitizedCertificate);
+        }
 
         return (java.security.cert.X509Certificate) CertificateFactory.getInstance(CommonConstants.X509)
                 .generateCertificate(new ByteArrayInputStream(decoded));
+    }
+
+    /**
+     * Sanitize the certificate before decoding.
+     * @param content certificate as a string.
+     * @return sanitized certificate.
+     */
+    private String sanitizeCertificate(String content) {
+
+        String certContent = StringUtils.trim(content);
+        // Remove Certificate Headers.
+        String certBody = certContent.replaceAll(CommonConstants.BEGIN_CERT, StringUtils.EMPTY)
+                .replaceAll(CommonConstants.END_CERT, StringUtils.EMPTY);
+        // Removing all whitespaces and new lines.
+        return certBody.replaceAll("\\s", StringUtils.EMPTY).replace("\\n", StringUtils.EMPTY);
     }
 
     private boolean clientIdExistsAsParam(Map<String, List> contentParam) {
