@@ -275,32 +275,34 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
      */
     private X509Certificate parseCertificate(String content) throws CertificateException, UnsupportedEncodingException {
 
-        // Trim extra spaces.
-        String certContent = StringUtils.trim(content);
-        // URL decode if encoded.
-        if (isUrlEncoded(certContent)) {
-            certContent = URLDecoder.decode(certContent, StandardCharsets.UTF_8.name());
+        byte[] decoded;
+        String sanitizedCertificate = sanitizeCertificate(content);
+        // First we try to Base64 decode, if it is not decodable, we try to url decode first and then Base64 decode.
+        try {
+            decoded = Base64.getDecoder().decode(sanitizedCertificate);
+        } catch (IllegalArgumentException e) {
+            String urlDecodedContent = URLDecoder.decode(content, StandardCharsets.UTF_8.name());
+            sanitizedCertificate = sanitizeCertificate(urlDecodedContent);
+            decoded = Base64.getDecoder().decode(sanitizedCertificate);
         }
-        // Remove Certificate Headers.
-        String certBody = certContent.replaceAll(CommonConstants.BEGIN_CERT, StringUtils.EMPTY)
-                .replaceAll(CommonConstants.END_CERT, StringUtils.EMPTY);
-        // Removing all whitespaces and new lines.
-        certBody = certBody.replaceAll("\\s", StringUtils.EMPTY).replace("\\n", StringUtils.EMPTY);
-        byte[] decoded = Base64.getDecoder().decode(certBody);
 
         return (java.security.cert.X509Certificate) CertificateFactory.getInstance(CommonConstants.X509)
                 .generateCertificate(new ByteArrayInputStream(decoded));
     }
 
     /**
-     * Check if the string contains percent-encoded sequences.
-     *
-     * @param str input string value.
-     * @return returns true if string is url encoded.
+     * Sanitize the certificate before decoding.
+     * @param content certificate as a string.
+     * @return sanitized certificate.
      */
-    private boolean isUrlEncoded(String str) {
+    private String sanitizeCertificate(String content) {
 
-        return str.matches(".*(%[0-9a-fA-F]{2}).*");
+        String certContent = StringUtils.trim(content);
+        // Remove Certificate Headers.
+        String certBody = certContent.replaceAll(CommonConstants.BEGIN_CERT, StringUtils.EMPTY)
+                .replaceAll(CommonConstants.END_CERT, StringUtils.EMPTY);
+        // Removing all whitespaces and new lines.
+        return certBody.replaceAll("\\s", StringUtils.EMPTY).replace("\\n", StringUtils.EMPTY);
     }
 
     private boolean clientIdExistsAsParam(Map<String, List> contentParam) {
