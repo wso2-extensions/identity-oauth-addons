@@ -138,6 +138,7 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
     }
 
     protected void setJwtValidator(JWTValidator jwtValidator) {
+
         this.jwtValidator = jwtValidator;
     }
 
