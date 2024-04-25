@@ -53,8 +53,10 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.security.cert.CertificateEncodingException;
@@ -256,7 +258,7 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
 
             try {
                 return Optional.of(parseCertificate(headerString));
-            } catch (CertificateException e) {
+            } catch (CertificateException | UnsupportedEncodingException e) {
                 log.error("Unable to parse the certificate sent in header", e);
             }
         }
@@ -271,12 +273,16 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
      * @return X509Certificate X.509 certificate after decoding the certificate content.
      * @throws CertificateException Certificate Exception.
      */
-    private X509Certificate parseCertificate(String content) throws CertificateException {
+    private X509Certificate parseCertificate(String content) throws CertificateException, UnsupportedEncodingException {
 
         // Trim extra spaces.
-        String decodedContent = StringUtils.trim(content);
+        String certContent = StringUtils.trim(content);
+        // URL decode if encoded.
+        if (isUrlEncoded(certContent)) {
+            certContent = URLDecoder.decode(certContent, StandardCharsets.UTF_8.name());
+        }
         // Remove Certificate Headers.
-        String certBody = decodedContent.replaceAll(CommonConstants.BEGIN_CERT, StringUtils.EMPTY)
+        String certBody = certContent.replaceAll(CommonConstants.BEGIN_CERT, StringUtils.EMPTY)
                 .replaceAll(CommonConstants.END_CERT, StringUtils.EMPTY);
         // Removing all whitespaces and new lines.
         certBody = certBody.replaceAll("\\s", StringUtils.EMPTY).replace("\\n", StringUtils.EMPTY);
@@ -284,6 +290,17 @@ public class MutualTLSClientAuthenticator extends AbstractOAuthClientAuthenticat
 
         return (java.security.cert.X509Certificate) CertificateFactory.getInstance(CommonConstants.X509)
                 .generateCertificate(new ByteArrayInputStream(decoded));
+    }
+
+    /**
+     * Check if the string contains percent-encoded sequences.
+     *
+     * @param str input string value.
+     * @return returns true if string is url encoded.
+     */
+    private boolean isUrlEncoded(String str) {
+
+        return str.matches(".*(%[0-9a-fA-F]{2}).*");
     }
 
     private boolean clientIdExistsAsParam(Map<String, List> contentParam) {
