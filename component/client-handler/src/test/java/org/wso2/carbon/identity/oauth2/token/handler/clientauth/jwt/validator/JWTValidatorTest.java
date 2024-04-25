@@ -81,8 +81,10 @@ public class JWTValidatorTest {
     public static final String TEST_SECRET_1 = "testSecret1";
     public static final String VALID_ISSUER_VAL = "valid-issuer";
     public static final String VALID_ISSUER = "ValidIssuer";
-    public static final String VALID_AUDIENCE = "ValidAudience";
-    public static final String SOME_VALID_AUDIENCE = "some-valid-audience";
+    public static final String VALID_AUDIENCE_1 = "ValidAudience1";
+    public static final String VALID_AUDIENCE_2 = "ValidAudience2";
+    public static final String SOME_VALID_AUDIENCE_1 = "some-valid-audience-1";
+    public static final String SOME_VALID_AUDIENCE_2 = "some-valid-audience-2";
     public static final String PREVENT_TOKEN_REUSE = "PreventTokenReuse";
     public static final String JWT_VALIDITY_PERIOD = "JwtValidityPeriod";
     public static final String ENABLE_CACHE_FOR_JTI = "EnableCacheForJTI";
@@ -163,12 +165,13 @@ public class JWTValidatorTest {
         Properties properties7 = new Properties();
         Properties properties8 = new Properties();
         Properties properties9 = new Properties();
+        Properties properties10 = new Properties();
 
         properties1.setProperty(ENABLE_CACHE_FOR_JTI, "true");
         properties1.setProperty(JWT_VALIDITY_PERIOD, "30");
         properties1.setProperty(PREVENT_TOKEN_REUSE, "true");
         properties2.setProperty(VALID_ISSUER, VALID_ISSUER_VAL);
-        properties4.setProperty(VALID_AUDIENCE, SOME_VALID_AUDIENCE);
+        properties4.setProperty(VALID_AUDIENCE_1, SOME_VALID_AUDIENCE_1);
         properties5.setProperty(PREVENT_TOKEN_REUSE, "false");
         properties6.setProperty(ENABLE_CACHE_FOR_JTI, "false");
         properties6.setProperty(PREVENT_TOKEN_REUSE, "false");
@@ -178,6 +181,8 @@ public class JWTValidatorTest {
         properties9.setProperty(ENABLE_CACHE_FOR_JTI, "false");
         properties9.setProperty(PREVENT_TOKEN_REUSE, "false");
         properties9.setProperty(REJECT_BEFORE_IN_MINUTES, "1");
+        properties10.setProperty(VALID_AUDIENCE_1, SOME_VALID_AUDIENCE_1);
+        properties10.setProperty(VALID_AUDIENCE_2, SOME_VALID_AUDIENCE_2);
 
 
         Key key1 = clientKeyStore.getKey("wso2carbon", "wso2carbon".toCharArray());
@@ -194,7 +199,7 @@ public class JWTValidatorTest {
         String jsonWebToken7 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "2002", audience, "RSA265", key1, 0);
         String jsonWebToken9 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3002", audience, "RSA265", key1,
                 Calendar.getInstance().getTimeInMillis());
-        String jsonWebToken10 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3004", SOME_VALID_AUDIENCE,
+        String jsonWebToken10 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3004", SOME_VALID_AUDIENCE_1,
                 "RSA265", key1, 0);
         String jsonWebToken11 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3005", audience, "RSA265", key1,
                 0, 0, Calendar.getInstance().getTimeInMillis() - (1000L * 60 * 2 *
@@ -209,6 +214,12 @@ public class JWTValidatorTest {
                 "RSA265", key1, 0);
         String jsonWebToken17 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3010", audience, "RSA265", key1, 0);
         String jsonWebToken18 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3011", audience, "RSA265", key1, 0);
+        String jsonWebToken19 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3012", SOME_VALID_AUDIENCE_1,
+                "RSA265", key1, 0);
+        String jsonWebToken20 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3013", SOME_VALID_AUDIENCE_2,
+                "RSA265", key1, 0);
+        String jsonWebToken21 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3014", "some_audience",
+                "RSA265", key1, 0);
 
         return new Object[][]{
                 {jsonWebToken0, properties8, false, "Correct authentication request is failed."},
@@ -234,6 +245,9 @@ public class JWTValidatorTest {
                 {jsonWebToken16, properties4, false, ""},
                 {jsonWebToken17, properties6, false, ""},
                 {jsonWebToken18, properties7, false, ""},
+                {jsonWebToken19, properties10, true, ""},
+                {jsonWebToken20, properties10, true, ""},
+                {jsonWebToken21, properties10, false, ""},
         };
     }
 
@@ -242,7 +256,6 @@ public class JWTValidatorTest {
                                   String errorMsg) throws Exception {
 
         try {
-            // TODO: write tests for other JWTValidator implementations
             JWTValidator jwtValidator = getJWTValidator((Properties) properties);
             SignedJWT signedJWT = SignedJWT.parse(jwt);
             assertEquals(jwtValidator.isValidAssertion(signedJWT),
