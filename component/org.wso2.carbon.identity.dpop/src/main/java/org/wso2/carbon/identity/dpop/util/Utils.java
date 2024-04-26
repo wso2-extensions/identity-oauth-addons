@@ -18,6 +18,9 @@
 
 package org.wso2.carbon.identity.dpop.util;
 
+import java.security.interfaces.ECPublicKey;
+import java.security.interfaces.RSAPublicKey;
+import java.text.ParseException;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSVerifier;
@@ -27,21 +30,12 @@ import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jwt.SignedJWT;
-import org.apache.axiom.om.OMElement;
 import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.database.utils.jdbc.JdbcTemplate;
-import org.wso2.carbon.identity.core.persistence.UmPersistenceManager;
-import org.wso2.carbon.identity.core.util.IdentityConfigParser;
-import org.wso2.carbon.identity.core.util.IdentityCoreConstants;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.dpop.constant.DPoPConstants;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2ClientException;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
-
-import java.security.interfaces.ECPublicKey;
-import java.security.interfaces.RSAPublicKey;
-import java.text.ParseException;
-import javax.xml.namespace.QName;
 
 /**
  * This class provides utility functions for dpop implementation.
