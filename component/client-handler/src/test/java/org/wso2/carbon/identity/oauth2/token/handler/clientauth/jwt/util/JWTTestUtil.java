@@ -188,7 +188,7 @@ public class JWTTestUtil {
 
         int rejectBeforePeriod;
         boolean cacheUsedJTI = true;
-        String validAudience = null;
+        List<String> validAudiences = new ArrayList<>();
         String validIssuer = null;
         boolean preventTokenReuse = true;
         List<String> mandatoryClaims = new ArrayList<>();
@@ -208,11 +208,14 @@ public class JWTTestUtil {
                 cacheUsedJTI = Constants.DEFAULT_ENABLE_JTI_CACHE;
             }
 
-            String validAudienceConfigVal = properties.getProperty("ValidAudience");
-            if (StringUtils.isNotEmpty(validAudienceConfigVal)) {
-                validAudience = validAudienceConfigVal;
-            } else {
-                validAudience = null;
+            String validAudienceConfigVal1 = properties.getProperty("ValidAudience1");
+            if (StringUtils.isNotEmpty(validAudienceConfigVal1)) {
+                validAudiences.add(validAudienceConfigVal1);
+            }
+
+            String validAudienceConfigVal2 = properties.getProperty("ValidAudience2");
+            if (StringUtils.isNotEmpty(validAudienceConfigVal2)) {
+                validAudiences.add(validAudienceConfigVal2);
             }
 
             String validIssuerConfigVal = properties.getProperty("ValidIssuer");
@@ -236,7 +239,15 @@ public class JWTTestUtil {
             rejectBeforePeriod = Constants.DEFAULT_VALIDITY_PERIOD_IN_MINUTES;
         }
 
-        return new JWTValidator(preventTokenReuse, validAudience, rejectBeforePeriod, validIssuer, mandatoryClaims
-                , cacheUsedJTI);
+        if (validAudiences.isEmpty()) {
+            return new JWTValidator(preventTokenReuse, (String) null, rejectBeforePeriod, validIssuer,
+                    mandatoryClaims, cacheUsedJTI);
+        } else if (validAudiences.size() == 1) {
+            return new JWTValidator(preventTokenReuse, validAudiences.get(0), rejectBeforePeriod, validIssuer,
+                    mandatoryClaims, cacheUsedJTI);
+        } else {
+            return new JWTValidator(preventTokenReuse, validAudiences, rejectBeforePeriod, validIssuer,
+                    mandatoryClaims, cacheUsedJTI);
+        }
     }
 }
