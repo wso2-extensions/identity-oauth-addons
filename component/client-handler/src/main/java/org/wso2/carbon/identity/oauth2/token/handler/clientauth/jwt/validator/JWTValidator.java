@@ -38,6 +38,7 @@ import org.wso2.carbon.identity.application.common.util.IdentityApplicationManag
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth.common.OAuth2ErrorCodes;
+import org.wso2.carbon.identity.oauth.common.OAuthConstants;
 import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
 import org.wso2.carbon.identity.oauth.config.OAuthServerConfiguration;
 import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
@@ -116,10 +117,11 @@ public class JWTValidator {
      * To validate the JWT assertion.
      *
      * @param signedJWT Validate the token
+     * @param requestUrl The request URL.
      * @return true if the jwt is valid.
      * @throws OAuthClientAuthnException OAuthClientAuthnException thrown with Invalid Request error code.
      */
-    public boolean isValidAssertion(SignedJWT signedJWT) throws OAuthClientAuthnException {
+    public boolean isValidAssertion(SignedJWT signedJWT, String requestUrl) throws OAuthClientAuthnException {
 
         String errorMessage;
 
@@ -160,7 +162,7 @@ public class JWTValidator {
             /* A list of valid audiences (issuer identifier, token endpoint URL or pushed authorization request
             endpoint URL) should be supported for PAR and not just a single valid audience.
             https://datatracker.ietf.org/doc/html/rfc9126 */
-            List<String> acceptedAudienceList = getValidAudiences(tenantDomain);
+            List<String> acceptedAudienceList = getValidAudiences(tenantDomain, requestUrl);
 
             long expTime = 0;
             long issuedTime = 0;
@@ -220,6 +222,18 @@ public class JWTValidator {
         } catch (UserStoreException | JWTClientAuthenticatorServiceServerException e) {
             return logAndThrowException(e.getMessage());
         }
+    }
+
+    /**
+     * To validate the JWT assertion.
+     *
+     * @param signedJWT Validate the token
+     * @return true if the jwt is valid.
+     * @throws OAuthClientAuthnException OAuthClientAuthnException thrown with Invalid Request error code.
+     */
+    public boolean isValidAssertion(SignedJWT signedJWT) throws OAuthClientAuthnException {
+
+        return isValidAssertion(signedJWT, null);
     }
 
     private boolean validateMandatoryFeilds(List<String> mandatoryClaims, JWTClaimsSet claimsSet) throws OAuthClientAuthnException {
@@ -488,7 +502,7 @@ public class JWTValidator {
         return isValidSignature;
     }
 
-    private List<String> getValidAudiences(String tenantDomain) throws OAuthClientAuthnException {
+    private List<String> getValidAudiences(String tenantDomain, String requestUrl) throws OAuthClientAuthnException {
 
         List<String> validAudiences = new ArrayList<>();
         String tokenEndpoint = null;
@@ -517,6 +531,13 @@ public class JWTValidator {
                 log.debug(message);
             }
             throw new OAuthClientAuthnException(message, OAuth2ErrorCodes.INVALID_REQUEST);
+        }
+
+        /* If the request is from the mTLS gateway, then the token and PAR endpoints should be set to the mTLS
+        endpoints.*/
+        if (requestUrl != null && requestUrl.contains(IdentityUtil.getProperty(OAuthConstants.MTLS_HOSTNAME))) {
+            tokenEndpoint = OAuth2Util.OAuthURL.getOAuth2MTLSTokenEPUrl();
+            parEndpoint = OAuth2Util.OAuthURL.getOAuth2MTLSParEPUrl();
         }
 
         if (StringUtils.isEmpty(tokenEndpoint)) {
