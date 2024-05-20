@@ -73,8 +73,7 @@ import static org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENA
 public class PrivateKeyJWTClientAuthenticatorTest {
 
     PrivateKeyJWTClientAuthenticator privateKeyJWTClientAuthenticator;
-    @Mock
-    HttpServletRequest httpServletRequest;
+    HttpServletRequest httpServletRequest = Mockito.mock(HttpServletRequest.class);
 
     OAuthClientAuthnContext oAuthClientAuthnContext =new OAuthClientAuthnContext();
 
@@ -147,6 +146,8 @@ public class PrivateKeyJWTClientAuthenticatorTest {
                 .thenReturn(jwtClientAuthenticatorConfig);
         JWTServiceDataHolder.getInstance()
                 .setJWTAuthenticationConfigurationDAO(mockDAO);
+        Mockito.when(httpServletRequest.getRequestURL())
+                .thenReturn(new StringBuffer("http://localhost:9443/oauth2/token"));
 
         try {
             privateKeyJWTClientAuthenticator.authenticateClient(httpServletRequest, bodyContent,

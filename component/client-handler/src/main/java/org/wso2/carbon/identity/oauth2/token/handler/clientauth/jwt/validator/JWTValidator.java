@@ -35,6 +35,8 @@ import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationManagementUtil;
+import org.wso2.carbon.identity.core.ServiceURLBuilder;
+import org.wso2.carbon.identity.core.URLBuilderException;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth.common.OAuth2ErrorCodes;
@@ -74,6 +76,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.apache.commons.lang.StringUtils.isEmpty;
+import static org.wso2.carbon.identity.oauth.common.OAuthConstants.OAuth20Endpoints.OAUTH2_TOKEN_EP_URL;
 
 /**
  * This class is used to validate the JWT which is coming along with the request.
@@ -535,9 +538,19 @@ public class JWTValidator {
 
         /* If the request is from the mTLS gateway, then the token and PAR endpoints should be set to the mTLS
         endpoints.*/
-        if (requestUrl != null && requestUrl.contains(IdentityUtil.getProperty(OAuthConstants.MTLS_HOSTNAME))) {
-            tokenEndpoint = OAuth2Util.OAuthURL.getOAuth2MTLSTokenEPUrl();
-            parEndpoint = OAuth2Util.OAuthURL.getOAuth2MTLSParEPUrl();
+        if (requestUrl != null && Boolean.parseBoolean(IdentityUtil.getProperty("OAuth.MutualTLSAliases.Enabled")) &&
+                requestUrl.contains(IdentityUtil.getProperty("OAuth.MutualTLSAliases.Hostname"))) {
+            String mtlsHostname = IdentityUtil.getProperty("OAuth.MutualTLSAliases.Hostname");
+            try {
+                tokenEndpoint = ServiceURLBuilder.create().addPath(OAUTH2_TOKEN_EP_URL).build(mtlsHostname)
+                        .getAbsolutePublicURL();
+                parEndpoint = ServiceURLBuilder.create().addPath(Constants.OAUTH2_PAR_URL_CONFIG).build(mtlsHostname)
+                        .getAbsolutePublicURL();
+            } catch (URLBuilderException e) {
+                String errorMsg = String.format("Error while building the absolute url of the context: '%s',  for the" +
+                        " tenant domain: '%s'", OAUTH2_TOKEN_EP_URL, tenantDomain);
+                throw new OAuthClientAuthnException(errorMsg, OAuth2ErrorCodes.INVALID_REQUEST, e);
+            }
         }
 
         if (StringUtils.isEmpty(tokenEndpoint)) {
