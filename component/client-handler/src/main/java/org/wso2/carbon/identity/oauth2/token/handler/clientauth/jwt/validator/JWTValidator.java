@@ -40,7 +40,6 @@ import org.wso2.carbon.identity.core.URLBuilderException;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth.common.OAuth2ErrorCodes;
-import org.wso2.carbon.identity.oauth.common.OAuthConstants;
 import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
 import org.wso2.carbon.identity.oauth.config.OAuthServerConfiguration;
 import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
@@ -77,6 +76,7 @@ import java.util.Map;
 
 import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.wso2.carbon.identity.oauth.common.OAuthConstants.OAuth20Endpoints.OAUTH2_TOKEN_EP_URL;
+import static org.wso2.carbon.identity.oauth.common.OAuthConstants.OAuth20Endpoints.OAUTH2_PAR_EP_URL;
 
 /**
  * This class is used to validate the JWT which is coming along with the request.
@@ -93,6 +93,8 @@ public class JWTValidator {
     private static final String PROP_ID_TOKEN_ISSUER_ID = "OAuth.OpenIDConnect.IDTokenIssuerID";
     private static final String FAPI_SIGNATURE_ALG_CONFIGURATION = "OAuth.OpenIDConnect.FAPI." +
             "AllowedSignatureAlgorithms.AllowedSignatureAlgorithm";
+    private static final String MTLS_ALIASES_ENABLED = "OAuth.MutualTLSAliases.Enabled";
+    private static final String MTLS_ALIASES_HOSTNAME = "OAuth.MutualTLSAliases.Hostname";
     private boolean preventTokenReuse;
     private String validAudience;
     private String validIssuer;
@@ -538,13 +540,13 @@ public class JWTValidator {
 
         /* If the request is from the mTLS gateway, then the token and PAR endpoints should be set to the mTLS
         endpoints.*/
-        if (requestUrl != null && Boolean.parseBoolean(IdentityUtil.getProperty("OAuth.MutualTLSAliases.Enabled")) &&
-                requestUrl.contains(IdentityUtil.getProperty("OAuth.MutualTLSAliases.Hostname"))) {
-            String mtlsHostname = IdentityUtil.getProperty("OAuth.MutualTLSAliases.Hostname");
+        if (requestUrl != null && Boolean.parseBoolean(IdentityUtil.getProperty(MTLS_ALIASES_ENABLED)) &&
+                requestUrl.contains(IdentityUtil.getProperty(MTLS_ALIASES_HOSTNAME))) {
+            String mtlsHostname = IdentityUtil.getProperty(MTLS_ALIASES_HOSTNAME);
             try {
                 tokenEndpoint = ServiceURLBuilder.create().addPath(OAUTH2_TOKEN_EP_URL).build(mtlsHostname)
                         .getAbsolutePublicURL();
-                parEndpoint = ServiceURLBuilder.create().addPath(Constants.OAUTH2_PAR_URL_CONFIG).build(mtlsHostname)
+                parEndpoint = ServiceURLBuilder.create().addPath(OAUTH2_PAR_EP_URL).build(mtlsHostname)
                         .getAbsolutePublicURL();
             } catch (URLBuilderException e) {
                 String errorMsg = String.format("Error while building the absolute url of the context: '%s',  for the" +
