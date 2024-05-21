@@ -1,3 +1,13 @@
+## <p style="color: red; font-weight: bold;">⚠️ Deprecation Notice </p>
+
+**This component has been moved to a new standalone repository.All the future development will be
+continued in the new repository and this repository will no longer be maintained.**
+
+**You can find the new repository here: [identity-oauth-dpop](https://github.com/wso2-extensions/identity-oauth-dpop)**
+
+
+<hr style="border: 2px solid yellow;" />
+
 # DPoP component
 
 DPoP ( Demonstrating Proof of Possession ) is an additional security mechanism for the token
