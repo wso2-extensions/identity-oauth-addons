@@ -155,6 +155,7 @@ public class JWTValidatorTest {
         // Assuming that the FAPI allowed signature algorithms are the below algorithms.
         configuration.put("OAuth.OpenIDConnect.FAPI.AllowedSignatureAlgorithms.AllowedSignatureAlgorithm",
                 Arrays.asList("PS256", "ES256", "RS512"));
+        configuration.put("OAuth.MutualTLSAliases.Enabled", "false");
         WhiteboxImpl.setInternalState(IdentityUtil.class, "configuration", configuration);
     }
 
