@@ -41,6 +41,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.apache.commons.lang.StringUtils.isNotEmpty;
+import static org.wso2.carbon.identity.oauth.common.OAuthConstants.OIDCConfigProperties.DEFAULT_VALUE_FOR_PREVENT_TOKEN_REUSE;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.AUDIENCE_CLAIM;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.DEFAULT_ENABLE_JTI_CACHE;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.DEFAULT_AUDIENCE;
@@ -69,7 +70,7 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
     private JWTValidator jwtValidator;
 
     private int rejectBeforePeriod = DEFAULT_VALIDITY_PERIOD_IN_MINUTES;
-    private boolean preventTokenReuse = true;
+    private boolean preventTokenReuse = DEFAULT_VALUE_FOR_PREVENT_TOKEN_REUSE;
     private String tokenEPAlias = DEFAULT_AUDIENCE;
 
     public PrivateKeyJWTClientAuthenticator() {

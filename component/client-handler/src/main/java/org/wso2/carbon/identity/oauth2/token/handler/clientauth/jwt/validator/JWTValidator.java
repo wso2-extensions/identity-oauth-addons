@@ -205,9 +205,7 @@ public class JWTValidator {
                         consumerKey, OAuth2ErrorCodes.SERVER_ERROR);
             }
 
-            preventTokenReuse = !JWTServiceDataHolder.getInstance()
-                    .getPrivateKeyJWTAuthenticationConfigurationDAO()
-                    .getPrivateKeyJWTClientAuthenticationConfigurationByTenantDomain(tenantDomain).isEnableTokenReuse();
+            preventTokenReuse = !oAuthAppDO.isTokenEndpointAllowReusePvtKeyJwt();
 
             //Validate signature validation, audience, nbf,exp time, jti.
             if (!validateAudience(acceptedAudienceList, audience)
@@ -224,7 +222,7 @@ public class JWTValidator {
 
         } catch (IdentityOAuth2Exception e) {
             return logAndThrowException(e.getMessage(), e.getErrorCode());
-        } catch (UserStoreException | JWTClientAuthenticatorServiceServerException e) {
+        } catch (UserStoreException e) {
             return logAndThrowException(e.getMessage());
         }
     }
