@@ -114,9 +114,11 @@ public class PrivateKeyJWTClientAuthenticator extends AbstractOAuthClientAuthent
         String requestUrl = httpServletRequest.getRequestURL().toString();
 
         // Todo: remove after verification
-        log.info("x-forwarded-for: " + httpServletRequest.getHeader("x-forwarded-for"));
-        log.info("x-forwarded-host: " + httpServletRequest.getHeader("x-forwarded-host"));
-        log.info("requestUrl: " + requestUrl);
+        if (log.isDebugEnabled()) {
+            log.debug("x-forwarded-for: " + httpServletRequest.getHeader("x-forwarded-for"));
+            log.debug("x-forwarded-host: " + httpServletRequest.getHeader("x-forwarded-host"));
+            log.debug("requestUrl: " + requestUrl);
+        }
 
         return jwtValidator.isValidAssertion(getSignedJWT(bodyParameters, oAuthClientAuthnContext), requestUrl);
     }
