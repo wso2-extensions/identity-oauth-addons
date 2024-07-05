@@ -1,12 +1,17 @@
 {
-    "name": "OAuth2 DPoP Connector",
+    "name": "Private Key JWT Client Authenticator",
     "owner": "WSO2 Inc.",
-    "category": "OAuth 2.0 grant type",
-    "documentationUrl": "https://github.com/wso2-extensions/identity-oauth-addons/tree/master/component/org.wso2.carbon.identity.dpop",
-    "description": "DPoP ( Demonstrating Proof of Possession ) is an additional security mechanism for the token generation which overcomes the issue of bearer tokens which will not validate between who is requesting the token and who is actually using the token for access to a particular resource. The specification defines a mechanism to prevent illegal API calls from succeeding only with a stolen access token.",
+    "category": "OAuth Client Authenticator",
+    "documentationUrl": "https://is.docs.wso2.com/en/5.10.0/learn/private-key-jwt-client-authentication-for-oidc/",
+    "description": "This is one of the Client Authentication methods that can be used by Clients to authenticate to the Authorization Server when using the Token Endpoint.",
     "status": "Active",
-    "labels": [
-        "Oauth2-Add-ons"
-    ],
-    "releases": []
+    "labels": [],
+    "releases": [
+        {
+            "tagName": "1.0.9",
+            "products": [
+                "IS 5.7.0"
+            ]
+        }
+    ]
 }
