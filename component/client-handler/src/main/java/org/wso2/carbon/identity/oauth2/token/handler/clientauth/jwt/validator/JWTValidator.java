@@ -77,6 +77,7 @@ import java.util.Map;
 import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.wso2.carbon.identity.oauth.common.OAuthConstants.OAuth20Endpoints.OAUTH2_TOKEN_EP_URL;
 import static org.wso2.carbon.identity.oauth.common.OAuthConstants.OAuth20Endpoints.OAUTH2_PAR_EP_URL;
+import static org.wso2.carbon.identity.oauth.common.OAuthConstants.OIDCConfigProperties.DEFAULT_VALUE_FOR_PREVENT_TOKEN_REUSE;
 
 /**
  * This class is used to validate the JWT which is coming along with the request.
@@ -205,7 +206,11 @@ public class JWTValidator {
                         consumerKey, OAuth2ErrorCodes.SERVER_ERROR);
             }
 
-            preventTokenReuse = !oAuthAppDO.isTokenEndpointAllowReusePvtKeyJwt();
+            if (oAuthAppDO.isTokenEndpointAllowReusePvtKeyJwt() != null) {
+                preventTokenReuse = !oAuthAppDO.isTokenEndpointAllowReusePvtKeyJwt();
+            } else {
+                preventTokenReuse = DEFAULT_VALUE_FOR_PREVENT_TOKEN_REUSE;
+            }
 
             //Validate signature validation, audience, nbf,exp time, jti.
             if (!validateAudience(acceptedAudienceList, audience)
