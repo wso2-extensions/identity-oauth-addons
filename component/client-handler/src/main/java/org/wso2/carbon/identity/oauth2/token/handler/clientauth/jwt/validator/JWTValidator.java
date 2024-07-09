@@ -208,8 +208,6 @@ public class JWTValidator {
 
             if (oAuthAppDO.isTokenEndpointAllowReusePvtKeyJwt() != null) {
                 preventTokenReuse = !oAuthAppDO.isTokenEndpointAllowReusePvtKeyJwt();
-            } else {
-                preventTokenReuse = DEFAULT_VALUE_FOR_PREVENT_TOKEN_REUSE;
             }
 
             //Validate signature validation, audience, nbf,exp time, jti.
