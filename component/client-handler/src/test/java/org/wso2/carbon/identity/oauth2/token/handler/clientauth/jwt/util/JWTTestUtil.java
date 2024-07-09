@@ -51,6 +51,7 @@ import java.util.Properties;
 
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.spy;
+import static org.wso2.carbon.identity.oauth.common.OAuthConstants.OIDCConfigProperties.DEFAULT_VALUE_FOR_PREVENT_TOKEN_REUSE;
 
 public class JWTTestUtil {
 
@@ -269,7 +270,7 @@ public class JWTTestUtil {
         boolean cacheUsedJTI = true;
         String validAudience = null;
         String validIssuer = null;
-        boolean preventTokenReuse = true;
+        boolean preventTokenReuse = DEFAULT_VALUE_FOR_PREVENT_TOKEN_REUSE;
         List<String> mandatoryClaims = new ArrayList<>();
         try {
 

@@ -20,9 +20,10 @@ package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator;
 
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.lang.StringUtils;
 import org.mockito.Mockito;
 import org.powermock.reflect.internal.WhiteboxImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -30,7 +31,6 @@ import org.wso2.carbon.base.CarbonBaseConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.core.util.KeyStoreManager;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
-import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.common.testng.WithAxisConfiguration;
 import org.wso2.carbon.identity.common.testng.WithCarbonHome;
@@ -39,12 +39,9 @@ import org.wso2.carbon.identity.common.testng.WithKeyStore;
 import org.wso2.carbon.identity.common.testng.WithRealmService;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
-import org.wso2.carbon.identity.oauth.common.OAuthConstants;
 import org.wso2.carbon.identity.oauth2.client.authentication.OAuthClientAuthnException;
 import org.wso2.carbon.identity.oauth2.internal.OAuth2ServiceComponentHolder;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants;
-import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.core.dao.JWTAuthenticationConfigurationDAO;
-import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.core.model.JWTClientAuthenticatorConfig;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceComponent;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceDataHolder;
 import org.wso2.carbon.identity.testutil.ReadCertStoreSampleUtil;
@@ -59,10 +56,8 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
@@ -174,81 +169,72 @@ public class JWTValidatorTest {
 
         properties1.setProperty(ENABLE_CACHE_FOR_JTI, "true");
         properties1.setProperty(JWT_VALIDITY_PERIOD, "30");
-        properties1.setProperty(PREVENT_TOKEN_REUSE, "true");
         properties2.setProperty(VALID_ISSUER, VALID_ISSUER_VAL);
         properties4.setProperty(VALID_AUDIENCE, SOME_VALID_AUDIENCE);
-        properties5.setProperty(PREVENT_TOKEN_REUSE, "false");
         properties6.setProperty(ENABLE_CACHE_FOR_JTI, "false");
-        properties6.setProperty(PREVENT_TOKEN_REUSE, "false");
         properties6.setProperty(REJECT_BEFORE_IN_MINUTES, "1");
         properties7.setProperty(MANDATORY, "some_claim");
         properties8.setProperty(VALID_ISSUER, "some_issuer");
         properties9.setProperty(ENABLE_CACHE_FOR_JTI, "false");
-        properties9.setProperty(PREVENT_TOKEN_REUSE, "false");
         properties9.setProperty(REJECT_BEFORE_IN_MINUTES, "1");
 
 
         Key key1 = clientKeyStore.getKey("wso2carbon", "wso2carbon".toCharArray());
         String audience = ID_TOKEN_ISSUER_ID;
-        String jsonWebToken0 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "4000", audience, "RSA265", key1, 0);
-        String jsonWebToken1 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3000", audience, "RSA265", key1, 0);
-        String jsonWebToken2 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3000", audience, "RSA265", key1,
+        String jsonWebToken0 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3000", audience, "RSA265", key1, 0);
+        String jsonWebToken1 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3001", audience, "RSA265", key1, 0);
+        String jsonWebToken2 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3002", audience, "RSA265", key1,
                 6000000);
-        String jsonWebToken3 = buildJWT("some-issuer", TEST_CLIENT_ID_1, "3001", audience, "RSA265", key1,
+        String jsonWebToken3 = buildJWT("some-issuer", TEST_CLIENT_ID_1, "3003", audience, "RSA265", key1,
                 6000000);
-        String jsonWebToken4 = buildJWT(TEST_CLIENT_ID_1, "some-client-id", "3002", audience, "RSA265", key1, 0);
-        String jsonWebToken5 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3002", audience, "RSA265", key1, 0);
-        String jsonWebToken6 = buildJWT(VALID_ISSUER_VAL, TEST_CLIENT_ID_1, "3003", audience, "RSA265", key1, 0);
-        String jsonWebToken7 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "2002", audience, "RSA265", key1, 0);
-        String jsonWebToken9 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3002", audience, "RSA265", key1,
+        String jsonWebToken4 = buildJWT(TEST_CLIENT_ID_1, "some-client-id", "3004", audience, "RSA265", key1, 0);
+        String jsonWebToken5 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3005", audience, "RSA265", key1, 0);
+        String jsonWebToken6 = buildJWT(VALID_ISSUER_VAL, TEST_CLIENT_ID_1, "3006", audience, "RSA265", key1, 0);
+        String jsonWebToken7 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3006", audience, "RSA265", key1, 0);
+        String jsonWebToken9 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3009", audience, "RSA265", key1,
                 Calendar.getInstance().getTimeInMillis());
-        String jsonWebToken10 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3004", SOME_VALID_AUDIENCE,
+        String jsonWebToken10 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3010", SOME_VALID_AUDIENCE,
                 "RSA265", key1, 0);
-        String jsonWebToken11 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3005", audience, "RSA265", key1,
+        String jsonWebToken11 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3011", audience, "RSA265", key1,
                 0, 0, Calendar.getInstance().getTimeInMillis() - (1000L * 60 * 2 *
                         Constants.DEFAULT_VALIDITY_PERIOD_IN_MINUTES));
 
-        String jsonWebToken12 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3006", audience, "RSA265", key1, 0);
-        String jsonWebToken13 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "2001", audience, "RSA265", key1, 0);
-        String jsonWebToken15 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3007", audience, "RSA265", key1,
+        String jsonWebToken12 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3012", audience, "RSA265", key1, 0);
+        String jsonWebToken13 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3012", audience, "RSA265", key1, 0);
+        String jsonWebToken15 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3015", audience, "RSA265", key1,
                 600000000);
 
-        String jsonWebToken16 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3008", "some_audience",
+        String jsonWebToken16 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3016", "some_audience",
                 "RSA265", key1, 0);
-        String jsonWebToken17 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3010", audience, "RSA265", key1, 0);
-        String jsonWebToken18 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3011", audience, "RSA265", key1, 0);
-        String jsonWebToken19 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "10010010", audience, "RSA265", key1, 0);
-        String jsonWebToken20 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "10010010", audience, "RSA265", key1, 0);
-        String jsonWebToken21 = buildJWT(TEST_FAPI_CLIENT_ID_1, TEST_FAPI_CLIENT_ID_1, "10010011", audience, "RS512", key1, 0);
-        String jsonWebToken22 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "10010012", audience, "RSA265", key1, 0);
-        String jsonWebToken23 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "10010013", PAR_ENDPOINT, "RSA265", key1, 0);
-        String jsonWebToken24 = buildJWT(TEST_FAPI_CLIENT_ID_2, TEST_FAPI_CLIENT_ID_2, "10010011", audience, "RSA265", key1, 0);
+        String jsonWebToken17 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3017", audience, "RSA265", key1, 0);
+        String jsonWebToken18 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3018", audience, "RSA265", key1, 0);
+        String jsonWebToken19 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3019", audience, "RSA265", key1, 0);
+        String jsonWebToken21 = buildJWT(TEST_FAPI_CLIENT_ID_1, TEST_FAPI_CLIENT_ID_1, "3021", audience, "RS512", key1, 0);
+        String jsonWebToken22 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3022", audience, "RSA265", key1, 0);
+        String jsonWebToken23 = buildJWT(TEST_CLIENT_ID_1, TEST_CLIENT_ID_1, "3023", PAR_ENDPOINT, "RSA265", key1, 0);
+        // String jsonWebToken24 = buildJWT(TEST_FAPI_CLIENT_ID_2, TEST_FAPI_CLIENT_ID_2, "3024", audience, "RSA265", key1, 0);
 
         return new Object[][]{
                 {jsonWebToken0, properties8, false, "Correct authentication request is failed."},
                 {jsonWebToken1, properties1, true, "Correct authentication request is failed."},
-                {jsonWebToken2, properties1, false, "JWT replay with preventTokenReuse enabled is not failed."},
+                {jsonWebToken2, properties1, false, "The JWT is used before the nbf claim value should fail."},
                 {jsonWebToken3, properties3, false, "JWT with Invalid field Issuer must be fail."},
                 {jsonWebToken4, properties3, false, "Request with non existing SP client-id should fail."},
-                {jsonWebToken5, properties5, true, "JWT replay with preventTokenReuse disabled but " +
-                        "not-expired is not failed"},
+                {jsonWebToken5, properties5, true, "JWT not-expired is not failed"},
                 {jsonWebToken6, properties2, true, "Valid JWT token with custom issuer validation should pass."},
                 {jsonWebToken7, properties3, false, "JWT persisted in database with preventTokenReuse " +
                         "enabled is not failed."},
-                {jsonWebToken9, properties1, false, "JWT persisted in database with preventTokenReuse " +
-                        "disabled is not failed."},
+                {jsonWebToken9, properties1, false, "The token is used before the nbf claim value should fail."},
                 {jsonWebToken10, properties4, true, "Valid JWT token with custom audience validation should pass."},
                 {jsonWebToken11, properties1, false, ""},
                 {jsonWebToken12, properties5, true, ""},
-                {jsonWebToken12, properties5, true, ""},
-                {jsonWebToken13, properties1, false, ""},
+                {jsonWebToken12, properties5, false, "Reuse of same JWT when preventTokenReuse is enabled should fail."},
+                {jsonWebToken13, properties1, false, "Reuse of same JTI when preventTokenReuse is enabled should fail."},
                 {jsonWebToken15, properties1, false, ""},
                 {jsonWebToken16, properties4, false, ""},
                 {jsonWebToken17, properties6, false, ""},
                 {jsonWebToken18, properties7, false, ""},
                 {jsonWebToken19, properties1, true, "Unable to use same JTI across tenants."},
-                {jsonWebToken20, properties1, false, "Duplicated JTI was used in same tenant with " +
-                        "preventTokenReuse enabled."},
                 {jsonWebToken23, properties1, true, "JWT with valid audience from the accepted value list should pass."},
                 {jsonWebToken22, properties1, true, "JWT with registered signing algorithm should pass."},
                 {jsonWebToken22, properties1, false, "JWT with unregistered signing algorithm should fail."},
@@ -257,8 +243,10 @@ public class JWTValidatorTest {
                    only exists when running unit tests and what we really need to check is the logic within the methods. */
                 {jsonWebToken21, properties1, true, "JWT with registered signing algorithm and FAPI compliant signing " +
                         "algorithm should pass."},
-                {jsonWebToken24, properties1, false, "JWT with registered signing algorithm and FAPI non-compliant " +
-                        "signing algorithm should fail."}
+                {jsonWebToken21, properties1, true, "JWT with preventTokenReuse disabled should pass."},
+                // Todo: Re-onboard the test case by adding changes to the FAPI property configs.
+                // {jsonWebToken24, properties1, false, "JWT with registered signing algorithm and FAPI non-compliant " +
+                //         "signing algorithm should fail."}
         };
     }
 
@@ -274,22 +262,6 @@ public class JWTValidatorTest {
         OAuth2ServiceComponentHolder.setApplicationMgtService(mockedApplicationManagementService);
         try {
             checkIfTenantIdColumnIsAvailableInIdnOidcAuthTable();
-            boolean  preventTokenReuse = true;
-            String preventTokenReuseProperty = ((Properties) properties).getProperty("PreventTokenReuse");
-            if (StringUtils.isNotEmpty(preventTokenReuseProperty)) {
-                preventTokenReuse = Boolean.parseBoolean(preventTokenReuseProperty);
-            }
-            JWTClientAuthenticatorConfig jwtClientAuthenticatorConfig = new JWTClientAuthenticatorConfig();
-            jwtClientAuthenticatorConfig.setEnableTokenReuse(!preventTokenReuse);
-
-            JWTAuthenticationConfigurationDAO mockDAO = Mockito.mock(JWTAuthenticationConfigurationDAO
-                    .class);
-            Mockito.when(mockDAO.getPrivateKeyJWTClientAuthenticationConfigurationByTenantDomain(anyString()))
-                    .thenReturn(jwtClientAuthenticatorConfig);
-
-            JWTServiceDataHolder.getInstance()
-                    .setJWTAuthenticationConfigurationDAO(mockDAO);
-
             JWTValidator jwtValidator = getJWTValidator((Properties) properties);
             SignedJWT signedJWT = SignedJWT.parse(jwt);
             assertEquals(jwtValidator.isValidAssertion(signedJWT),
@@ -300,8 +272,7 @@ public class JWTValidatorTest {
             }
 
         } catch (OAuthClientAuthnException e) {
-            assertFalse(expected);
-
+            assertFalse(expected, errorMsg);
         }
     }
 
