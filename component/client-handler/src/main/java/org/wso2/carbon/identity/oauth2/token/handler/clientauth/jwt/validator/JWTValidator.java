@@ -207,7 +207,14 @@ public class JWTValidator {
             }
 
             if (oAuthAppDO.isTokenEndpointAllowReusePvtKeyJwt() != null) {
+                // Private ket JWT is selected as the token endpoint authentication method.
                 preventTokenReuse = !oAuthAppDO.isTokenEndpointAllowReusePvtKeyJwt();
+            } else {
+                // No client authentication method is selected. -> All methods are allowed.
+                preventTokenReuse = !JWTServiceDataHolder.getInstance()
+                        .getPrivateKeyJWTAuthenticationConfigurationDAO()
+                        .getPrivateKeyJWTClientAuthenticationConfigurationByTenantDomain(tenantDomain)
+                        .isEnableTokenReuse();
             }
 
             //Validate signature validation, audience, nbf,exp time, jti.
@@ -225,7 +232,7 @@ public class JWTValidator {
 
         } catch (IdentityOAuth2Exception e) {
             return logAndThrowException(e.getMessage(), e.getErrorCode());
-        } catch (UserStoreException e) {
+        } catch (UserStoreException | JWTClientAuthenticatorServiceServerException e) {
             return logAndThrowException(e.getMessage());
         }
     }
