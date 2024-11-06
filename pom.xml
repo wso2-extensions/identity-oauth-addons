@@ -428,7 +428,7 @@
         <identity.carbon.auth.rest.version>1.4.47</identity.carbon.auth.rest.version>
         <identity.carbon.auth.rest.imp.pkg.version>[1.0.0,2.0.0)</identity.carbon.auth.rest.imp.pkg.version>
 
-        <carbon.kernel.version>4.6.0</carbon.kernel.version>
+        <carbon.kernel.version>4.6.1</carbon.kernel.version>
         <carbon.kernel.feature.version>4.6.0</carbon.kernel.feature.version>
         <carbon.kernel.imp.pkg.version.range>[4.5.0, 5.0.0)</carbon.kernel.imp.pkg.version.range>
         <carbon.user.api.imp.pkg.version.range>[1.0.1, 2.0.0)</carbon.user.api.imp.pkg.version.range>
