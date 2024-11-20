@@ -45,3 +45,4 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: component/**/target/site/jacoco/jacoco.xml
+          flags: unit
