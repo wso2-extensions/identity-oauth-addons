@@ -122,6 +122,6 @@ public class Constants {
                 "WHEN MATCHED THEN UPDATE SET " +
                 "EXP_TIME = ? , " +
                 "TIME_CREATED = ? WHEN NOT MATCHED THEN INSERT (JWT_ID, TENANT_ID ,EXP_TIME, TIME_CREATED) " +
-                "VALUES (?,?,?,?);";
+                "VALUES (?,?,?,?)";
     }
 }
