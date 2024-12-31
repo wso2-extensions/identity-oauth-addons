@@ -8,5 +8,12 @@
     "labels": [
         "Oauth2-Add-ons"
     ],
-    "releases": []
+    "releases": [
+        {
+            "tagName": "2.4.9",
+            "products": [
+                "IS 5.11.0"
+            ]
+        }
+    ]
 }
