@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
- ~ Copyright (c) 2017, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ ~ Copyright (c) 2017-2024, WSO2 LLC. (https://www.wso2.com).
  ~
  ~ WSO2 Inc. licenses this file to you under the Apache License,
  ~ Version 2.0 (the "License"); you may not use this file except
@@ -35,9 +35,7 @@
         <!--this should be released after the required supplementary features are merged-->
         <module>component/org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls</module>
         <module>component/org.wso2.carbon.identity.oauth2.token.handler.clientauth.tlswithidsecret</module>
-        <module>component/org.wso2.carbon.identity.oauth2.validators.xacml</module>
         <module>features/org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.feature</module>
-        <module>features/org.wso2.carbon.identity.oauth2.validators.xacml.server.feature</module>
         <module>component/org.wso2.carbon.identity.oauth2.clientauth.privilegeduser</module>
         <module>component/org.wso2.carbon.identity.dpop</module>
     </modules>
@@ -116,11 +114,6 @@
                 <groupId>org.wso2.carbon.identity.framework</groupId>
                 <artifactId>org.wso2.carbon.identity.core</artifactId>
                 <version>${org.wso2.carbon.identity.core.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.wso2.carbon.identity.framework</groupId>
-                <artifactId>org.wso2.carbon.identity.entitlement</artifactId>
-                <version>${carbon.identity.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.wso2.carbon.identity.framework</groupId>
@@ -243,11 +236,6 @@
             </dependency>
 
             <dependency>
-                <groupId>org.wso2.balana</groupId>
-                <artifactId>org.wso2.balana.utils</artifactId>
-                <version>${balana.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.wso2.carbon</groupId>
                 <artifactId>org.wso2.carbon.utils</artifactId>
                 <version>${carbon.utils.version}</version>
@@ -310,11 +298,6 @@
             <dependency>
                 <groupId>org.wso2.carbon.extension.identity.oauth.addons</groupId>
                 <artifactId>org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.wso2.carbon.extension.identity.oauth.addons</groupId>
-                <artifactId>org.wso2.carbon.identity.oauth2.validators.xacml</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
