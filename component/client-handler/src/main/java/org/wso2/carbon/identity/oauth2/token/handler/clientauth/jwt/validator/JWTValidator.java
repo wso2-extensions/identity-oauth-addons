@@ -83,6 +83,7 @@ public class JWTValidator {
     private static final Log log = LogFactory.getLog(JWTValidator.class);
     public static final String FULLSTOP_DELIMITER = ".";
     public static final String DASH_DELIMITER = "-";
+    public static final String KEYSTORE_FILE_EXTENSION = ".jks";
     public static final String RS = "RS";
     public static final String PS = "PS";
     private static final String IDP_ENTITY_ID = "IdPEntityId";
