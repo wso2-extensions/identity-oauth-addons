@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2017-2025, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -27,8 +27,6 @@ import com.nimbusds.jwt.SignedJWT;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wso2.carbon.base.MultitenantConstants;
-import org.wso2.carbon.core.util.KeyStoreManager;
 import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorConfig;
 import org.wso2.carbon.identity.application.common.model.IdentityProvider;
 import org.wso2.carbon.identity.application.common.model.Property;
@@ -61,8 +59,6 @@ import org.wso2.carbon.idp.mgt.IdentityProviderManagementException;
 import org.wso2.carbon.idp.mgt.IdentityProviderManager;
 import org.wso2.carbon.user.api.UserStoreException;
 
-import java.security.KeyStore;
-import java.security.KeyStoreException;
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
@@ -87,7 +83,6 @@ public class JWTValidator {
     private static final Log log = LogFactory.getLog(JWTValidator.class);
     public static final String FULLSTOP_DELIMITER = ".";
     public static final String DASH_DELIMITER = "-";
-    public static final String KEYSTORE_FILE_EXTENSION = ".jks";
     public static final String RS = "RS";
     public static final String PS = "PS";
     private static final String IDP_ENTITY_ID = "IdPEntityId";
@@ -502,7 +497,7 @@ public class JWTValidator {
         // If certificate is not configured in service provider, it will throw an error.
         // For the existing clients need to handle that error and get from truststore.
         if (StringUtils.isBlank(jwksUri) && cert == null) {
-            cert = getCertificate(tenantDomain, alias, tenantId);
+            cert = getCertificate(tenantDomain, alias);
         }
         if (StringUtils.isBlank(jwksUri) && cert != null) {
             try {
@@ -620,43 +615,19 @@ public class JWTValidator {
         return claimsSet.getSubject();
     }
 
-    private static X509Certificate getCertificate(String tenantDomain, String alias, int tenantId)
+    private static X509Certificate getCertificate(String tenantDomain, String alias)
             throws OAuthClientAuthnException {
 
-        KeyStoreManager keyStoreManager;
-        // get an instance of the corresponding Key Store Manager instance
-        keyStoreManager = KeyStoreManager.getInstance(tenantId);
-        KeyStore keyStore;
         try {
-            if (tenantId != MultitenantConstants.SUPER_TENANT_ID) {// for tenants, load key from their generated key store
-                keyStore = keyStoreManager.getKeyStore(generateKSNameFromDomainName(tenantDomain));
-            } else {
-                // for super tenant, load the default pub. cert using the config. in carbon.xml
-                keyStore = keyStoreManager.getPrimaryKeyStore();
-            }
-            return (X509Certificate) keyStore.getCertificate(alias);
-
-        } catch (KeyStoreException e) {
+            return (X509Certificate) OAuth2Util.getCertificate(tenantDomain, alias);
+        } catch (IdentityOAuth2Exception e) {
             String errorMsg = "Error instantiating an X509Certificate object for the certificate alias: " + alias +
                     " in tenant:" + tenantDomain;
             if (log.isDebugEnabled()) {
                 log.debug(errorMsg);
             }
             throw new OAuthClientAuthnException(errorMsg, OAuth2ErrorCodes.INVALID_REQUEST);
-        } catch (Exception e) {
-            String message = "Unable to load key store manager for the tenant domain: " + tenantDomain;
-            //keyStoreManager throws Exception
-            if (log.isDebugEnabled()) {
-                log.debug(message);
-            }
-            throw new OAuthClientAuthnException(message, OAuth2ErrorCodes.INVALID_REQUEST);
         }
-    }
-
-    private static String generateKSNameFromDomainName(String tenantDomain) {
-
-        String ksName = tenantDomain.trim().replace(FULLSTOP_DELIMITER, DASH_DELIMITER);
-        return ksName + KEYSTORE_FILE_EXTENSION;
     }
 
     private boolean validateSignature(SignedJWT signedJWT, X509Certificate x509Certificate)
