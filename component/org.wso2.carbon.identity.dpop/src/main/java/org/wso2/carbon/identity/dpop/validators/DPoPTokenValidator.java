@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.com).
+ * Copyright (c) 2021-2025, WSO2 LLC. (http://www.wso2.com).
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -38,6 +38,7 @@ import org.wso2.carbon.identity.oauth.config.OAuthServerConfiguration;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2TokenValidationRequestDTO;
 import org.wso2.carbon.identity.oauth2.model.AccessTokenDO;
+import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 import org.wso2.carbon.identity.oauth2.validators.OAuth2TokenValidationMessageContext;
 import org.wso2.carbon.identity.oauth2.validators.OAuth2TokenValidator;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementException;
@@ -170,8 +171,13 @@ public class DPoPTokenValidator implements OAuth2TokenValidator {
         X509Certificate x509Certificate;
         String tenantDomain = getTenantDomain();
         try {
-            x509Certificate = (X509Certificate) IdentityApplicationManagementUtil
-                    .decodeCertificate(idp.getCertificate());
+            if (StringUtils.equals(IdentityApplicationConstants.RESIDENT_IDP_RESERVED_NAME,
+                    idp.getIdentityProviderName())) {
+                x509Certificate = (X509Certificate) OAuth2Util.getCertificate(tenantDomain);
+            } else {
+                x509Certificate =
+                        (X509Certificate) IdentityApplicationManagementUtil.decodeCertificate(idp.getCertificate());
+            }
         } catch (CertificateException e) {
             throw new IdentityOAuth2Exception("Error occurred while decoding public certificate of Identity Provider "
                     + idp.getIdentityProviderName() + " for tenant domain " + tenantDomain, e);
