@@ -33,7 +33,6 @@
     <modules>
         <!--this should be released after the required supplementary features are merged-->
         <module>component/org.wso2.carbon.identity.oauth2.token.handler.clientauth.tlswithidsecret</module>
-        <module>features/org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.feature</module>
         <module>component/org.wso2.carbon.identity.oauth2.clientauth.privilegeduser</module>
         <module>component/org.wso2.carbon.identity.dpop</module>
     </modules>
