@@ -26,7 +26,7 @@ jobs:
           distribution: "adopt"
       - name: Cache local Maven repository
         id: cache-maven-m2
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         env:
           cache-name: cache-m2
         with:
@@ -38,4 +38,11 @@ jobs:
             ${{ runner.os }}-
       - name: Build with Maven
         run: mvn clean install -U -B
-
+      - name: Generate coverage report
+        run: mvn test jacoco:report
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: component/**/target/site/jacoco/jacoco.xml
+          flags: unit
