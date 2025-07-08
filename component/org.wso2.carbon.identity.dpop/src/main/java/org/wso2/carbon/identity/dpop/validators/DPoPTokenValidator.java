@@ -135,7 +135,7 @@ public class DPoPTokenValidator implements OAuth2TokenValidator {
             throw new IdentityOAuth2Exception("Mandatory field cnf is  empty in the given Token.");
         }
 
-        String jkt = claimsSet.getJSONObjectClaim(DPoPConstants.CNF).getAsString(DPoPConstants.JWK_THUMBPRINT);
+        String jkt = (String) claimsSet.getJSONObjectClaim(DPoPConstants.CNF).get(DPoPConstants.JWK_THUMBPRINT);
         if (StringUtils.isBlank(jkt) || !bindingValue.equalsIgnoreCase(jkt)) {
             throw new IdentityOAuth2Exception("Mandatory field jkt is  empty or invalid in the cnf.");
         }
