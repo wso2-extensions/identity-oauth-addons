@@ -18,17 +18,15 @@
 
 package org.wso2.carbon.identity.oauth2.clientauth.privilegeduser;
 
-import org.mockito.Mock;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.testng.PowerMockTestCase;
+import org.mockito.MockedStatic;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import org.wso2.carbon.CarbonConstants;
 import org.wso2.carbon.identity.common.testng.WithCarbonHome;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.oauth2.bean.OAuthClientAuthnContext;
 import org.wso2.carbon.identity.oauth2.clientauth.privilegeduser.internal.PrivilegedUserAuthenticatorServiceHolder;
-import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 import org.wso2.carbon.user.api.AuthorizationManager;
 import org.wso2.carbon.user.api.RealmConfiguration;
 import org.wso2.carbon.user.api.UserRealm;
@@ -36,30 +34,23 @@ import org.wso2.carbon.user.api.UserStoreManager;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
-@PrepareForTest({
-        HttpServletRequest.class,
-        OAuth2Util.class,
-        IdentityTenantUtil.class,
-        PrivilegedUserAuthenticatorServiceHolder.class,
-        UserCoreUtil.class,
-})
 @WithCarbonHome
-public class PrivilegedUserAuthenticatorTest extends PowerMockTestCase {
+public class PrivilegedUserAuthenticatorTest {
 
     private PrivilegedUserAuthenticator privilegedUserAuthenticator = new PrivilegedUserAuthenticator();
     private static final String USERNAME = "username";
@@ -69,18 +60,23 @@ public class PrivilegedUserAuthenticatorTest extends PowerMockTestCase {
     private static final String CLIENT_ID = "KrVLov4Bl3natUksF2HmWsdw684a";
     private static final String REVOKE_ENDPOINT = "/oauth2/revoke";
 
-    @Mock
     private RealmService realmService;
-    @Mock
     private UserRealm userRealm;
-    @Mock
     private UserStoreManager userStoreManager;
-    @Mock
     private PrivilegedUserAuthenticatorServiceHolder privilegedUserAuthenticatorServiceHolder;
-    @Mock
     private RealmConfiguration mockedRealmConfiguration;
-    @Mock
     private AuthorizationManager authorizationManager;
+
+    @BeforeClass
+    public void setUp() throws Exception {
+
+        realmService = mock(RealmService.class);
+        userRealm = mock(UserRealm.class);
+        userStoreManager = mock(UserStoreManager.class);
+        privilegedUserAuthenticatorServiceHolder = mock(PrivilegedUserAuthenticatorServiceHolder.class);
+        mockedRealmConfiguration = mock(RealmConfiguration.class);
+        authorizationManager = mock(AuthorizationManager.class);
+    }
 
     @DataProvider(name = "testCanAuthenticateData")
     public Object[][] testCanAuthenticateData() {
@@ -110,7 +106,7 @@ public class PrivilegedUserAuthenticatorTest extends PowerMockTestCase {
                                     HashMap<String, List> bodyContent, boolean
             canHandle) throws Exception {
 
-        HttpServletRequest httpServletRequest = PowerMockito.mock(HttpServletRequest.class);
+        HttpServletRequest httpServletRequest = mock(HttpServletRequest.class);
         List<String> userNameCredentials = new ArrayList<>();
         userNameCredentials.add(USERNAME_VALUE);
         List<String> passwordCredentials = new ArrayList<>();
@@ -136,7 +132,7 @@ public class PrivilegedUserAuthenticatorTest extends PowerMockTestCase {
         List<String> clientIDContent = new ArrayList<>();
         clientIDContent.add(CLIENT_ID);
         bodyContent.put("client_id", clientIDContent);
-        HttpServletRequest httpServletRequest = PowerMockito.mock(HttpServletRequest.class);
+        HttpServletRequest httpServletRequest = mock(HttpServletRequest.class);
         String clientId = privilegedUserAuthenticator.getClientId(httpServletRequest, bodyContent,
                 new OAuthClientAuthnContext());
         assertEquals(clientId, "KrVLov4Bl3natUksF2HmWsdw684a", "The expected client id is not found.");
@@ -146,39 +142,46 @@ public class PrivilegedUserAuthenticatorTest extends PowerMockTestCase {
     @Test()
     public void testAuthenticateClient() throws Exception {
 
-        OAuthClientAuthnContext oAuthClientAuthnContextObj =  buildOAuthClientAuthnContext(CLIENT_ID);
-        HttpServletRequest httpServletRequest = PowerMockito.mock(HttpServletRequest.class);
+        OAuthClientAuthnContext oAuthClientAuthnContextObj = buildOAuthClientAuthnContext(CLIENT_ID);
+        HttpServletRequest httpServletRequest = mock(HttpServletRequest.class);
 
-        mockStatic(IdentityTenantUtil.class);
-        when(IdentityTenantUtil.getTenantIdOfUser(anyString())).thenReturn(-1234);
+        try (MockedStatic<IdentityTenantUtil> identityTenantUtilMockedStatic = mockStatic(IdentityTenantUtil.class);
+             MockedStatic<PrivilegedUserAuthenticatorServiceHolder> privilegedUserAuthenticatorServiceHolderMockedStatic
+                     = mockStatic(PrivilegedUserAuthenticatorServiceHolder.class);
+             MockedStatic<UserCoreUtil> userCoreUtilMockedStatic = mockStatic(UserCoreUtil.class)) {
+            identityTenantUtilMockedStatic.when(() -> IdentityTenantUtil.getTenantIdOfUser(anyString()))
+                    .thenReturn(-1234);
 
-        mockStatic(PrivilegedUserAuthenticatorServiceHolder.class);
-        when(PrivilegedUserAuthenticatorServiceHolder.getInstance()).thenReturn(privilegedUserAuthenticatorServiceHolder);
+            privilegedUserAuthenticatorServiceHolderMockedStatic
+                    .when(PrivilegedUserAuthenticatorServiceHolder::getInstance)
+                    .thenReturn(privilegedUserAuthenticatorServiceHolder);
 
-        mockStatic(UserCoreUtil.class);
 
-        HashMap<String, List> bodyContent = new HashMap<>();
-        List<String> userNameCredentials = new ArrayList<>();
-        userNameCredentials.add(USERNAME_VALUE);
-        List<String> passwordCredentials = new ArrayList<>();
-        passwordCredentials.add(PASSWORD_VALUE);
-        bodyContent.put(USERNAME, userNameCredentials);
-        bodyContent.put(PASSWORD, passwordCredentials);
+            HashMap<String, List> bodyContent = new HashMap<>();
+            List<String> userNameCredentials = new ArrayList<>();
+            userNameCredentials.add(USERNAME_VALUE);
+            List<String> passwordCredentials = new ArrayList<>();
+            passwordCredentials.add(PASSWORD_VALUE);
+            bodyContent.put(USERNAME, userNameCredentials);
+            bodyContent.put(PASSWORD, passwordCredentials);
 
-        when(privilegedUserAuthenticatorServiceHolder.getRealmService()).thenReturn(realmService);
-        when(realmService.getTenantUserRealm(anyInt())).thenReturn(userRealm);
-        when(userRealm.getUserStoreManager()).thenReturn(userStoreManager);
-        when(userStoreManager.authenticate(anyString(), any())).thenReturn(true);
+            when(privilegedUserAuthenticatorServiceHolder.getRealmService()).thenReturn(realmService);
+            when(realmService.getTenantUserRealm(anyInt())).thenReturn(userRealm);
+            when(userRealm.getUserStoreManager()).thenReturn(userStoreManager);
+            when(userStoreManager.authenticate(anyString(), any())).thenReturn(true);
 
-        when(userRealm.getRealmConfiguration()).thenReturn(mockedRealmConfiguration);
-        when(UserCoreUtil.getDomainName(mockedRealmConfiguration)).thenReturn("PRIMARY");
+            when(userRealm.getRealmConfiguration()).thenReturn(mockedRealmConfiguration);
+            userCoreUtilMockedStatic.when(() -> UserCoreUtil.getDomainName(mockedRealmConfiguration)).thenReturn("PRIMARY");
+            userCoreUtilMockedStatic.when(() -> UserCoreUtil.addDomainToName(anyString(), anyString())).thenReturn(
+                    "PRIMARY" + CarbonConstants.DOMAIN_SEPARATOR + USERNAME_VALUE);
 
-        when(userRealm.getAuthorizationManager()).thenReturn(authorizationManager);
-        when(authorizationManager.isUserAuthorized(anyString(), anyString(), anyString())).thenReturn(true);
+            when(userRealm.getAuthorizationManager()).thenReturn(authorizationManager);
+            when(authorizationManager.isUserAuthorized(anyString(), anyString(), anyString())).thenReturn(true);
 
-        assertTrue(privilegedUserAuthenticator.authenticateClient(httpServletRequest, bodyContent,
-                oAuthClientAuthnContextObj), "Expected client authentication result was not " +
-                "received");
+            assertTrue(privilegedUserAuthenticator.authenticateClient(httpServletRequest, bodyContent,
+                    oAuthClientAuthnContextObj), "Expected client authentication result was not " +
+                    "received");
+        }
     }
 
 

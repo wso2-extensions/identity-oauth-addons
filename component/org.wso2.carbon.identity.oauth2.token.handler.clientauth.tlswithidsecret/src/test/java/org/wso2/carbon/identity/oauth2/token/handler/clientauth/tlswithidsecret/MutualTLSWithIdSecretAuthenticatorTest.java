@@ -20,30 +20,16 @@ package org.wso2.carbon.identity.oauth2.token.handler.clientauth.tlswithidsecret
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.oltu.oauth2.common.OAuth;
-import org.mockito.Matchers;
-import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.testng.PowerMockTestCase;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
+import org.mockito.MockedStatic;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.wso2.carbon.identity.common.testng.WithCarbonHome;
 import org.wso2.carbon.identity.core.handler.AbstractIdentityHandler;
 import org.wso2.carbon.identity.core.model.IdentityEventListenerConfig;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
-import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
-import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.bean.OAuthClientAuthnContext;
-import org.wso2.carbon.identity.oauth2.client.authentication.BasicAuthClientAuthenticator;
-import org.wso2.carbon.identity.oauth2.client.authentication.OAuthClientAuthnException;
-import org.wso2.carbon.identity.oauth2.token.handler.clientauth.tlswithidsecret.util.MutualTLSUtil;
-import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 
-import java.net.URL;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateEncodingException;
+import javax.servlet.http.HttpServletRequest;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -51,16 +37,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
-
-import static org.mockito.Matchers.any;
-import static org.testng.Assert.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertEquals;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.tlswithidsecret.util.MutualTLSUtil.JAVAX_SERVLET_REQUEST_CERTIFICATE;
-import static org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
 
 @WithCarbonHome
-@PrepareForTest({OAuth2Util.class, HttpServletRequest.class, MutualTLSUtil.class, IdentityUtil.class})
-public class MutualTLSWithIdSecretAuthenticatorTest extends PowerMockTestCase {
+public class MutualTLSWithIdSecretAuthenticatorTest {
 
     private static String CLIENT_ID = "someclientid";
     private static String CLIENT_SECRET = "someclientsecret";
@@ -126,8 +110,8 @@ public class MutualTLSWithIdSecretAuthenticatorTest extends PowerMockTestCase {
     @Test(dataProvider = "testCanAuthenticateData")
     public void testCanAuthenticate(X509Certificate certificate, HashMap<String, List> bodyContent, boolean canHandle) {
 
-        HttpServletRequest httpServletRequest = PowerMockito.mock(HttpServletRequest.class);
-        PowerMockito.when(httpServletRequest.getAttribute(JAVAX_SERVLET_REQUEST_CERTIFICATE)).thenReturn(certificate);
+        HttpServletRequest httpServletRequest = mock(HttpServletRequest.class);
+        when(httpServletRequest.getAttribute(JAVAX_SERVLET_REQUEST_CERTIFICATE)).thenReturn(certificate);
         assertEquals(mutualTLSWithIdSecretAuthenticator.canAuthenticate(httpServletRequest, bodyContent, new
                 OAuthClientAuthnContext()), canHandle, "Expected can authenticate evaluation not received");
     }
@@ -145,13 +129,14 @@ public class MutualTLSWithIdSecretAuthenticatorTest extends PowerMockTestCase {
     @Test(dataProvider = "testIsEnabledData")
     public void testIsEnabled(String isEnabled) {
 
-        IdentityEventListenerConfig identityEventListenerConfig = PowerMockito.mock(IdentityEventListenerConfig.class);
-        PowerMockito.mockStatic(IdentityUtil.class);
-        PowerMockito.when(IdentityUtil.readEventListenerProperty(
-                AbstractIdentityHandler.class.getName(), MutualTLSWithIdSecretAuthenticator.class.getName()))
-                .thenReturn(identityEventListenerConfig);
-        PowerMockito.when(identityEventListenerConfig.getEnable()).thenReturn(isEnabled);
-        assertEquals(mutualTLSWithIdSecretAuthenticator.isEnabled(), Boolean.parseBoolean(isEnabled));
+        try (MockedStatic<IdentityUtil> identityUtilMockedStatic = mockStatic(IdentityUtil.class)) {
+            IdentityEventListenerConfig identityEventListenerConfig = mock(IdentityEventListenerConfig.class);
+            identityUtilMockedStatic.when(() -> IdentityUtil.readEventListenerProperty(
+                            AbstractIdentityHandler.class.getName(), MutualTLSWithIdSecretAuthenticator.class.getName()))
+                    .thenReturn(identityEventListenerConfig);
+            when(identityEventListenerConfig.getEnable()).thenReturn(isEnabled);
+            assertEquals(mutualTLSWithIdSecretAuthenticator.isEnabled(), Boolean.parseBoolean(isEnabled));
+        }
     }
 
     @Test
@@ -179,12 +164,5 @@ public class MutualTLSWithIdSecretAuthenticatorTest extends PowerMockTestCase {
             }
         }
         return null;
-    }
-
-    private OAuthClientAuthnContext buildOAuthClientAuthnContext(String clientId) {
-
-        OAuthClientAuthnContext oAuthClientAuthnContext = new OAuthClientAuthnContext();
-        oAuthClientAuthnContext.setClientId(clientId);
-        return oAuthClientAuthnContext;
     }
 }
