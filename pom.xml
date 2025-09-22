@@ -90,7 +90,7 @@
             <dependency>
                 <groupId>org.wso2.carbon.identity.framework</groupId>
                 <artifactId>org.wso2.carbon.identity.application.common</artifactId>
-                <version>${carbon.identity.application.common.version}</version>
+                <version>${carbon.identity.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.wso2.carbon.identity.framework</groupId>
@@ -150,7 +150,7 @@
             <dependency>
                 <groupId>org.wso2.carbon.identity.framework</groupId>
                 <artifactId>org.wso2.carbon.identity.application.mgt</artifactId>
-                <version>${carbon.identity.app.mgt.version}</version>
+                <version>${carbon.identity.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.oltu.oauth2</groupId>
@@ -255,17 +255,16 @@
                 <scope>test</scope>
                 <version>${jacoco.version}</version>
             </dependency>
-            <!-- https://mvnrepository.com/artifact/org.powermock/powermock-module-testng -->
             <dependency>
-                <groupId>org.powermock</groupId>
-                <artifactId>powermock-module-testng</artifactId>
-                <version>${powermock.version}</version>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-core</artifactId>
+                <version>${mockito.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
-                <groupId>org.powermock</groupId>
-                <artifactId>powermock-api-mockito</artifactId>
-                <version>${powermock.version}</version>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-testng</artifactId>
+                <version>${mockito-testng.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
@@ -396,7 +395,7 @@
 
     <properties>
         <carbon.identity.app.mgt.version>7.3.26</carbon.identity.app.mgt.version>
-        <carbon.identity.version>5.20.322</carbon.identity.version>
+        <carbon.identity.version>7.8.0</carbon.identity.version>
         <carbon.identity.application.common.version>5.25.305</carbon.identity.application.common.version>
         <carbon.utils.version>4.9.10</carbon.utils.version>
         <identity.inbound.auth.oauth.version>7.0.286</identity.inbound.auth.oauth.version>
@@ -458,9 +457,10 @@
 
         <!--Test Dependencies-->
         <commons.collections.version>3.2.2</commons.collections.version>
-        <testng.version>6.9.10</testng.version>
-        <jacoco.version>0.7.9</jacoco.version>
-        <powermock.version>1.6.6</powermock.version>
+        <testng.version>7.10.1</testng.version>
+        <jacoco.version>0.8.12</jacoco.version>
+        <mockito.version>5.3.1</mockito.version>
+        <mockito-testng.version>0.5.2</mockito-testng.version>
         <maven.surefire.plugin.version>2.18.1</maven.surefire.plugin.version>
         <javaee.web.api.version>7.0</javaee.web.api.version>
         <h2database.version>2.2.220</h2database.version>
