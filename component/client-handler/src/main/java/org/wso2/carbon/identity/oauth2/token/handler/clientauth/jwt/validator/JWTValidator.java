@@ -594,6 +594,7 @@ public class JWTValidator {
             throw new OAuthClientAuthnException(errorMessage, OAuth2ErrorCodes.INVALID_REQUEST);
         }
         try {
+            IdentityUtil.validateJWTDepth(signedJWT.serialize());
             claimsSet = signedJWT.getJWTClaimsSet();
             if (claimsSet == null) {
                 errorMessage = "Claim values are empty in the given JSON Web Token.";

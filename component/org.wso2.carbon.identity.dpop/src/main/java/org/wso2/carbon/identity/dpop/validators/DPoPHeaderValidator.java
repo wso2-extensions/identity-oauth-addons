@@ -117,6 +117,7 @@ public class DPoPHeaderValidator {
             throws ParseException, IdentityOAuth2Exception {
 
         SignedJWT signedJwt = SignedJWT.parse(dPoPProof);
+        IdentityUtil.validateJWTDepth(dPoPProof);
         JWSHeader header = signedJwt.getHeader();
 
         return validateDPoPPayload(httpMethod, httpURL, signedJwt.getJWTClaimsSet()) && validateDPoPHeader(header);
@@ -137,6 +138,7 @@ public class DPoPHeaderValidator {
             throws ParseException, IdentityOAuth2Exception  {
 
         SignedJWT signedJwt = SignedJWT.parse(dPoPProof);
+        IdentityUtil.validateJWTDepth(dPoPProof);
         JWSHeader header = signedJwt.getHeader();
 
         return validateDPoPPayload(httpMethod, httpURL, signedJwt.getJWTClaimsSet(), token) && validateDPoPHeader(header) ;
