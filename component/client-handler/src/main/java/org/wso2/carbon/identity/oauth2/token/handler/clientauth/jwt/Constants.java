@@ -44,6 +44,7 @@ public class Constants {
     public static final String AUTHENTICATOR_TYPE_PK_JWT = "pkJWT";
     public static final String OAUTH2_PAR_URL_REF = "OAuth2ParEPUrl";
     public static final String OAUTH2_PAR_URL_CONFIG = "OAuth.OAuth2ParEPUrl";
+    public static final String FAPI2 = "2";
 
     //query keys
     public static final String GET_JWT_ID = "GET_JWT_ID";
