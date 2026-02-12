@@ -255,17 +255,10 @@
                 <scope>test</scope>
                 <version>${jacoco.version}</version>
             </dependency>
-            <!-- https://mvnrepository.com/artifact/org.powermock/powermock-module-testng -->
             <dependency>
-                <groupId>org.powermock</groupId>
-                <artifactId>powermock-module-testng</artifactId>
-                <version>${powermock.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.powermock</groupId>
-                <artifactId>powermock-api-mockito</artifactId>
-                <version>${powermock.version}</version>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-core</artifactId>
+                <version>${mockito.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
@@ -364,8 +357,8 @@
                 <inherited>true</inherited>
                 <configuration>
                     <encoding>UTF-8</encoding>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>21</source>
+                    <target>21</target>
                 </configuration>
             </plugin>
             <plugin>
@@ -396,7 +389,7 @@
 
     <properties>
         <carbon.identity.app.mgt.version>7.3.26</carbon.identity.app.mgt.version>
-        <carbon.identity.version>5.20.322</carbon.identity.version>
+        <carbon.identity.version>7.8.679</carbon.identity.version>
         <carbon.identity.application.common.version>5.25.305</carbon.identity.application.common.version>
         <carbon.utils.version>4.9.10</carbon.utils.version>
         <identity.inbound.auth.oauth.version>7.0.286</identity.inbound.auth.oauth.version>
@@ -440,7 +433,7 @@
         <carbon.kernel.package.import.version.range>[4.5.0, 5.0.0)</carbon.kernel.package.import.version.range>
         <nimbusds.osgi.version.range>[7.3.0,8.0.0)</nimbusds.osgi.version.range>
         <net.minidev.json.imp.pkg.version.range>[1.3.0, 3.0.0)</net.minidev.json.imp.pkg.version.range>
-        <javax.servlet.http.package.import.version.range>[2.6,3)</javax.servlet.http.package.import.version.range>
+        <javax.servlet.http.package.import.version.range>[3.1.0, 4.0.0)</javax.servlet.http.package.import.version.range>
         <apache.commons.lang.package.import.version.range>[2.6,3)</apache.commons.lang.package.import.version.range>
         <apache.commons.logging.package.import.version.range>[1.2.0, 2.0.0)
         </apache.commons.logging.package.import.version.range>
@@ -458,9 +451,9 @@
 
         <!--Test Dependencies-->
         <commons.collections.version>3.2.2</commons.collections.version>
-        <testng.version>6.9.10</testng.version>
-        <jacoco.version>0.7.9</jacoco.version>
-        <powermock.version>1.6.6</powermock.version>
+        <testng.version>7.10.1</testng.version>
+        <jacoco.version>0.8.12</jacoco.version>
+        <mockito.version>5.3.1</mockito.version>
         <maven.surefire.plugin.version>2.18.1</maven.surefire.plugin.version>
         <javaee.web.api.version>7.0</javaee.web.api.version>
         <h2database.version>2.2.220</h2database.version>
@@ -468,8 +461,8 @@
         <maven.plugins.version>2.0</maven.plugins.version>
         <maven.resource.plugin.version>3.0.2</maven.resource.plugin.version>
         <maven.plugins.version.source>1.8</maven.plugins.version.source>
-        <maven.bundle.plugins.version>3.2.0</maven.bundle.plugins.version>
-        <maven.compiler.plugin>3.7.0</maven.compiler.plugin>
+        <maven.bundle.plugins.version>5.1.9</maven.bundle.plugins.version>
+        <maven.compiler.plugin>3.14.1</maven.compiler.plugin>
         <maven.buildnumber.plugin.version>1.4</maven.buildnumber.plugin.version>
 
         <!-- Pax Logging Version -->

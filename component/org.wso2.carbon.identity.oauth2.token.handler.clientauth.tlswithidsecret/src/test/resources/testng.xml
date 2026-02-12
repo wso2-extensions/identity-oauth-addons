@@ -23,8 +23,7 @@
     <test name="oauth.tests.with.debug.x" preserve-order="true" parallel="false">
         <parameter name="log-level" value="debug, info"/>
         <classes>
-            <class
-                    name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.tlswithidsecret.MutualTLSWithIdSecretAuthenticatorTest"/>
+            <class name="org.wso2.carbon.identity.oauth2.token.handler.clientauth.tlswithidsecret.MutualTLSWithIdSecretAuthenticatorTest"/>
         </classes>
     </test>
 </suite>

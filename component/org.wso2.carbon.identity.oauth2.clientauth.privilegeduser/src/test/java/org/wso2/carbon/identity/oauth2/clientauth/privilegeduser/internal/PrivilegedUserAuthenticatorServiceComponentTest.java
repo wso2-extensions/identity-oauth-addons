@@ -19,31 +19,29 @@
 package org.wso2.carbon.identity.oauth2.clientauth.privilegeduser.internal;
 
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.component.ComponentContext;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.testng.IObjectFactory;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.ObjectFactory;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.wso2.carbon.identity.oauth2.clientauth.privilegeduser.PrivilegedUserAuthenticator;
 
 import java.util.Dictionary;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.MockitoAnnotations.initMocks;
-import static org.powermock.api.mockito.PowerMockito.doAnswer;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
 
-@PrepareForTest(BundleContext.class)
 public class PrivilegedUserAuthenticatorServiceComponentTest {
 
+    private AutoCloseable closeable;
 
     @Mock
     BundleContext bundleContext;
@@ -51,22 +49,19 @@ public class PrivilegedUserAuthenticatorServiceComponentTest {
     @Mock
     private ComponentContext context;
 
-    @ObjectFactory
-    public IObjectFactory getObjectFactory() {
-
-        return new org.powermock.modules.testng.PowerMockObjectFactory();
+    @BeforeMethod
+    public void setUp() throws Exception {
+        closeable = MockitoAnnotations.openMocks(this);
     }
 
-    @BeforeClass
-    public void setUp() throws Exception {
-
-        initMocks(this);
+    @AfterMethod
+    public void tearDown() throws Exception {
+        closeable.close();
     }
 
     @Test
     public void testActivate() throws Exception {
 
-        mockStatic(BundleContext.class);
         when(context.getBundleContext()).thenReturn(bundleContext);
 
         final String[] serviceName = new String[1];
@@ -81,11 +76,11 @@ public class PrivilegedUserAuthenticatorServiceComponentTest {
                 serviceName[0] = privilegedUserAuthenticator.getClass().getName();
                 return null;
             }
-        }).when(bundleContext).registerService(anyString(), any(PrivilegedUserAuthenticator.class), any(Dictionary.class));
+        }).when(bundleContext).registerService(anyString(), any(PrivilegedUserAuthenticator.class), nullable(Dictionary.class));
 
         PrivilegedUserAuthenticatorServiceComponent mutualTLSServiceComponent = new PrivilegedUserAuthenticatorServiceComponent();
         mutualTLSServiceComponent.activate(context);
 
-        assertEquals(PrivilegedUserAuthenticator.class.getName(), serviceName[0], "error");
+        assertEquals(serviceName[0], PrivilegedUserAuthenticator.class.getName(), "error");
     }
 }
