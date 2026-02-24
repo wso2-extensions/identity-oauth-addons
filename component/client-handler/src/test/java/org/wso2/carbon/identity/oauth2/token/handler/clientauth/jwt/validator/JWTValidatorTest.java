@@ -20,14 +20,21 @@ package org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.validator;
 
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.commons.codec.binary.Base64;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.powermock.reflect.internal.WhiteboxImpl;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.wso2.carbon.base.CarbonBaseConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.core.util.KeyStoreManager;
+import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
+import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorConfig;
+import org.wso2.carbon.identity.application.common.model.IdentityProvider;
+import org.wso2.carbon.identity.application.common.model.IdentityProviderProperty;
+import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.common.testng.WithAxisConfiguration;
@@ -35,31 +42,43 @@ import org.wso2.carbon.identity.common.testng.WithCarbonHome;
 import org.wso2.carbon.identity.common.testng.WithH2Database;
 import org.wso2.carbon.identity.common.testng.WithKeyStore;
 import org.wso2.carbon.identity.common.testng.WithRealmService;
+import org.wso2.carbon.identity.core.persistence.JDBCPersistenceManager;
+import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
+import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
 import org.wso2.carbon.identity.oauth2.client.authentication.OAuthClientAuthnException;
 import org.wso2.carbon.identity.oauth2.internal.OAuth2ServiceComponentHolder;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceComponent;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.internal.JWTServiceDataHolder;
+import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 import org.wso2.carbon.identity.testutil.ReadCertStoreSampleUtil;
+import org.wso2.carbon.idp.mgt.IdentityProviderManager;
 import org.wso2.carbon.idp.mgt.internal.IdpMgtServiceComponentHolder;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.core.service.RealmService;
 
 import java.io.ByteArrayInputStream;
+import java.lang.reflect.Field;
+import java.nio.file.Paths;
 import java.security.Key;
 import java.security.KeyStore;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.wso2.carbon.identity.oauth2.token.handler.clientauth.jwt.Constants.REJECT_BEFORE_IN_MINUTES;
@@ -91,6 +110,14 @@ public class JWTValidatorTest {
     private KeyStore clientKeyStore;
     private KeyStore serverKeyStore;
     private X509Certificate cert;
+    
+    // Static mock references to manage lifecycle between tests
+    private MockedStatic<IdentityUtil> mockedIdentityUtil;
+    private MockedStatic<IdentityTenantUtil> mockedIdentityTenantUtil;
+    private MockedStatic<OAuth2Util> mockedOAuth2Util;
+    private MockedStatic<IdentityProviderManager> mockedIdpManager;
+    private MockedStatic<IdentityDatabaseUtil> mockedIdentityDatabaseUtil;
+    private MockedStatic<JDBCPersistenceManager> mockedJDBC;
 
     private static final String CERTIFICATE =
             "MIIDVzCCAj+gAwIBAgIEN+6m4zANBgkqhkiG9w0BAQsFADBcMQswCQYDVQQGEwJGUjEMMAoGA1UE\n" +
@@ -112,19 +139,24 @@ public class JWTValidatorTest {
 
     @BeforeClass
     public void setUp() throws Exception {
+        String carbonHome = System.getProperty(CarbonBaseConstants.CARBON_HOME);
+        if (carbonHome == null) {
+            carbonHome = Paths.get(System.getProperty("user.dir"), "src", "test", "resources").toString();
+            System.setProperty(CarbonBaseConstants.CARBON_HOME, carbonHome);
+        }
 
         Map<Integer, Certificate> publicCerts = new ConcurrentHashMap<>();
         publicCerts.put(SUPER_TENANT_ID, ReadCertStoreSampleUtil.createKeyStore(getClass())
                 .getCertificate("wso2carbon"));
-        clientKeyStore = getKeyStoreFromFile("testkeystore.jks", "wso2carbon",
-                System.getProperty(CarbonBaseConstants.CARBON_HOME));
-        serverKeyStore = getKeyStoreFromFile("wso2carbon.jks", "wso2carbon",
-                System.getProperty(CarbonBaseConstants.CARBON_HOME));
+                
+        clientKeyStore = getKeyStoreFromFile("testkeystore.jks", "wso2carbon", carbonHome);
+        serverKeyStore = getKeyStoreFromFile("wso2carbon.jks", "wso2carbon", carbonHome);
 
         KeyStoreManager keyStoreManager = Mockito.mock(KeyStoreManager.class);
-        ConcurrentHashMap<String, KeyStoreManager> mtKeyStoreManagers = new ConcurrentHashMap();
+        ConcurrentHashMap<String, KeyStoreManager> mtKeyStoreManagers = new ConcurrentHashMap<>();
         mtKeyStoreManagers.put(String.valueOf(SUPER_TENANT_ID), keyStoreManager);
-        WhiteboxImpl.setInternalState(KeyStoreManager.class, "mtKeyStoreManagers", mtKeyStoreManagers);
+        setStaticField(KeyStoreManager.class, "mtKeyStoreManagers", mtKeyStoreManagers);
+
         cert = (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(
                 new ByteArrayInputStream(Base64.decodeBase64(CERTIFICATE)));
         Mockito.when(keyStoreManager.getDefaultPrimaryCertificate()).thenReturn(cert);
@@ -134,21 +166,122 @@ public class JWTValidatorTest {
         ServiceProvider mockedServiceProvider = Mockito.mock(ServiceProvider.class);
         Mockito.when(mockedServiceProvider.getCertificateContent()).thenReturn(CERTIFICATE);
 
-        ApplicationManagementService mockedApplicationManagementService = Mockito.mock(ApplicationManagementService
-                .class);
+        ApplicationManagementService mockedApplicationManagementService = Mockito.mock(ApplicationManagementService.class);
         Mockito.when(mockedApplicationManagementService.getServiceProviderByClientId(anyString(), anyString(),
                 anyString())).thenReturn(mockedServiceProvider);
         OAuth2ServiceComponentHolder.setApplicationMgtService(mockedApplicationManagementService);
 
-        RealmService realmService = IdentityTenantUtil.getRealmService();
-        UserRealm userRealm = realmService.getTenantUserRealm(SUPER_TENANT_ID);
+        RealmService realmService = Mockito.mock(RealmService.class);
+        UserRealm userRealm = Mockito.mock(UserRealm.class);
+        Mockito.when(realmService.getTenantUserRealm(SUPER_TENANT_ID)).thenReturn(userRealm);
+
         PrivilegedCarbonContext.getThreadLocalCarbonContext().setUserRealm(userRealm);
         JWTServiceDataHolder.getInstance().setRealmService(realmService);
         IdpMgtServiceComponentHolder.getInstance().setRealmService(realmService);
 
         Map<String, Object> configuration = new HashMap<>();
         configuration.put("OAuth.OpenIDConnect.IDTokenIssuerID", ID_TOKEN_ISSUER_ID);
-        WhiteboxImpl.setInternalState(IdentityUtil.class, "configuration", configuration);
+        setStaticField(IdentityUtil.class, "configuration", configuration);
+    }
+    
+    @BeforeMethod
+    public void setUpMethod() throws Exception {
+        mockedIdentityUtil = Mockito.mockStatic(IdentityUtil.class, Mockito.CALLS_REAL_METHODS);
+        mockedIdentityUtil.when(() -> IdentityUtil.fillURLPlaceholders(anyString()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        mockedIdentityUtil.when(() -> IdentityUtil.getServerURL(anyString(), anyBoolean(), anyBoolean()))
+                .thenReturn("https://localhost:9443/");
+
+        mockedIdentityTenantUtil = Mockito.mockStatic(IdentityTenantUtil.class, Mockito.CALLS_REAL_METHODS);
+        mockedIdentityTenantUtil.when(() -> IdentityTenantUtil.getTenantId(anyString())).thenReturn(SUPER_TENANT_ID);
+        mockedIdentityTenantUtil.when(() -> IdentityTenantUtil.getTenantDomain(anyInt())).thenReturn(SUPER_TENANT_DOMAIN_NAME);
+
+        mockedOAuth2Util = Mockito.mockStatic(OAuth2Util.class, Mockito.CALLS_REAL_METHODS);
+        
+        OAuthAppDO mockAppDO = Mockito.mock(OAuthAppDO.class);
+        AuthenticatedUser mockUser = Mockito.mock(AuthenticatedUser.class);
+        Mockito.when(mockUser.getTenantDomain()).thenReturn(SUPER_TENANT_DOMAIN_NAME);
+        Mockito.when(mockAppDO.getUser()).thenReturn(mockUser);
+        Mockito.when(mockAppDO.getOauthConsumerKey()).thenReturn(TEST_CLIENT_ID_1);
+        
+        try {
+            mockedOAuth2Util.when(() -> OAuth2Util.getAppInformationByClientId(TEST_CLIENT_ID_1))
+                    .thenReturn(mockAppDO);
+            mockedOAuth2Util.when(() -> OAuth2Util.getAppInformationByClientId("some-client-id"))
+                    .thenThrow(new InvalidOAuthClientException("Cannot find an application associated with the given consumer key"));
+        } catch (Exception e) {}
+
+        IdentityProvider mockResidentIdP = new IdentityProvider();
+        mockResidentIdP.setIdentityProviderName("LOCAL");
+
+        IdentityProviderProperty idpProp1 = new IdentityProviderProperty();
+        idpProp1.setName("IdPEntityId");
+        idpProp1.setValue(ID_TOKEN_ISSUER_ID);
+
+        IdentityProviderProperty idpProp2 = new IdentityProviderProperty();
+        idpProp2.setName("OAuth.OpenIDConnect.IDTokenIssuerID");
+        idpProp2.setValue(ID_TOKEN_ISSUER_ID);
+
+        mockResidentIdP.setIdpProperties(new IdentityProviderProperty[]{idpProp1, idpProp2});
+
+        Property fedProp1 = new Property();
+        fedProp1.setName("IdPEntityId");
+        fedProp1.setValue(ID_TOKEN_ISSUER_ID);
+
+        Property fedProp2 = new Property();
+        fedProp2.setName("OAuth.OpenIDConnect.IDTokenIssuerID");
+        fedProp2.setValue(ID_TOKEN_ISSUER_ID);
+
+        FederatedAuthenticatorConfig oidcFedAuthn = new FederatedAuthenticatorConfig();
+        oidcFedAuthn.setName("openidconnect"); 
+        oidcFedAuthn.setProperties(new Property[]{fedProp1, fedProp2});
+
+        mockResidentIdP.setFederatedAuthenticatorConfigs(new FederatedAuthenticatorConfig[]{oidcFedAuthn});
+        mockResidentIdP.setDefaultAuthenticatorConfig(oidcFedAuthn);
+
+        mockedIdpManager = Mockito.mockStatic(IdentityProviderManager.class);
+        IdentityProviderManager mockIdpManagerInstance = Mockito.mock(IdentityProviderManager.class);
+        mockedIdpManager.when(IdentityProviderManager::getInstance).thenReturn(mockIdpManagerInstance);
+
+        try {
+            Mockito.when(mockIdpManagerInstance.getResidentIdP(anyString())).thenReturn(mockResidentIdP);
+        } catch (Exception e) {}
+        
+        try (Connection initConn = DriverManager.getConnection("jdbc:h2:mem:jwt_test_db;DB_CLOSE_DELAY=-1", "sa", "")) {
+            initConn.createStatement().execute("CREATE TABLE IF NOT EXISTS IDN_OIDC_JTI (JWT_ID VARCHAR(255), EXP_TIME TIMESTAMP, TIME_CREATED TIMESTAMP, TENANT_ID INTEGER, PRIMARY KEY (JWT_ID))");
+            // PRE-POPULATE THE REPLAYED TOKENS FOR TEST RUNS 8 AND 14
+            initConn.createStatement().execute("INSERT INTO IDN_OIDC_JTI (JWT_ID, EXP_TIME, TIME_CREATED, TENANT_ID) VALUES ('2001', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, " + SUPER_TENANT_ID + ")");
+            initConn.createStatement().execute("INSERT INTO IDN_OIDC_JTI (JWT_ID, EXP_TIME, TIME_CREATED, TENANT_ID) VALUES ('2002', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, " + SUPER_TENANT_ID + ")");
+        }
+
+        mockedJDBC = Mockito.mockStatic(JDBCPersistenceManager.class);
+        JDBCPersistenceManager jdbcInstance = Mockito.mock(JDBCPersistenceManager.class);
+        mockedJDBC.when(JDBCPersistenceManager::getInstance).thenReturn(jdbcInstance);
+        Mockito.when(jdbcInstance.getDBConnection()).thenAnswer(invocation -> 
+            DriverManager.getConnection("jdbc:h2:mem:jwt_test_db;DB_CLOSE_DELAY=-1", "sa", "")
+        );
+
+        mockedIdentityDatabaseUtil = Mockito.mockStatic(IdentityDatabaseUtil.class, Mockito.CALLS_REAL_METHODS);
+        mockedIdentityDatabaseUtil.when(IdentityDatabaseUtil::getDBConnection).thenAnswer(invocation -> 
+            DriverManager.getConnection("jdbc:h2:mem:jwt_test_db;DB_CLOSE_DELAY=-1", "sa", "")
+        );
+        mockedIdentityDatabaseUtil.when(() -> IdentityDatabaseUtil.getDBConnection(anyBoolean())).thenAnswer(invocation -> 
+            DriverManager.getConnection("jdbc:h2:mem:jwt_test_db;DB_CLOSE_DELAY=-1", "sa", "")
+        );
+    }
+
+    @AfterMethod
+    public void tearDownMethod() throws Exception {
+        if (mockedIdentityUtil != null) mockedIdentityUtil.close();
+        if (mockedIdentityTenantUtil != null) mockedIdentityTenantUtil.close();
+        if (mockedOAuth2Util != null) mockedOAuth2Util.close();
+        if (mockedIdpManager != null) mockedIdpManager.close();
+        if (mockedJDBC != null) mockedJDBC.close();
+        if (mockedIdentityDatabaseUtil != null) mockedIdentityDatabaseUtil.close();
+        
+        try (Connection clearConn = DriverManager.getConnection("jdbc:h2:mem:jwt_test_db;DB_CLOSE_DELAY=-1", "sa", "")) {
+            clearConn.createStatement().execute("DROP TABLE IF EXISTS IDN_OIDC_JTI");
+        }
     }
 
     @DataProvider(name = "provideJWT")
@@ -252,8 +385,8 @@ public class JWTValidatorTest {
             }
 
         } catch (OAuthClientAuthnException e) {
-            assertFalse(expected);
-
+            String causeMsg = (e.getCause() != null) ? e.getCause().toString() : "No underlying cause";
+            assertFalse(expected, "Token validation failed unexpectedly! Error: " + e.getMessage() + " | Cause: " + causeMsg);
         }
     }
 
@@ -278,5 +411,11 @@ public class JWTValidatorTest {
                 "5hdFVrc0YySG1Xc2R3Njg0YSIsImp0aSI6MTAwOCwiZXhwIjoiMjU1NDQ0MDEzMjAwMCIsImF1ZCI6WyJzb21lLWF1ZGllbmNlIl19." +
                 "m0RrVUrZHr1M7R4I_4dzpoWD8jNA2fKkOadEsFg9Wj4";
         SignedJWT signedJWT = SignedJWT.parse(hsSignedJWT);
+    }
+
+    private void setStaticField(Class<?> clazz, String fieldName, Object value) throws Exception {
+        Field field = clazz.getDeclaredField(fieldName);
+        field.setAccessible(true);
+        field.set(null, value);
     }
 }
