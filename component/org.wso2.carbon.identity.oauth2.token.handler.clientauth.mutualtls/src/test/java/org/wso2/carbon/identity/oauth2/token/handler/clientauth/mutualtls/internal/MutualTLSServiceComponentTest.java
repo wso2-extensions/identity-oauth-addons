@@ -19,74 +19,73 @@
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.internal;
 
 import org.mockito.Mock;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.component.ComponentContext;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.testng.IObjectFactory;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.ObjectFactory;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-import org.wso2.carbon.identity.claim.metadata.mgt.ClaimMetadataManagementService;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.MutualTLSClientAuthenticator;
 
 import java.util.Dictionary;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.MockitoAnnotations.initMocks;
-import static org.powermock.api.mockito.PowerMockito.doAnswer;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.testng.Assert.assertEquals;
 
-
-@PrepareForTest(BundleContext.class)
+/**
+ * Test class for MutualTLSServiceComponent.
+ */
 public class MutualTLSServiceComponentTest {
 
-
     @Mock
-    BundleContext bundleContext;
+    private BundleContext bundleContext;
 
     @Mock
     private ComponentContext context;
 
-    @ObjectFactory
-    public IObjectFactory getObjectFactory() {
+    private AutoCloseable closeable;
 
-        return new org.powermock.modules.testng.PowerMockObjectFactory();
+    @BeforeMethod
+    public void setUp() {
+        // Initialize mocks and keep track of the closeable to prevent memory leaks in the test suite
+        closeable = MockitoAnnotations.openMocks(this);
     }
 
-    @BeforeClass
-    public void setUp() throws Exception {
-
-        initMocks(this);
+    @AfterMethod
+    public void tearDown() throws Exception {
+        if (closeable != null) {
+            closeable.close();
+        }
     }
 
     @Test
     public void testActivate() throws Exception {
 
-        mockStatic(BundleContext.class);
-        when(context.getBundleContext()).thenReturn(bundleContext);
+        Mockito.when(context.getBundleContext()).thenReturn(bundleContext);
 
         final String[] serviceName = new String[1];
 
-        doAnswer(new Answer<Object>() {
-
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-
-                MutualTLSClientAuthenticator mutualTLSClientAuthenticator = (MutualTLSClientAuthenticator) invocation.getArguments()[1];
-                serviceName[0] = mutualTLSClientAuthenticator.getClass().getName();
-                return null;
+        // BROADER MATCHERS: Using any() for the class name and the dictionary 
+        // to ensure the answer is always triggered during the OSGi registration call.
+        Mockito.doAnswer(invocation -> {
+            Object serviceObject = invocation.getArguments()[1];
+            if (serviceObject instanceof MutualTLSClientAuthenticator) {
+                serviceName[0] = serviceObject.getClass().getName();
             }
-        }).when(bundleContext).registerService(anyString(), any(MutualTLSClientAuthenticator.class), any(Dictionary.class));
+            return null;
+        }).when(bundleContext).registerService(
+                anyString(), 
+                any(), // Use a plain any() instead of a specific class here
+                any()  // Use a plain any() to catch any Dictionary/Map implementation
+        );
 
         MutualTLSServiceComponent mutualTLSServiceComponent = new MutualTLSServiceComponent();
         mutualTLSServiceComponent.activate(context);
 
-        assertEquals(MutualTLSClientAuthenticator.class.getName(), serviceName[0], "error");
+        // Standard TestNG assertion: actual, expected, message
+        assertEquals(serviceName[0], MutualTLSClientAuthenticator.class.getName(), 
+                "MutualTLSClientAuthenticator service was not registered correctly during activation.");
     }
-
 }

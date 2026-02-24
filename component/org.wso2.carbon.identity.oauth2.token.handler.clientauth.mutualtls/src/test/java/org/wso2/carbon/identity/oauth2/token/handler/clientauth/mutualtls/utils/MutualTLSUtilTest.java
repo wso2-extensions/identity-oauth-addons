@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2019, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
@@ -18,9 +17,8 @@
  */
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils;
 
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.testng.PowerMockTestCase;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.testng.annotations.Test;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
@@ -31,19 +29,17 @@ import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 import java.io.ByteArrayInputStream;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import javax.xml.bind.DatatypeConverter;
+import java.util.Base64;
 
-import static org.mockito.Matchers.any;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 import static org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
-
-import static org.testng.Assert.*;
 
 /**
  * Test class for MutualTLSUtil class.
  */
 @WithCarbonHome
-@PrepareForTest({OAuth2Util.class, IdentityUtil.class})
-public class MutualTLSUtilTest extends PowerMockTestCase {
+public class MutualTLSUtilTest {
 
     @Test
     public void testGetPropertyValue() {
@@ -56,7 +52,6 @@ public class MutualTLSUtilTest extends PowerMockTestCase {
         serviceProvider.setSpProperties(serviceProviderProperties);
         assertEquals(MutualTLSUtil.getPropertyValue(serviceProvider, "a"), "b");
     }
-
 
     @Test
     public void testGetThumbPrint() throws Exception {
@@ -82,11 +77,13 @@ public class MutualTLSUtilTest extends PowerMockTestCase {
                 + "IOQjy9UCaY7tq4SmhAJyab0mxjcFoRBpzOJIDh+N8ozSDK+MepyFSwtW5zVacOiG\n" + "OQUrBTGXQFZOGKje8sbS";
 
         CertificateFactory factory = CertificateFactory.getInstance("X.509");
+        // Replaced DatatypeConverter with java.util.Base64 for cleaner modern Java code
+        byte[] decodedCert = Base64.getMimeDecoder().decode(CERTIFICATE_CONTENT);
         X509Certificate Cert = (X509Certificate) factory.generateCertificate(
-                new ByteArrayInputStream(DatatypeConverter.parseBase64Binary(CERTIFICATE_CONTENT)));
+                new ByteArrayInputStream(decodedCert));
+        
         assertEquals(MutualTLSUtil.getThumbPrint(Cert, null),
                 "YTJkZTg5OGQ3NWUwMTQ2N2UwYTcwMGE1ZTFmMTcyMjE5ZGUwMDBiMDE2ZWVhOWI0NjY1OWQ4YTZlZjQ3YzJmMQ");
-
     }
 
     @Test
@@ -100,19 +97,23 @@ public class MutualTLSUtilTest extends PowerMockTestCase {
         ServiceProviderProperty[] serviceProviderProperties = new ServiceProviderProperty[1];
         serviceProviderProperties[0] = serviceProviderProperty;
         serviceProvider.setSpProperties(serviceProviderProperties);
-        PowerMockito.mockStatic(OAuth2Util.class);
-        PowerMockito.when(OAuth2Util.getServiceProvider(clientID, SUPER_TENANT_DOMAIN_NAME))
-                .thenReturn(serviceProvider);
-        assertTrue(MutualTLSUtil.isJwksUriConfigured(serviceProvider));
+
+        try (MockedStatic<OAuth2Util> mockedOAuth2Util = Mockito.mockStatic(OAuth2Util.class)) {
+            mockedOAuth2Util.when(() -> OAuth2Util.getServiceProvider(clientID, SUPER_TENANT_DOMAIN_NAME))
+                    .thenReturn(serviceProvider);
+            assertTrue(MutualTLSUtil.isJwksUriConfigured(serviceProvider));
+        }
     }
 
     @Test
     public void testReadHTTPConnectionConfigValue() {
 
-        PowerMockito.mockStatic(IdentityUtil.class);
-        PowerMockito.when(IdentityUtil.getProperty("path")).thenReturn("xPath");
-        assertEquals(MutualTLSUtil.readHTTPConnectionConfigValue("path"), 0);
-        PowerMockito.when(IdentityUtil.getProperty("path")).thenReturn("123");
-        assertEquals(MutualTLSUtil.readHTTPConnectionConfigValue("path"), 123);
+        try (MockedStatic<IdentityUtil> mockedIdentityUtil = Mockito.mockStatic(IdentityUtil.class)) {
+            mockedIdentityUtil.when(() -> IdentityUtil.getProperty("path")).thenReturn("xPath");
+            assertEquals(MutualTLSUtil.readHTTPConnectionConfigValue("path"), 0);
+            
+            mockedIdentityUtil.when(() -> IdentityUtil.getProperty("path")).thenReturn("123");
+            assertEquals(MutualTLSUtil.readHTTPConnectionConfigValue("path"), 123);
+        }
     }
 }

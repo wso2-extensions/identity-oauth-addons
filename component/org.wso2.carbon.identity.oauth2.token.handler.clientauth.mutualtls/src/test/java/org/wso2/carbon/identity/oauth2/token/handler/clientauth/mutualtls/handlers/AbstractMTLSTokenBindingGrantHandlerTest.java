@@ -18,10 +18,9 @@
 
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.handlers;
 
-import org.mockito.Matchers;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.testng.PowerMockTestCase;
-import org.testng.annotations.BeforeTest;
+import org.mockito.ArgumentMatchers;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.testng.annotations.Test;
 import org.wso2.carbon.identity.common.testng.WithCarbonHome;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
@@ -32,27 +31,21 @@ import org.wso2.carbon.identity.oauth2.dto.OAuth2AccessTokenReqDTO;
 import org.wso2.carbon.identity.oauth2.model.HttpRequestHeader;
 import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
 import org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.utils.CommonConstants;
-import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 import org.wso2.carbon.identity.oauth2.util.Oauth2ScopeUtils;
-import org.wso2.carbon.utils.CarbonUtils;
 
 import java.util.ArrayList;
 
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.when;
 import static org.testng.Assert.assertFalse;
 
 /**
  * Test class for AbstractMTLSTokenBindingGrantHandlerTest class.
  */
-@PrepareForTest({IdentityUtil.class, CarbonUtils.class, Oauth2ScopeUtils.class, OAuth2Util.class})
-
 @WithCarbonHome
-public class AbstractMTLSTokenBindingGrantHandlerTest extends PowerMockTestCase {
+public class AbstractMTLSTokenBindingGrantHandlerTest {
 
-    MTLSTokenBindingAuthorizationCodeGrantHandler mtlsTokenBindingAuthorizationCodeGrantHandler;
+    private MTLSTokenBindingAuthorizationCodeGrantHandler mtlsTokenBindingAuthorizationCodeGrantHandler;
 
-    private static String CERTIFICATE_CONTENT = "-----BEGIN CERTIFICATE-----MIID3TCCAsWgAwIBAgIUJQW8iwYsAbyjc/oHti" +
+    private static final String CERTIFICATE_CONTENT = "-----BEGIN CERTIFICATE-----MIID3TCCAsWgAwIBAgIUJQW8iwYsAbyjc/oHti" +
             "8DPLJH5ZcwDQYJKoZIhvcNAQELBQAwfjELMAkGA1UEBhMCU0wxEDAOBgNVBAgMB1dlc3Rlcm4xEDAOBgNVBAcMB0NvbG9tYm8xDTA" +
             "LBgNVBAoMBFdTTzIxDDAKBgNVBAsMA0lBTTENMAsGA1UEAwwER2FnYTEfMB0GCSqGSIb3DQEJARYQZ2FuZ2FuaUB3c28yLmNvbTAe" +
             "Fw0yMDAzMjQxMjQyMDFaFw0zMDAzMjIxMjQyMDFaMH4xCzAJBgNVBAYTAlNMMRAwDgYDVQQIDAdXZXN0ZXJuMRAwDgYDVQQHDAdDb" +
@@ -67,17 +60,13 @@ public class AbstractMTLSTokenBindingGrantHandlerTest extends PowerMockTestCase 
             "tS900S5aLbllGYe74jkyldLIdhS4TyEBIDgcpZrD8x/Z42al6T/6EANMpvu4Jopisg+uwwkEGSM1I/kjiW+YkWC4oTZ1jMZUWC11W" +
             "bcouLwjfaf6gt4zWitYCP0r0fLGk4bSJfUFsnJNu6vDhx60TbRhIh9P2jxkmgNYPuAxFtF8v+h-----END CERTIFICATE-----";
 
-    @BeforeTest
-    public void setup() {
-    }
-
     private static OAuth2AccessTokenReqDTO oauth2AccessTokenReqDTOObject() {
 
         OAuth2AccessTokenReqDTO oauth2AccessTokenReqDTO = new OAuth2AccessTokenReqDTO();
         oauth2AccessTokenReqDTO.setHttpRequestHeaders(getHttpRequestHeaders
                 (new String[]{"content-type", "x-wso2-mutual-auth-cert", "user-agent"},
                         new String[]{"application/x-www-form-urlencoded", CERTIFICATE_CONTENT,
-                                "PostmanRuntime/7.24.0"}));
+                                "PostmanRuntime/724.0"}));
         OAuthClientAuthnContext oAuthClientAuthnContext = new OAuthClientAuthnContext();
         oAuthClientAuthnContext.addParameter(CommonConstants.AUTHENTICATOR_TYPE_PARAM,
                 CommonConstants.AUTHENTICATOR_TYPE_MTLS);
@@ -99,21 +88,28 @@ public class AbstractMTLSTokenBindingGrantHandlerTest extends PowerMockTestCase 
     @Test
     public void testValidateScope() throws IdentityOAuth2Exception {
 
-        mockStatic(IdentityUtil.class);
-        when(IdentityUtil.getProperty((CommonConstants.MTLS_AUTH_HEADER))).thenReturn("x-wso2-mutual-auth-cert");
-        when(IdentityUtil.getIdentityConfigDirPath()).thenReturn(System.
-                getProperty("user.dir") + "/src/test/resources/repository/conf/identity");
-        mtlsTokenBindingAuthorizationCodeGrantHandler = new MTLSTokenBindingAuthorizationCodeGrantHandler();
+        try (MockedStatic<IdentityUtil> mockedIdentityUtil = Mockito.mockStatic(IdentityUtil.class);
+             MockedStatic<Oauth2ScopeUtils> mockedScopeUtils = Mockito.mockStatic(Oauth2ScopeUtils.class)) {
 
-        mockStatic(Oauth2ScopeUtils.class);
-        when(Oauth2ScopeUtils.validateByApplicationScopeValidator(Matchers.any(OAuthTokenReqMessageContext.class),
-                Matchers.any(OAuthAuthzReqMessageContext.class))).thenReturn(false);
-        OAuthTokenReqMessageContext oAuthTokenReqMessageContext =
-                new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTOObject());
-        oAuthTokenReqMessageContext.setScope(new String[]{"openid"});
+            mockedIdentityUtil.when(() -> IdentityUtil.getProperty(CommonConstants.MTLS_AUTH_HEADER))
+                    .thenReturn("x-wso2-mutual-auth-cert");
+            mockedIdentityUtil.when(IdentityUtil::getIdentityConfigDirPath)
+                    .thenReturn(System.getProperty("user.dir") + "/src/test/resources/repository/conf/identity");
 
-        boolean validateScope =
-                mtlsTokenBindingAuthorizationCodeGrantHandler.validateScope(oAuthTokenReqMessageContext);
-        assertFalse(validateScope);
+            mtlsTokenBindingAuthorizationCodeGrantHandler = new MTLSTokenBindingAuthorizationCodeGrantHandler();
+
+            mockedScopeUtils.when(() -> Oauth2ScopeUtils.validateByApplicationScopeValidator(
+                            ArgumentMatchers.any(OAuthTokenReqMessageContext.class),
+                            ArgumentMatchers.any(OAuthAuthzReqMessageContext.class)))
+                    .thenReturn(false);
+
+            OAuthTokenReqMessageContext oAuthTokenReqMessageContext =
+                    new OAuthTokenReqMessageContext(oauth2AccessTokenReqDTOObject());
+            oAuthTokenReqMessageContext.setScope(new String[]{"openid"});
+
+            boolean validateScope =
+                    mtlsTokenBindingAuthorizationCodeGrantHandler.validateScope(oAuthTokenReqMessageContext);
+            assertFalse(validateScope);
+        }
     }
 }

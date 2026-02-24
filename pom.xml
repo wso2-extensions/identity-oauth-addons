@@ -260,17 +260,10 @@
                 <scope>test</scope>
                 <version>${jacoco.version}</version>
             </dependency>
-            <!-- https://mvnrepository.com/artifact/org.powermock/powermock-module-testng -->
             <dependency>
-                <groupId>org.powermock</groupId>
-                <artifactId>powermock-module-testng</artifactId>
-                <version>${powermock.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.powermock</groupId>
-                <artifactId>powermock-api-mockito</artifactId>
-                <version>${powermock.version}</version>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-core</artifactId>
+                <version>${mockito.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
@@ -374,8 +367,8 @@
                 <inherited>true</inherited>
                 <configuration>
                     <encoding>UTF-8</encoding>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>21</source>
+                    <target>21</target>
                 </configuration>
             </plugin>
             <plugin>
@@ -387,7 +380,7 @@
 
     <properties>
 
-        <carbon.identity.version>5.20.322</carbon.identity.version>
+        <carbon.identity.version>5.27.0</carbon.identity.version>
         <carbon.identity.framework.imp.pkg.version.range>[5.17.5, 6.0.0)
         </carbon.identity.framework.imp.pkg.version.range>
         <identity.inbound.auth.oauth.version>6.7.70</identity.inbound.auth.oauth.version>
@@ -448,18 +441,18 @@
 
         <!--Test Dependencies-->
         <commons.collections.version>3.2.2</commons.collections.version>
-        <testng.version>6.9.10</testng.version>
-        <jacoco.version>0.7.9</jacoco.version>
-        <powermock.version>1.6.6</powermock.version>
+        <testng.version>7.10.1</testng.version>
+        <jacoco.version>0.8.12</jacoco.version>
+        <mockito.version>5.3.1</mockito.version>
         <maven.surefire.plugin.version>2.18.1</maven.surefire.plugin.version>
         <javaee.web.api.version>7.0</javaee.web.api.version>
         <h2database.version>2.1.210</h2database.version>
         <org.wso2.carbon.identity.testutil.version>5.11.9</org.wso2.carbon.identity.testutil.version>
         <maven.plugins.version>2.0</maven.plugins.version>
         <maven.resource.plugin.version>3.0.2</maven.resource.plugin.version>
-        <maven.plugins.version.source>1.7</maven.plugins.version.source>
-        <maven.bundle.plugins.version>3.2.0</maven.bundle.plugins.version>
-        <maven.compiler.plugin>3.7.0</maven.compiler.plugin>
+        <maven.plugins.version.source>21</maven.plugins.version.source>
+        <maven.bundle.plugins.version>5.1.9</maven.bundle.plugins.version>
+        <maven.compiler.plugin>3.14.1</maven.compiler.plugin>
         <maven.buildnumber.plugin.version>1.4</maven.buildnumber.plugin.version>
 
         <!-- Pax Logging Version -->

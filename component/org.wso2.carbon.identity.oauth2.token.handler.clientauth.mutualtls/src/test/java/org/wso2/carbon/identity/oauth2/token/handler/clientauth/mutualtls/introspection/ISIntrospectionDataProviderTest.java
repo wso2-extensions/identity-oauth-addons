@@ -18,8 +18,7 @@
 
 package org.wso2.carbon.identity.oauth2.token.handler.clientauth.mutualtls.introspection;
 
-import org.powermock.modules.testng.PowerMockTestCase;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2IntrospectionResponseDTO;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2TokenValidationRequestDTO;
@@ -32,16 +31,15 @@ import static org.testng.Assert.assertEquals;
 /**
  * Test class for ISIntrospectionDataProviderTest class.
  */
-public class ISIntrospectionDataProviderTest extends PowerMockTestCase {
+public class ISIntrospectionDataProviderTest {
 
-    ISIntrospectionDataProvider isIntrospectionDataProvider;
+    private ISIntrospectionDataProvider isIntrospectionDataProvider;
 
-    @BeforeTest
+    @BeforeMethod
     public void setup() {
 
         isIntrospectionDataProvider = new ISIntrospectionDataProvider();
     }
-
 
     @Test
     public void testGetIntrospectionData() {
@@ -65,6 +63,8 @@ public class ISIntrospectionDataProviderTest extends PowerMockTestCase {
         oAuth2IntrospectionResponseDTO2.setActive(false);
 
         Map<String, Object> introspectionData2 = new HashMap<String, Object>();
+        
+        // Assertions
         assertEquals(isIntrospectionDataProvider.getIntrospectionData(oAuth2TokenValidationRequestDTO,
                 oAuth2IntrospectionResponseDTO), introspectionData,
                 "Expected introspection data not received.");

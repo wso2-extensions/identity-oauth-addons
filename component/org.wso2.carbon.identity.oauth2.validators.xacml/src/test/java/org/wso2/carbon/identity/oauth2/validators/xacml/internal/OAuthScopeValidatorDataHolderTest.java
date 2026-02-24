@@ -19,6 +19,7 @@
 
 package org.wso2.carbon.identity.oauth2.validators.xacml.internal;
 
+import org.mockito.Mockito;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.wso2.carbon.identity.entitlement.EntitlementService;
@@ -26,10 +27,9 @@ import org.wso2.carbon.identity.entitlement.EntitlementService;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
-import static org.powermock.api.mockito.PowerMockito.mock;
 
 /**
- * OAuthScopeValidatorDataHolderTest defines unit tests for AppAuthzDataholder class.
+ * OAuthScopeValidatorDataHolderTest defines unit tests for OAuthScopeValidatorDataHolder class.
  */
 public class OAuthScopeValidatorDataHolderTest {
 
@@ -51,9 +51,18 @@ public class OAuthScopeValidatorDataHolderTest {
     @Test
     public void testGetAndSetEntitlementService() {
 
+        // It's a good practice to ensure the state is clean before testing
+        authScopeValidatorDataHolder.setEntitlementService(null);
         assertNull(authScopeValidatorDataHolder.getEntitlementService());
-        authScopeValidatorDataHolder.setEntitlementService(mock(EntitlementService.class));
+        
+        // Mockito 5 standard mock
+        EntitlementService entitlementService = Mockito.mock(EntitlementService.class);
+        authScopeValidatorDataHolder.setEntitlementService(entitlementService);
+        
         assertNotNull(authScopeValidatorDataHolder.getEntitlementService());
+        assertEquals(authScopeValidatorDataHolder.getEntitlementService(), entitlementService);
+        
+        // Resetting state for other tests in the suite
         authScopeValidatorDataHolder.setEntitlementService(null);
     }
 }

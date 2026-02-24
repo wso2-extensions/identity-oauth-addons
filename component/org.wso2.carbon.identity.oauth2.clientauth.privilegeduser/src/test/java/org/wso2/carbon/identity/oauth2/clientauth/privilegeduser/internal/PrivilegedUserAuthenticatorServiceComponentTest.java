@@ -19,73 +19,84 @@
 package org.wso2.carbon.identity.oauth2.clientauth.privilegeduser.internal;
 
 import org.mockito.Mock;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.component.ComponentContext;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.testng.IObjectFactory;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.ObjectFactory;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.oauth2.clientauth.privilegeduser.PrivilegedUserAuthenticator;
 
+import java.nio.file.Paths;
 import java.util.Dictionary;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.MockitoAnnotations.initMocks;
-import static org.powermock.api.mockito.PowerMockito.doAnswer;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
-
-@PrepareForTest(BundleContext.class)
 public class PrivilegedUserAuthenticatorServiceComponentTest {
 
+    private AutoCloseable closeable;
+    private MockedStatic<PrivilegedCarbonContext> privilegedCarbonContextMockedStatic;
 
     @Mock
-    BundleContext bundleContext;
+    private BundleContext bundleContext;
 
     @Mock
     private ComponentContext context;
 
-    @ObjectFactory
-    public IObjectFactory getObjectFactory() {
+    @BeforeMethod
+    public void setUp() throws Exception {
+        // 1. Set carbon.home system property before Carbon classes are loaded.
+        // This prevents the 'could not be initialized' error on Java 21.
+        String carbonHome = Paths.get(System.getProperty("user.dir"), "target").toString();
+        System.setProperty("carbon.home", carbonHome);
 
-        return new org.powermock.modules.testng.PowerMockObjectFactory();
+        closeable = MockitoAnnotations.openMocks(this);
+
+        // 2. Initialize the static mock for the Carbon Context
+        privilegedCarbonContextMockedStatic = Mockito.mockStatic(PrivilegedCarbonContext.class);
     }
 
-    @BeforeClass
-    public void setUp() throws Exception {
-
-        initMocks(this);
+    @AfterMethod
+    public void tearDown() throws Exception {
+        // 3. Always close static mocks to prevent thread-leakage
+        if (privilegedCarbonContextMockedStatic != null) {
+            privilegedCarbonContextMockedStatic.close();
+        }
+        closeable.close();
     }
 
     @Test
     public void testActivate() throws Exception {
+        // Stub the thread local context to return a mock instance
+        PrivilegedCarbonContext mockCarbonContext = mock(PrivilegedCarbonContext.class);
+        privilegedCarbonContextMockedStatic.when(PrivilegedCarbonContext::getThreadLocalCarbonContext)
+                .thenReturn(mockCarbonContext);
 
-        mockStatic(BundleContext.class);
         when(context.getBundleContext()).thenReturn(bundleContext);
 
         final String[] serviceName = new String[1];
 
-        doAnswer(new Answer<Object>() {
+        // Using Mockito.doAnswer to capture the registered service
+        Mockito.doAnswer(invocation -> {
+            PrivilegedUserAuthenticator privilegedUserAuthenticator = 
+                    (PrivilegedUserAuthenticator) invocation.getArguments()[1];
+            serviceName[0] = privilegedUserAuthenticator.getClass().getName();
+            return null;
+        }).when(bundleContext).registerService(anyString(), any(PrivilegedUserAuthenticator.class), 
+                nullable(Dictionary.class));
 
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
+        PrivilegedUserAuthenticatorServiceComponent component = new PrivilegedUserAuthenticatorServiceComponent();
+        component.activate(context);
 
-                PrivilegedUserAuthenticator privilegedUserAuthenticator =
-                        (PrivilegedUserAuthenticator) invocation.getArguments()[1];
-                serviceName[0] = privilegedUserAuthenticator.getClass().getName();
-                return null;
-            }
-        }).when(bundleContext).registerService(anyString(), any(PrivilegedUserAuthenticator.class), any(Dictionary.class));
-
-        PrivilegedUserAuthenticatorServiceComponent mutualTLSServiceComponent = new PrivilegedUserAuthenticatorServiceComponent();
-        mutualTLSServiceComponent.activate(context);
-
-        assertEquals(PrivilegedUserAuthenticator.class.getName(), serviceName[0], "error");
+        assertEquals(serviceName[0], PrivilegedUserAuthenticator.class.getName(), 
+                "The Authenticator service was not registered with the correct class name.");
     }
 }
