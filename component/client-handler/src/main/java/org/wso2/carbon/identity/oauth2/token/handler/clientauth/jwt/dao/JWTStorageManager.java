@@ -97,8 +97,8 @@ public class JWTStorageManager {
             prepStmt.setString(1, jti);
             rs = prepStmt.executeQuery();
             if (rs.next()) {
-                long exp = rs.getTime(1, Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC))).getTime();
-                long created = rs.getTime(2, Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC))).getTime();
+                long exp = rs.getTimestamp(1, Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC))).getTime();
+                long created = rs.getTimestamp(2, Calendar.getInstance(TimeZone.getTimeZone(Constants.UTC))).getTime();
                 jwtEntry = new JWTEntry(exp, created);
             }
         } catch (SQLException e) {
