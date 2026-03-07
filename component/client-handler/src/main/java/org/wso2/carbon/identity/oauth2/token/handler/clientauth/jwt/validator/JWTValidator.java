@@ -273,7 +273,7 @@ public class JWTValidator {
 
         if (currentTimeInMillis + timeStampSkewMillis < jwtExpiryTimeMillis) {
             if (log.isDebugEnabled()) {
-                log.debug("JWT Token with jti: " + jti + "has been reused with in the allowed expiry time: " +
+                log.debug("JWT Token with jti: " + jti + " has been reused within the allowed expiry time: " +
                         jwtExpiryTimeMillis);
             }
             return true;
