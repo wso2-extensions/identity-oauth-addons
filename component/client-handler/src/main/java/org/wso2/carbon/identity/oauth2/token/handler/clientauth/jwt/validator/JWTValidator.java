@@ -254,46 +254,31 @@ public class JWTValidator {
             }
         }
         // Check JWT ID in DB
-        if (!validateJWTInDataBase(jti, currentTimeInMillis, timeStampSkewMillis)) {
-            return false;
-        }
-        persistJWTID(jti, expTime, issuedTime);
-        return true;
-    }
-
-    private boolean validateJWTInDataBase(String jti, long currentTimeInMillis,
-                                          long timeStampSkewMillis) throws OAuthClientAuthnException {
-
         JWTEntry jwtEntry = jwtStorageManager.getJwtFromDB(jti);
         if (jwtEntry == null) {
             if (log.isDebugEnabled()) {
                 log.debug("JWT id: " + jti + " not found in the Storage the JWT has been validated successfully.");
             }
+            persistJWTID(jti, expTime, issuedTime);
             return true;
         } else if (preventTokenReuse) {
-            if (jwtStorageManager.isJTIExistsInDB(jti)) {
-                String message = "JWT Token with JTI: " + jti + " has been replayed";
-                return logAndThrowException(message);
-            }
-        } else {
-            if (!checkJTIValidityPeriod(jti, jwtEntry.getExp(), currentTimeInMillis, timeStampSkewMillis)) {
-                return false;
-            }
+            logAndThrowException("JWT Token with JTI: " + jti + " has been replayed");
         }
+        checkJTIValidityPeriod(jti, jwtEntry.getExp(), currentTimeInMillis, timeStampSkewMillis);
         return true;
     }
 
     private boolean checkJTIValidityPeriod(String jti, long jwtExpiryTimeMillis, long currentTimeInMillis,
                                            long timeStampSkewMillis) throws OAuthClientAuthnException {
 
-        if (currentTimeInMillis + timeStampSkewMillis > jwtExpiryTimeMillis) {
+        if (currentTimeInMillis + timeStampSkewMillis < jwtExpiryTimeMillis) {
             if (log.isDebugEnabled()) {
-                log.debug("JWT Token with jti: " + jti + "has been reused after the allowed expiry time: " +
+                log.debug("JWT Token with jti: " + jti + " has been reused within the allowed expiry time: " +
                         jwtExpiryTimeMillis);
             }
             return true;
         } else {
-            String message = "JWT Token with jti: " + jti + " has been replayed before the allowed expiry time: "
+            String message = "JWT Token with jti: " + jti + " has been replayed after the allowed expiry time: "
                     + jwtExpiryTimeMillis;
             return logAndThrowException(message);
         }
